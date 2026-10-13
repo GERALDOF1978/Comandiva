@@ -1,0 +1,38 @@
+# Segredos e configuração local — nunca versionar
+.env
+.env.*
+!.env.example
+!config/env.example
+
+# Dependências
+node_modules/
+
+# Build
+dist/
+dist-ssr/
+client/dev-dist/
+*.tsbuildinfo
+
+# Backups de banco de dados
+backups/
+*.sql.gz
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Editor/OS
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Overrides locais do Claude Code (nunca versionar — específico de cada máquina)
+.claude/settings.local.json
+
+# Testes/cobertura
+coverage/
+.claude/scheduled_tasks.lock
