@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "sistema-dev",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--dir", "Sistema de restaurante", "run", "dev"],
+      "port": 3000,
+      "autoPort": true
+    },
+    {
+      "name": "master-dev",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--dir", "Master", "run", "dev"],
+      "port": 4000,
+      "autoPort": true
+    }
+  ]
+}
