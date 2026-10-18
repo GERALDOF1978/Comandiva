@@ -1,0 +1,110 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isPlatformAdmin() {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/platformAdmins/$(request.auth.uid));
+    }
+    function memberPath(restaurantId) {
+      return /databases/$(database)/documents/restaurants/$(restaurantId)/members/$(request.auth.uid);
+    }
+    function isMember(restaurantId) {
+      return signedIn() && exists(memberPath(restaurantId)) &&
+        get(memberPath(restaurantId)).data.active == true;
+    }
+    function role(restaurantId) {
+      return get(memberPath(restaurantId)).data.role;
+    }
+    function isManager(restaurantId) {
+      return isMember(restaurantId) &&
+        role(restaurantId) in ['owner','manager'];
+    }
+
+    match /platformAdmins/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isPlatformAdmin());
+      allow create, update, delete: if isPlatformAdmin();
+    }
+
+    match /plans/{planId} {
+      allow read: if true;
+      allow write: if isPlatformAdmin();
+    }
+
+    match /subscriptions/{restaurantId} {
+      allow read: if isPlatformAdmin() || isManager(restaurantId);
+      allow write: if isPlatformAdmin();
+    }
+
+    match /restaurantSlugs/{slug} {
+      allow read: if true;
+      allow write: if isPlatformAdmin();
+    }
+
+    match /restaurants/{restaurantId} {
+      allow read: if resource.data.status == 'active' || isMember(restaurantId) || isPlatformAdmin();
+      allow create, update, delete: if isPlatformAdmin();
+
+      match /members/{uid} {
+        allow read: if isMember(restaurantId) || isPlatformAdmin();
+        allow create, update, delete: if isManager(restaurantId) || isPlatformAdmin();
+      }
+
+      match /settings/{docId} {
+        allow read: if isMember(restaurantId) || isPlatformAdmin() ||
+          (docId == 'public' && resource.data.published == true);
+        allow write: if isManager(restaurantId) || isPlatformAdmin();
+      }
+
+      match /categories/{id} {
+        allow read: if resource.data.active == true || isMember(restaurantId) || isPlatformAdmin();
+        allow write: if isManager(restaurantId) || isPlatformAdmin();
+      }
+
+      match /products/{id} {
+        allow read: if resource.data.active == true || isMember(restaurantId) || isPlatformAdmin();
+        allow write: if isManager(restaurantId) || isPlatformAdmin();
+      }
+
+      match /promotions/{id} {
+        allow read: if resource.data.active == true || isMember(restaurantId) || isPlatformAdmin();
+        allow write: if isManager(restaurantId) || isPlatformAdmin();
+      }
+
+      match /deliveryAreas/{id} {
+        allow read: if resource.data.active == true || isMember(restaurantId) || isPlatformAdmin();
+        allow write: if isManager(restaurantId) || isPlatformAdmin();
+      }
+
+      match /orders/{id} {
+        allow read: if isMember(restaurantId) || isPlatformAdmin();
+        allow create: if false; // criação passa por endpoint confiável
+        allow update: if isMember(restaurantId) || isPlatformAdmin();
+        allow delete: if false;
+      }
+
+      match /tables/{id} {
+        allow read: if isMember(restaurantId) || isPlatformAdmin();
+        allow write: if isMember(restaurantId) || isPlatformAdmin();
+      }
+
+      match /customers/{id} {
+        allow read, write: if isMember(restaurantId) || isPlatformAdmin();
+      }
+
+      match /audit/{id} {
+        allow read: if isManager(restaurantId) || isPlatformAdmin();
+        allow write: if false;
+      }
+    }
+
+    match /paymentWebhookEvents/{id} {
+      allow read, write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
