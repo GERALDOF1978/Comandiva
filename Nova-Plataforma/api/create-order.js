@@ -10,7 +10,7 @@ function init(){
   initializeApp({credential:cert({projectId,clientEmail,privateKey})});
 }
 const clean=v=>typeof v==="string"?v.trim():"";
-const n=v=>{const x=Number(v);return Number.isFinite(x)?x:null};
+const n=v=>{if(v===null||v===undefined||v==="")return null;const x=Number(v);return Number.isFinite(x)?x:null};
 async function serverRoute(origin,destination){
  const routeBase=process.env.ROUTING_BASE_URL||"https://router.project-osrm.org",geoBase=process.env.GEOCODER_BASE_URL||"https://nominatim.openstreetmap.org";
  async function point(p,address){if(n(p?.latitude)!==null&&n(p?.longitude)!==null)return{latitude:n(p.latitude),longitude:n(p.longitude)};const r=await fetch(geoBase+"/search?format=jsonv2&limit=1&countrycodes=br&q="+encodeURIComponent(address),{headers:{"User-Agent":"SaaS-Delivery/1.0 (+https://agendaaki.shop)","Accept-Language":"pt-BR"}}),d=await r.json();if(!r.ok||!d?.length)throw new Error("address_not_found");return{latitude:Number(d[0].lat),longitude:Number(d[0].lon)}}
@@ -59,7 +59,7 @@ export default async function handler(req,res){
     if(channel==="DELIVERY"){
       const cfg=deliveryConfig.exists?deliveryConfig.data():{mode:"NEIGHBORHOOD"},neighborhood=clean(body.delivery?.neighborhood),key=neighborhood.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
       let distanceKm=null,verifiedDestination=null,routeDurationMinutes=null;
-      if(cfg.mode==="DISTANCE"||cfg.freeType==="RADIUS"){
+      if(cfg.mode==="DISTANCE"||(cfg.freeEnabled&&cfg.freeType==="RADIUS")){
         const origin={latitude:settings.data().latitude,longitude:settings.data().longitude,address:clean(settings.data().address)},destination={latitude:body.delivery?.latitude,longitude:body.delivery?.longitude,address:[clean(body.delivery?.address),clean(body.delivery?.number),neighborhood,clean(body.delivery?.city),clean(body.delivery?.state),clean(body.delivery?.cep),"Brasil"].filter(Boolean).join(", ")};
         const route=await serverRoute(origin,destination);distanceKm=route.distanceKm;verifiedDestination=route.destination;routeDurationMinutes=route.durationMinutes;
       }
