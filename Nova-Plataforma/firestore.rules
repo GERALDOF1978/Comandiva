@@ -88,6 +88,13 @@ service cloud.firestore {
         allow delete: if isOwner(restaurantId);
       }
 
+      match /deliveryRanges/{id} {
+        allow read: if isMember(restaurantId) || isPlatformAdmin() ||
+          (resource.data.active == true && restaurantActive(restaurantId));
+        allow create, update: if isManager(restaurantId);
+        allow delete: if isOwner(restaurantId);
+      }
+
       // Criação e mutações sensíveis passam por API confiável.
       match /orders/{id} {
         allow read: if isMember(restaurantId) || isPlatformAdmin();
