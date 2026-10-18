@@ -67,7 +67,7 @@ export default async function handler(req,res){
         if(!Number.isFinite(distanceKm)||distanceKm<0)return res.status(400).json({error:"distance_required"});
         const snap=await db.collection("restaurants").doc(restaurantId).collection("deliveryRanges").where("active","==",true).get();
         const range=snap.docs.map(d=>({id:d.id,...d.data()})).find(x=>distanceKm>=Number(x.minKm)&&distanceKm<=Number(x.maxKm));
-        if(!range)return res.status(422).json({error:"outside_delivery_area"});
+        if(!range){const maxKm=snap.docs.reduce((m,d)=>Math.max(m,Number(d.data().maxKm||0)),0);return res.status(422).json({error:"outside_delivery_area",distanceKm,maxKm})}
         if(totalCents<Number(range.minimumOrderCents||0))return res.status(422).json({error:"minimum_order",minimumOrderCents:Number(range.minimumOrderCents||0)});
         originalDeliveryFeeCents=Number(range.feeCents||0);deliveryMeta={mode:"DISTANCE",distanceKm,routeDurationMinutes,rangeId:range.id,estimatedMinutes:Number(range.estimatedMinutes||0)};
       }else{
