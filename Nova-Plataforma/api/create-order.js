@@ -24,7 +24,7 @@ export default async function handler(req,res){
     const slugDoc=await db.collection("restaurantSlugs").doc(slug).get();
     if(!slugDoc.exists||slugDoc.data().active===false)return res.status(404).json({error:"restaurant_not_found"});
     const restaurantId=slugDoc.data().restaurantId;
-    const [restaurant,settings]=await Promise.all([db.collection("restaurants").doc(restaurantId).get(),db.collection("restaurants").doc(restaurantId).collection("settings").doc("public").get()]);
+    const [restaurant,settings,deliveryConfig]=await Promise.all([db.collection("restaurants").doc(restaurantId).get(),db.collection("restaurants").doc(restaurantId).collection("settings").doc("public").get(),db.collection("restaurants").doc(restaurantId).collection("settings").doc("delivery").get()]);
     if(!restaurant.exists||restaurant.data().status!=="active"||!settings.exists||settings.data().published!==true)return res.status(403).json({error:"restaurant_unavailable"});
     let totalCents=0; const items=[];
     for(const raw of body.items){
@@ -49,9 +49,30 @@ export default async function handler(req,res){
       items.push({productId:product.id,name:clean(p.name),qty,basePriceCents:Number(p.priceCents||0),unitPriceCents,options:selected,totalCents:unitPriceCents*qty});
     }
     if(totalCents<0||totalCents>100000000)return res.status(400).json({error:"invalid_total"});
+    let deliveryFeeCents=0,originalDeliveryFeeCents=0,deliveryMeta=null;
+    if(channel==="DELIVERY"){
+      const cfg=deliveryConfig.exists?deliveryConfig.data():{mode:"NEIGHBORHOOD"},neighborhood=clean(body.delivery?.neighborhood),key=neighborhood.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim(),distanceKm=Number(body.delivery?.distanceKm);
+      if(cfg.mode==="DISTANCE"){
+        if(!Number.isFinite(distanceKm)||distanceKm<0)return res.status(400).json({error:"distance_required"});
+        const snap=await db.collection("restaurants").doc(restaurantId).collection("deliveryRanges").where("active","==",true).get();
+        const range=snap.docs.map(d=>({id:d.id,...d.data()})).find(x=>distanceKm>=Number(x.minKm)&&distanceKm<=Number(x.maxKm));
+        if(!range)return res.status(422).json({error:"outside_delivery_area"});
+        if(totalCents<Number(range.minimumOrderCents||0))return res.status(422).json({error:"minimum_order",minimumOrderCents:Number(range.minimumOrderCents||0)});
+        originalDeliveryFeeCents=Number(range.feeCents||0);deliveryMeta={mode:"DISTANCE",distanceKm,rangeId:range.id,estimatedMinutes:Number(range.estimatedMinutes||0)};
+      }else{
+        if(!key)return res.status(400).json({error:"neighborhood_required"});
+        const snap=await db.collection("restaurants").doc(restaurantId).collection("deliveryAreas").where("active","==",true).get();
+        const area=snap.docs.map(d=>({id:d.id,...d.data()})).find(x=>clean(x.neighborhoodKey)===key);
+        if(!area)return res.status(422).json({error:"outside_delivery_area"});
+        if(totalCents<Number(area.minimumOrderCents||0))return res.status(422).json({error:"minimum_order",minimumOrderCents:Number(area.minimumOrderCents||0)});
+        originalDeliveryFeeCents=Number(area.feeCents||0);deliveryMeta={mode:"NEIGHBORHOOD",neighborhood,areaId:area.id,estimatedMinutes:Number(area.estimatedMinutes||0)};
+      }
+      let free=false;if(cfg.freeEnabled&&totalCents>=Number(cfg.freeMinimumCents||0)){if(cfg.freeType==="RADIUS"&&Number.isFinite(distanceKm)&&distanceKm<=Number(cfg.freeMaxKm||0))free=true;if(cfg.freeType==="NEIGHBORHOOD"&&key&&key===clean(cfg.freeNeighborhood).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim())free=true}
+      deliveryFeeCents=free?0:originalDeliveryFeeCents;deliveryMeta={...deliveryMeta,freeShipping:free,originalFeeCents:originalDeliveryFeeCents};
+    }
     const counter=db.collection("restaurants").doc(restaurantId).collection("counters").doc("orders");
     const orderRef=db.collection("restaurants").doc(restaurantId).collection("orders").doc();
-    const number=await db.runTransaction(async tx=>{const c=await tx.get(counter);const next=(c.exists?Number(c.data().value||0):0)+1;tx.set(counter,{value:next,updatedAt:FieldValue.serverTimestamp()},{merge:true});tx.create(orderRef,{number:next,channel,status:paymentMethod==="PIX"?"PENDING_PAYMENT":"RECEIVED",paymentStatus:"PENDING",paymentMethod,subtotalCents:totalCents,deliveryFeeCents:0,totalCents,customerSnapshot:{name,phone},deliverySnapshot:channel==="DELIVERY"?{address:clean(body.delivery.address),number:clean(body.delivery.number),complement:clean(body.delivery.complement)}:null,table:channel==="TABLE"?clean(body.table):null,items,source:"PUBLIC_MENU",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});return next});
-    return res.status(201).json({ok:true,orderId:orderRef.id,number,totalCents,paymentMethod,status:paymentMethod==="PIX"?"PENDING_PAYMENT":"RECEIVED"});
+    const number=await db.runTransaction(async tx=>{const c=await tx.get(counter);const next=(c.exists?Number(c.data().value||0):0)+1;tx.set(counter,{value:next,updatedAt:FieldValue.serverTimestamp()},{merge:true});tx.create(orderRef,{number:next,channel,status:paymentMethod==="PIX"?"PENDING_PAYMENT":"RECEIVED",paymentStatus:"PENDING",paymentMethod,subtotalCents:totalCents,deliveryFeeCents,originalDeliveryFeeCents,totalCents:totalCents+deliveryFeeCents,customerSnapshot:{name,phone},deliverySnapshot:channel==="DELIVERY"?{cep:clean(body.delivery.cep),address:clean(body.delivery.address),number:clean(body.delivery.number),complement:clean(body.delivery.complement),neighborhood:clean(body.delivery.neighborhood),city:clean(body.delivery.city),state:clean(body.delivery.state),latitude:Number.isFinite(Number(body.delivery.latitude))?Number(body.delivery.latitude):null,longitude:Number.isFinite(Number(body.delivery.longitude))?Number(body.delivery.longitude):null,...deliveryMeta}:null,table:channel==="TABLE"?clean(body.table):null,items,source:"PUBLIC_MENU",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});return next});
+    return res.status(201).json({ok:true,orderId:orderRef.id,number,subtotalCents:totalCents,deliveryFeeCents,originalDeliveryFeeCents,totalCents:totalCents+deliveryFeeCents,paymentMethod,status:paymentMethod==="PIX"?"PENDING_PAYMENT":"RECEIVED"});
   }catch(e){console.error("create-order",e);return res.status(500).json({error:"internal_error"})}
 }
