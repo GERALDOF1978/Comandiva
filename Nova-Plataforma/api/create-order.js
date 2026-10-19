@@ -56,36 +56,24 @@ export default async function handler(req,res){
       items.push({productId:product.id,name:clean(p.name),qty,basePriceCents:Number(p.priceCents||0),unitPriceCents,options:selected,totalCents:unitPriceCents*qty});
     }
     if(totalCents<0||totalCents>100000000)return res.status(400).json({error:"invalid_total"});
-    let deliveryFeeCents=0,originalDeliveryFeeCents=0,deliveryMeta=null,verifiedDestination=null;
+    let deliveryFeeCents=0,originalDeliveryFeeCents=0,deliveryMeta=null;
     if(channel==="DELIVERY"){
-      const cfg=deliveryConfig.exists?deliveryConfig.data():{mode:"NEIGHBORHOOD"},neighborhood=clean(body.delivery?.neighborhood),key=neighborhood.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
-      let distanceKm=null,routeDurationMinutes=null;
-      if(cfg.mode==="DISTANCE"||(cfg.freeEnabled&&cfg.freeType==="RADIUS")){
-        const origin={latitude:settings.data().latitude,longitude:settings.data().longitude,address:clean(settings.data().address)},destination={latitude:n(body.delivery?.latitude),longitude:n(body.delivery?.longitude),address:[[clean(body.delivery?.address),clean(body.delivery?.number),neighborhood,clean(body.delivery?.city),clean(body.delivery?.state),clean(body.delivery?.cep),"Brasil"].filter(Boolean).join(", "),[clean(body.delivery?.address),neighborhood,clean(body.delivery?.city),clean(body.delivery?.state),"Brasil"].filter(Boolean).join(", "),[clean(body.delivery?.cep),clean(body.delivery?.city),clean(body.delivery?.state),"Brasil"].filter(Boolean).join(", ")]};
-        const route=await serverRoute(origin,destination);distanceKm=route.distanceKm;verifiedDestination=route.destination;routeDurationMinutes=route.durationMinutes;
-      }
-      if(cfg.mode==="DISTANCE"){
-        if(!Number.isFinite(distanceKm)||distanceKm<0)return res.status(400).json({error:"distance_required"});
-        const snap=await db.collection("restaurants").doc(restaurantId).collection("deliveryRanges").where("active","==",true).get();
-        const range=snap.docs.map(d=>({id:d.id,...d.data()})).find(x=>distanceKm>=Number(x.minKm)&&distanceKm<=Number(x.maxKm));
-        if(!range){const maxKm=snap.docs.reduce((m,d)=>Math.max(m,Number(d.data().maxKm||0)),0);return res.status(422).json({error:"outside_delivery_area",distanceKm,maxKm})}
-        if(totalCents<Number(range.minimumOrderCents||0))return res.status(422).json({error:"minimum_order",minimumOrderCents:Number(range.minimumOrderCents||0)});
-        originalDeliveryFeeCents=Number(range.feeCents||0);deliveryMeta={mode:"DISTANCE",distanceKm,routeDurationMinutes,rangeId:range.id,estimatedMinutes:Number(range.estimatedMinutes||0)};
-      }else{
-        if(!key)return res.status(400).json({error:"neighborhood_required"});
-        const snap=await db.collection("restaurants").doc(restaurantId).collection("deliveryAreas").where("active","==",true).get();
-        const area=snap.docs.map(d=>({id:d.id,...d.data()})).find(x=>clean(x.neighborhoodKey).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim()===key);
-        if(!area)return res.status(422).json({error:"outside_delivery_area"});
-        if(totalCents<Number(area.minimumOrderCents||0))return res.status(422).json({error:"minimum_order",minimumOrderCents:Number(area.minimumOrderCents||0)});
-        originalDeliveryFeeCents=Number(area.feeCents||0);deliveryMeta={mode:"NEIGHBORHOOD",neighborhood,areaId:area.id,estimatedMinutes:Number(area.estimatedMinutes||0)};
-      }
-      let free=false;if(cfg.freeEnabled&&totalCents>=Number(cfg.freeMinimumCents||0)){if(cfg.freeType==="RADIUS"&&Number.isFinite(distanceKm)&&distanceKm<=Number(cfg.freeMaxKm||0))free=true;if(cfg.freeType==="NEIGHBORHOOD"&&key&&key===clean(cfg.freeNeighborhood).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim())free=true}
-      deliveryFeeCents=free?0:originalDeliveryFeeCents;deliveryMeta={...deliveryMeta,freeShipping:free,originalFeeCents:originalDeliveryFeeCents};
+      const cfg=deliveryConfig.exists?deliveryConfig.data():{},neighborhood=clean(body.delivery?.neighborhood),key=neighborhood.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
+      if(!key)return res.status(400).json({error:"neighborhood_required"});
+      const snap=await db.collection("restaurants").doc(restaurantId).collection("deliveryAreas").where("active","==",true).get();
+      const normalize=v=>clean(v).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
+      const area=snap.docs.map(d=>({id:d.id,...d.data()})).find(x=>normalize(x.neighborhoodKey||x.neighborhood)===key);
+      if(!area)return res.status(422).json({error:"outside_delivery_area",neighborhood});
+      if(totalCents<Number(area.minimumOrderCents||0))return res.status(422).json({error:"minimum_order",minimumOrderCents:Number(area.minimumOrderCents||0)});
+      originalDeliveryFeeCents=Number(area.feeCents||0);
+      let free=false;if(cfg.freeEnabled&&cfg.freeType==="NEIGHBORHOOD"&&totalCents>=Number(cfg.freeMinimumCents||0)&&key===normalize(cfg.freeNeighborhood))free=true;
+      deliveryFeeCents=free?0:originalDeliveryFeeCents;
+      deliveryMeta={mode:"NEIGHBORHOOD",neighborhood:area.neighborhood||neighborhood,areaId:area.id,estimatedMinutes:Number(area.estimatedMinutes||0),freeShipping:free,originalFeeCents:originalDeliveryFeeCents};
     }
     const orderRef=db.collection("restaurants").doc(restaurantId).collection("orders").doc();
     const number=Date.now();
     try{
-      const orderData=stripUndefined({number,channel,status:paymentMethod==="PIX"?"PENDING_PAYMENT":"RECEIVED",paymentStatus:"PENDING",paymentMethod,subtotalCents:totalCents,deliveryFeeCents,originalDeliveryFeeCents,totalCents:totalCents+deliveryFeeCents,customerSnapshot:{name,phone},deliverySnapshot:channel==="DELIVERY"?{cep:clean(body.delivery.cep),address:clean(body.delivery.address),number:clean(body.delivery.number),complement:clean(body.delivery.complement),neighborhood:clean(body.delivery.neighborhood),city:clean(body.delivery.city),state:clean(body.delivery.state),latitude:verifiedDestination?.latitude??null,longitude:verifiedDestination?.longitude??null,...deliveryMeta}:null,table:channel==="TABLE"?clean(body.table):null,items,source:"PUBLIC_MENU",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
+      const orderData=stripUndefined({number,channel,status:paymentMethod==="PIX"?"PENDING_PAYMENT":"RECEIVED",paymentStatus:"PENDING",paymentMethod,subtotalCents:totalCents,deliveryFeeCents,originalDeliveryFeeCents,totalCents:totalCents+deliveryFeeCents,customerSnapshot:{name,phone},deliverySnapshot:channel==="DELIVERY"?{cep:clean(body.delivery.cep),address:clean(body.delivery.address),number:clean(body.delivery.number),complement:clean(body.delivery.complement),neighborhood:clean(body.delivery.neighborhood),city:clean(body.delivery.city),state:clean(body.delivery.state),latitude:null,longitude:null,...deliveryMeta}:null,table:channel==="TABLE"?clean(body.table):null,items,source:"PUBLIC_MENU",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
       await orderRef.set(orderData);
     }catch(err){
       console.error("order-write",{name:err?.name,message:err?.message,code:err?.code,stack:err?.stack});
