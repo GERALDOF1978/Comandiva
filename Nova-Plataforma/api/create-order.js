@@ -58,7 +58,7 @@ export default async function handler(req,res){
     if(totalCents<0||totalCents>100000000)return res.status(400).json({error:"invalid_total"});
     let deliveryFeeCents=0,originalDeliveryFeeCents=0,deliveryMeta=null,verifiedDestination=null;
     if(channel==="DELIVERY"){
-      const cfg=deliveryConfig.exists?deliveryConfig.data():{mode:"NEIGHBORHOOD"},neighborhood=clean(body.delivery?.neighborhood),key=neighborhood.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+      const cfg=deliveryConfig.exists?deliveryConfig.data():{mode:"NEIGHBORHOOD"},neighborhood=clean(body.delivery?.neighborhood),key=neighborhood.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
       let distanceKm=null,routeDurationMinutes=null;
       if(cfg.mode==="DISTANCE"||(cfg.freeEnabled&&cfg.freeType==="RADIUS")){
         const origin={latitude:settings.data().latitude,longitude:settings.data().longitude,address:clean(settings.data().address)},destination={latitude:n(body.delivery?.latitude),longitude:n(body.delivery?.longitude),address:[[clean(body.delivery?.address),clean(body.delivery?.number),neighborhood,clean(body.delivery?.city),clean(body.delivery?.state),clean(body.delivery?.cep),"Brasil"].filter(Boolean).join(", "),[clean(body.delivery?.address),neighborhood,clean(body.delivery?.city),clean(body.delivery?.state),"Brasil"].filter(Boolean).join(", "),[clean(body.delivery?.cep),clean(body.delivery?.city),clean(body.delivery?.state),"Brasil"].filter(Boolean).join(", ")]};
@@ -74,7 +74,7 @@ export default async function handler(req,res){
       }else{
         if(!key)return res.status(400).json({error:"neighborhood_required"});
         const snap=await db.collection("restaurants").doc(restaurantId).collection("deliveryAreas").where("active","==",true).get();
-        const area=snap.docs.map(d=>({id:d.id,...d.data()})).find(x=>clean(x.neighborhoodKey)===key);
+        const area=snap.docs.map(d=>({id:d.id,...d.data()})).find(x=>clean(x.neighborhoodKey).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim()===key);
         if(!area)return res.status(422).json({error:"outside_delivery_area"});
         if(totalCents<Number(area.minimumOrderCents||0))return res.status(422).json({error:"minimum_order",minimumOrderCents:Number(area.minimumOrderCents||0)});
         originalDeliveryFeeCents=Number(area.feeCents||0);deliveryMeta={mode:"NEIGHBORHOOD",neighborhood,areaId:area.id,estimatedMinutes:Number(area.estimatedMinutes||0)};
