@@ -56,10 +56,10 @@ export default async function handler(req,res){
       items.push({productId:product.id,name:clean(p.name),qty,basePriceCents:Number(p.priceCents||0),unitPriceCents,options:selected,totalCents:unitPriceCents*qty});
     }
     if(totalCents<0||totalCents>100000000)return res.status(400).json({error:"invalid_total"});
-    let deliveryFeeCents=0,originalDeliveryFeeCents=0,deliveryMeta=null;
+    let deliveryFeeCents=0,originalDeliveryFeeCents=0,deliveryMeta=null,verifiedDestination=null;
     if(channel==="DELIVERY"){
       const cfg=deliveryConfig.exists?deliveryConfig.data():{mode:"NEIGHBORHOOD"},neighborhood=clean(body.delivery?.neighborhood),key=neighborhood.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
-      let distanceKm=null,verifiedDestination=null,routeDurationMinutes=null;
+      let distanceKm=null,routeDurationMinutes=null;
       if(cfg.mode==="DISTANCE"||(cfg.freeEnabled&&cfg.freeType==="RADIUS")){
         const origin={latitude:settings.data().latitude,longitude:settings.data().longitude,address:clean(settings.data().address)},destination={latitude:null,longitude:null,address:[[clean(body.delivery?.address),clean(body.delivery?.number),neighborhood,clean(body.delivery?.city),clean(body.delivery?.state),clean(body.delivery?.cep),"Brasil"].filter(Boolean).join(", "),[clean(body.delivery?.address),neighborhood,clean(body.delivery?.city),clean(body.delivery?.state),"Brasil"].filter(Boolean).join(", "),[clean(body.delivery?.cep),clean(body.delivery?.city),clean(body.delivery?.state),"Brasil"].filter(Boolean).join(", ")]};
         const route=await serverRoute(origin,destination);distanceKm=route.distanceKm;verifiedDestination=route.destination;routeDurationMinutes=route.durationMinutes;
