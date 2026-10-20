@@ -99,3 +99,23 @@
 .bairroSaveBar button{border:0;border-radius:9px;background:#f97316;color:#fff;padding:12px 14px;font-size:12px;font-weight:800;cursor:pointer}
 .bairroSaveBar button:disabled{opacity:.65}
 @media(max-width:480px){.bairroSaveBar{bottom:4px}.bairroFeeRow input{width:100px}}
+
+/* Delivery: cabeçalho, cidade, pesquisa e abas em layout responsivo */
+.deliveryCityHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px}
+.deliveryCityHead h3{margin:0 0 5px;font-size:18px;line-height:1.3;color:#101828}
+.deliveryCityHead p{margin:0;font-size:12px;line-height:1.5;color:#667085}
+.deliveryForm .deliveryRefresh{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:none;padding:10px 12px;border:1px solid #fed7aa;border-radius:10px;background:#fff7ed;color:#c2410c;font-size:12px;font-weight:800;cursor:pointer}
+.deliveryRefresh svg{width:16px;height:16px}
+.deliveryCityControls{display:flex;flex-direction:column;gap:13px}
+.deliveryCityControls label{display:flex;flex-direction:column;gap:7px;font-size:12px;font-weight:750;color:#344054}
+.deliveryCityControls select{width:100%;min-height:46px;padding:11px 12px;border:1px solid #d0d5dd;border-radius:10px;background:#fff;font:inherit;font-size:13px;color:#101828}
+.deliverySearchField{display:flex;align-items:center;gap:9px;padding:0 12px;border:1px solid #d0d5dd;border-radius:10px;background:#fff}
+.deliverySearchField svg{flex:none;color:#98a2b3}
+.deliveryCityControls .deliverySearchField input{width:100%;min-width:0;height:46px;border:0;outline:0;background:transparent;padding:0;font:inherit;font-size:13px}
+.deliveryForm .deliveryFetchButton{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;border:0;border-radius:10px;background:#f97316;color:#fff;font-size:13px;font-weight:800;cursor:pointer}
+.deliveryFetchButton:disabled,.deliveryRefresh:disabled{opacity:.6;cursor:wait}
+.deliverySourceTabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:18px 0 12px;padding:5px;border-radius:12px;background:#f2f4f7}
+.deliveryForm .deliverySourceTabs button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;padding:12px 8px;border:1px solid transparent;border-radius:9px;background:transparent;color:#475467;font-size:12px;font-weight:800;cursor:pointer;text-align:center}
+.deliverySourceTabs button small{font-size:10px;font-weight:500;line-height:1.3}
+.deliveryForm .deliverySourceTabs button.active{border-color:#fed7aa;background:#fff;color:#c2410c;box-shadow:0 2px 6px #1018280d}
+@media(max-width:480px){.deliveryCityHead h3{font-size:16px}.deliveryCityHead p{font-size:11px}.deliveryForm .deliveryRefresh{padding:9px}.deliveryCityHead{gap:8px}}
