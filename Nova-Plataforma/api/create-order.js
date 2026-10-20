@@ -68,7 +68,7 @@ export default async function handler(req,res){
         const city=clean(pub.city)||clean(source.city);
         const state=clean(pub.state)||clean(source.state);
         const neighborhoodOrigin=clean(pub.neighborhood)||clean(source.neighborhood);
-        const embeddedNumber=/(?:^|[,\\s])(?:n[º°.]?\\s*)?\\d{1,6}(?:\\s*[-/]\\s*[a-z0-9]+)?(?:\\s*(?:,|-|$))/i.test(street);
+        const embeddedNumber=/(?:^|[,\s])(?:n[º°.]?\s*)?\d{1,6}(?:\s*[-/]\s*[a-z0-9]+)?(?=\s*(?:,|-|$))/i.test(street);
         const originAddress=[street,number&&!embeddedNumber?number:"",neighborhoodOrigin,city,state,"Brasil"].filter(Boolean).join(", ");
         if(!street||(!number&&!embeddedNumber)||!city||!state)return res.status(422).json({error:"origin_address_incomplete"});
         const dest=body.delivery;
