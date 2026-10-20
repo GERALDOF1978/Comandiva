@@ -11,9 +11,11 @@ function init(){
 }
 const clean=v=>String(v??"").trim();
 
-async function sheetGet(base,restaurantId,secret){
+async function sheetGet(base,restaurantId,secret,action="getDeliveryTable",city="",state=""){
   const url=new URL(base);
-  url.searchParams.set("action","getDeliveryTable");
+  url.searchParams.set("action",action);
+  if(city)url.searchParams.set("city",city);
+  if(state)url.searchParams.set("state",state);
   url.searchParams.set("restaurantId",restaurantId);
   if(secret)url.searchParams.set("token",secret);
   const r=await fetch(url.toString(),{redirect:"follow"});
@@ -36,11 +38,19 @@ async function createSheet(base,payload,secret){
 export default async function handler(req,res){
   if(req.method!=="GET")return res.status(405).json({error:"method_not_allowed"});
   const restaurantId=clean(req.query?.restaurantId);
-  if(!restaurantId)return res.status(400).json({error:"restaurant_required"});
+  const action=clean(req.query?.action)||"getDeliveryTable";
+  const city=clean(req.query?.city),state=clean(req.query?.state);
+  if(action!=="getDeliveryTable"&&action!=="getCityNeighborhoods")return res.status(400).json({error:"invalid_action"});
+  if(action==="getCityNeighborhoods"&&!city)return res.status(400).json({error:"city_required"});
+  if(action==="getDeliveryTable"&&!restaurantId)return res.status(400).json({error:"restaurant_required"});
   const base=process.env.DELIVERY_SHEETS_WEBAPP_URL,secret=process.env.DELIVERY_SHEETS_SECRET;
   if(!base)return res.status(503).json({error:"sheet_not_configured"});
   try{
-    let result=await sheetGet(base,restaurantId,secret);
+    let result=await sheetGet(base,restaurantId,secret,action,city,state);
+    if(action==="getCityNeighborhoods"){
+      if(!result.ok)return res.status(502).json({error:result.data?.error||"sheet_request_failed"});
+      return res.status(200).json({city,state,neighborhoods:Array.isArray(result.data.neighborhoods)?result.data.neighborhoods:[]});
+    }
     if(!result.ok&&result.data?.error==="restaurant_not_found"){
       init();const db=getFirestore();
       const [restaurantSnap,publicSnap]=await Promise.all([
