@@ -43,8 +43,9 @@ export default async function handler(req,res){
   if(action!=="getDeliveryTable"&&action!=="getCityNeighborhoods"&&action!=="listCities")return res.status(400).json({error:"invalid_action"});
   if(action==="getCityNeighborhoods"&&!city)return res.status(400).json({error:"city_required"});
   if(action==="getDeliveryTable")return res.status(410).json({error:"legacy_restaurant_sheet_disabled"});
-  const base=process.env.DELIVERY_SHEETS_WEBAPP_URL,secret=process.env.DELIVERY_SHEETS_SECRET;
-  if(!base)return res.status(503).json({error:"sheet_not_configured"});
+  // URL publica confirmada pelo proprietario; a variavel de ambiente pode sobrescreve-la.
+  const base=process.env.DELIVERY_SHEETS_WEBAPP_URL?.trim()||"https://script.google.com/macros/s/AKfycbykLbsFnD8erR1Z0jWPmMEEcdXhQ-5lZzB2cowos3UIg5Cvr6ecwOq4L25wh3slAWqr/exec";
+  const secret=process.env.DELIVERY_SHEETS_SECRET;
   try{
     let result=await sheetGet(base,restaurantId,secret,action,city,state);
     if(action==="listCities"){if(!result.ok)return res.status(502).json({error:result.data?.error||"sheet_request_failed"});return res.status(200).json({cities:Array.isArray(result.data.cities)?result.data.cities:[]});}
