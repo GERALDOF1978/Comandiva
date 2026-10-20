@@ -77,7 +77,10 @@ export default async function handler(req,res){
         const dest=body.delivery;
         if(!clean(dest.city)||!clean(dest.state)||!clean(dest.neighborhood))return res.status(422).json({error:"invalid_address"});
         const destinationAddress=[dest.address,dest.number,dest.neighborhood,dest.city,dest.state,"Brasil"].filter(Boolean).join(", ");
-        const route=await serverRoute(hasOriginCoords?{address:originAddress,latitude:originLat,longitude:originLng}:{address:originAddress},{address:destinationAddress});
+        const destLat=n(dest.latitude),destLng=n(dest.longitude);
+        const hasDestinationCoords=destLat!==null&&destLng!==null&&destLat>=-34&&destLat<=6&&destLng>=-74&&destLng<=-28;
+        const destinationPoint=hasDestinationCoords?{address:destinationAddress,latitude:destLat,longitude:destLng}:{address:destinationAddress};
+        const route=await serverRoute(hasOriginCoords?{address:originAddress,latitude:originLat,longitude:originLng}:{address:originAddress},destinationPoint);
         if(!Number.isFinite(route.distanceKm)||route.distanceKm<=0)return res.status(422).json({error:"route_not_found"});
         const ranges=await db.collection("restaurants").doc(restaurantId).collection("deliveryRanges").where("active","==",true).get();
         const match=ranges.docs.map(d=>({id:d.id,...d.data()})).filter(x=>Number.isFinite(Number(x.minKm))&&Number.isFinite(Number(x.maxKm))&&Number(x.maxKm)>Number(x.minKm)).sort((a,b)=>Number(a.minKm)-Number(b.minKm)).find(x=>route.distanceKm>=Number(x.minKm)&&route.distanceKm<=Number(x.maxKm));
