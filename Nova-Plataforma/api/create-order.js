@@ -72,7 +72,7 @@ export default async function handler(req,res){
         const free=!!cfg.freeEnabled&&cfg.freeType==="NEIGHBORHOOD"&&totalCents>=Number(cfg.freeMinimumCents||0)&&key===normalize(cfg.freeNeighborhood);
         deliveryFeeCents=free?0:originalDeliveryFeeCents;
         deliveryMeta={mode:"NEIGHBORHOOD",neighborhood:savedArea.neighborhood||neighborhood,areaId:savedArea.id,estimatedMinutes:Number(savedArea.estimatedMinutes||0),freeShipping:free,originalFeeCents:originalDeliveryFeeCents};
-      }else       if(cfg.mode==="DISTANCE"){
+      }else{
         const source=restaurant.data(),pub=settings.data();
         const street=clean(pub.address)||clean(source.address);
         const number=clean(pub.number)||clean(source.number);
@@ -113,15 +113,6 @@ export default async function handler(req,res){
             });
           }catch(err){console.error("delivery_area_auto_save_failed",err.message)}
         }
-      }else{
-        const snap=await db.collection("restaurants").doc(restaurantId).collection("deliveryAreas").where("active","==",true).get();
-        const area=snap.docs.map(d=>({id:d.id,...d.data()})).find(x=>normalize(x.neighborhoodKey||x.neighborhood)===key&&normalize(x.city)===normalize(body.delivery?.city)&&normalize(x.state)===normalize(body.delivery?.state));
-        if(!area)return res.status(422).json({error:"outside_delivery_area",neighborhood});
-        if(totalCents<Number(area.minimumOrderCents||0))return res.status(422).json({error:"minimum_order",minimumOrderCents:Number(area.minimumOrderCents||0)});
-        originalDeliveryFeeCents=Number(area.feeCents||0);
-        const free=!!cfg.freeEnabled&&cfg.freeType==="NEIGHBORHOOD"&&totalCents>=Number(cfg.freeMinimumCents||0)&&key===normalize(cfg.freeNeighborhood);
-        deliveryFeeCents=free?0:originalDeliveryFeeCents;
-        deliveryMeta={mode:"NEIGHBORHOOD",neighborhood:area.neighborhood||neighborhood,areaId:area.id,estimatedMinutes:Number(area.estimatedMinutes||0),freeShipping:free,originalFeeCents:originalDeliveryFeeCents};
       }
     }
     if(quoteOnly)return res.status(200).json({ok:true,quote:true,subtotalCents:totalCents,deliveryFeeCents,totalCents:totalCents+deliveryFeeCents,distanceKm:deliveryMeta?.distanceKm??null});
