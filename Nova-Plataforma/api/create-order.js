@@ -61,7 +61,18 @@ export default async function handler(req,res){
       const cfg=deliveryConfig.exists?deliveryConfig.data():{},neighborhood=clean(body.delivery?.neighborhood),key=neighborhood.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
       if(cfg.mode!=="DISTANCE"&&!key)return res.status(400).json({error:"neighborhood_required"});
       const normalize=v=>clean(v).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
-      if(cfg.mode==="DISTANCE"){
+      const areaRef=db.collection("restaurants").doc(restaurantId).collection("deliveryAreas");
+      const savedAreas=await areaRef.where("active","==",true).get();
+      const savedArea=savedAreas.docs.map(d=>({id:d.id,...d.data()})).find(x=>normalize(x.neighborhoodKey||x.neighborhood)===key);
+      const useSavedArea=!!savedArea;
+      if(useSavedArea){
+        if(totalCents<Number(savedArea.minimumOrderCents||0))return res.status(422).json({error:"minimum_order",minimumOrderCents:Number(savedArea.minimumOrderCents||0)});
+        originalDeliveryFeeCents=Number(savedArea.feeCents);
+        if(!Number.isFinite(originalDeliveryFeeCents)||originalDeliveryFeeCents<0)return res.status(422).json({error:"invalid_delivery_fee"});
+        const free=!!cfg.freeEnabled&&cfg.freeType==="NEIGHBORHOOD"&&totalCents>=Number(cfg.freeMinimumCents||0)&&key===normalize(cfg.freeNeighborhood);
+        deliveryFeeCents=free?0:originalDeliveryFeeCents;
+        deliveryMeta={mode:"NEIGHBORHOOD",neighborhood:savedArea.neighborhood||neighborhood,areaId:savedArea.id,estimatedMinutes:Number(savedArea.estimatedMinutes||0),freeShipping:free,originalFeeCents:originalDeliveryFeeCents};
+      }else       if(cfg.mode==="DISTANCE"){
         const source=restaurant.data(),pub=settings.data();
         const street=clean(pub.address)||clean(source.address);
         const number=clean(pub.number)||clean(source.number);
@@ -91,6 +102,17 @@ export default async function handler(req,res){
         const free=!!cfg.freeEnabled&&cfg.freeType==="RADIUS"&&route.distanceKm<=Number(cfg.freeMaxKm||0)&&totalCents>=Number(cfg.freeMinimumCents||0);
         deliveryFeeCents=free?0:originalDeliveryFeeCents;
         deliveryMeta={mode:"DISTANCE",distanceKm:route.distanceKm,routeMinutes:route.durationMinutes,rangeId:match.id,estimatedMinutes:Number(match.estimatedMinutes||0),freeShipping:free,originalFeeCents:originalDeliveryFeeCents};
+        // Primeiro cálculo validado do bairro: grava taxa fixa. Nunca sobrescreve valor do proprietário.
+        if(key&&clean(dest.city)&&clean(dest.state)){
+          const areaId=[normalize(dest.state),normalize(dest.city),key].join("_").replace(/ /g,"-");
+          const newArea=areaRef.doc(areaId);
+          try{
+            await db.runTransaction(async tx=>{
+              const existing=await tx.get(newArea);
+              if(!existing.exists)tx.create(newArea,{neighborhood,neighborhoodKey:key,city:clean(dest.city),state:clean(dest.state),feeCents:originalDeliveryFeeCents,minimumOrderCents:0,estimatedMinutes:Number(match.estimatedMinutes||0),active:true,source:"AUTO_ROUTE",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
+            });
+          }catch(err){console.error("delivery_area_auto_save_failed",err.message)}
+        }
       }else{
         const snap=await db.collection("restaurants").doc(restaurantId).collection("deliveryAreas").where("active","==",true).get();
         const area=snap.docs.map(d=>({id:d.id,...d.data()})).find(x=>normalize(x.neighborhoodKey||x.neighborhood)===key);
