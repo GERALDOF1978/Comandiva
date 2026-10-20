@@ -59,8 +59,8 @@ export default async function handler(req,res){
     let deliveryFeeCents=0,originalDeliveryFeeCents=0,deliveryMeta=null;
     if(channel==="DELIVERY"){
       const cfg=deliveryConfig.exists?deliveryConfig.data():{},neighborhood=clean(body.delivery?.neighborhood),key=neighborhood.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
-      if(!key)return res.status(400).json({error:"neighborhood_required"});
-      const normalize=v=>clean(v).normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\\s+/g," ").trim();
+      if(cfg.mode!=="DISTANCE"&&!key)return res.status(400).json({error:"neighborhood_required"});
+      const normalize=v=>clean(v).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
       if(cfg.mode==="DISTANCE"){
         const source=restaurant.data(),pub=settings.data();
         const originAddress=[pub.address||source.address,pub.number||source.number,pub.neighborhood||source.neighborhood,pub.city||source.city,pub.state||source.state,"Brasil"].filter(Boolean).join(", ");
