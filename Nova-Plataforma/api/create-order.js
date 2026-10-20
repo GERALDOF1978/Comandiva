@@ -63,8 +63,14 @@ export default async function handler(req,res){
       const normalize=v=>clean(v).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
       if(cfg.mode==="DISTANCE"){
         const source=restaurant.data(),pub=settings.data();
-        const originAddress=[pub.address||source.address,pub.number||source.number,pub.neighborhood||source.neighborhood,pub.city||source.city,pub.state||source.state,"Brasil"].filter(Boolean).join(", ");
-        if(!clean(pub.address||source.address)||!clean(pub.number||source.number))return res.status(422).json({error:"origin_address_incomplete"});
+        const street=clean(pub.address)||clean(source.address);
+        const number=clean(pub.number)||clean(source.number);
+        const city=clean(pub.city)||clean(source.city);
+        const state=clean(pub.state)||clean(source.state);
+        const neighborhoodOrigin=clean(pub.neighborhood)||clean(source.neighborhood);
+        const embeddedNumber=/(?:^|[,\\s])(?:n[º°.]?\\s*)?\\d{1,6}(?:\\s*[-/]\\s*[a-z0-9]+)?(?:\\s*(?:,|-|$))/i.test(street);
+        const originAddress=[street,number&&!embeddedNumber?number:"",neighborhoodOrigin,city,state,"Brasil"].filter(Boolean).join(", ");
+        if(!street||(!number&&!embeddedNumber)||!city||!state)return res.status(422).json({error:"origin_address_incomplete"});
         const dest=body.delivery;
         if(!clean(dest.city)||!clean(dest.state)||!clean(dest.neighborhood))return res.status(422).json({error:"invalid_address"});
         const destinationAddress=[dest.address,dest.number,dest.neighborhood,dest.city,dest.state,"Brasil"].filter(Boolean).join(", ");
