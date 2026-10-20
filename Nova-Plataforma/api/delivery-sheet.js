@@ -67,7 +67,7 @@ export default async function handler(req,res){
     }
     if(!result.ok)return res.status(result.data?.error==="restaurant_not_found"?404:502).json({error:result.data?.error||"sheet_request_failed"});
     const neighborhoods=Array.isArray(result.data.neighborhoods)?result.data.neighborhoods:[];
-    return res.status(200).json({restaurantId,restaurantName:result.data.restaurantName||"",neighborhoods});
+    return res.status(200).json({restaurantId,restaurantName:result.data.restaurantName||"",city:result.data.city||"",state:result.data.state||"",neighborhoods});
   }catch(e){
     console.error("delivery-sheet",e);
     return res.status(502).json({error:e.message||"sheet_unavailable"});
