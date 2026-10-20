@@ -21,10 +21,10 @@ export default async function handler(req,res){
   if(req.method!=="POST")return res.status(405).json({error:"method_not_allowed"});
   try{
     init(); const db=getFirestore(); const body=req.body||{};
-    const slug=clean(body.slug), channel=body.channel, paymentMethod=body.paymentMethod;
+    const slug=clean(body.slug), channel=body.channel, paymentMethod=body.paymentMethod, quoteOnly=body.quoteOnly===true;
     if(!slug||!["DELIVERY","PICKUP","TABLE"].includes(channel)||!["PIX","CASH","CARD_ON_DELIVERY"].includes(paymentMethod))return res.status(400).json({error:"invalid_order"});
     const name=clean(body.customer?.name),phone=clean(body.customer?.phone);
-    if(name.length<2||phone.replace(/\D/g,"").length<10)return res.status(400).json({error:"invalid_customer"});
+    if(!quoteOnly&&(name.length<2||phone.replace(/\D/g,"").length<10))return res.status(400).json({error:"invalid_customer"});
     if(channel==="DELIVERY"&&(!clean(body.delivery?.address)||!clean(body.delivery?.number)))return res.status(400).json({error:"invalid_address"});
     if(channel==="TABLE"&&!clean(body.table))return res.status(400).json({error:"invalid_table"});
     if(!Array.isArray(body.items)||!body.items.length||body.items.length>50)return res.status(400).json({error:"invalid_items"});
@@ -99,6 +99,8 @@ export default async function handler(req,res){
         deliveryMeta={mode:"NEIGHBORHOOD",neighborhood:area.neighborhood||neighborhood,areaId:area.id,estimatedMinutes:Number(area.estimatedMinutes||0),freeShipping:free,originalFeeCents:originalDeliveryFeeCents};
       }
     }
+    if(quoteOnly)return res.status(200).json({ok:true,quote:true,subtotalCents:totalCents,deliveryFeeCents,totalCents:totalCents+deliveryFeeCents,distanceKm:deliveryMeta?.distanceKm??null});
+    if(body.expectedDeliveryFeeCents!==undefined&&Number(body.expectedDeliveryFeeCents)!==deliveryFeeCents)return res.status(409).json({error:"delivery_fee_changed",deliveryFeeCents,totalCents:totalCents+deliveryFeeCents});
     const orderRef=db.collection("restaurants").doc(restaurantId).collection("orders").doc();
     const number=Date.now();
     try{
