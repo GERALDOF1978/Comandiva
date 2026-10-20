@@ -79,3 +79,8 @@
 .bairroModalResults button b{font-size:13px;color:#101828}
 .bairroModalResults button small{font-size:11px;color:#667085}
 .bairroModalResults button strong{font-size:13px;color:#027a48;white-space:nowrap}
+
+/* Campo único de bairro com ícone de pesquisa */
+.checkoutBody .bairroOpenButton{width:100%;min-height:46px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 13px;border:1px solid #d0d5dd;border-radius:9px;background:#fff;color:#344054;font:inherit;font-size:13px;font-weight:600;text-align:left;cursor:pointer}
+.checkoutBody .bairroOpenButton:hover,.checkoutBody .bairroOpenButton:focus-visible{border-color:#f97316;outline:0;box-shadow:0 0 0 2px #ffedd5}
+.checkoutBody .bairroOpenButton svg{flex:none;color:#f97316}
