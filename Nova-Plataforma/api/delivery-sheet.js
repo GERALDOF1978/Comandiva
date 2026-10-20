@@ -47,7 +47,8 @@ export default async function handler(req,res){
   if(!base)return res.status(503).json({error:"sheet_not_configured"});
   try{
     let result=await sheetGet(base,restaurantId,secret,action,city,state);
-    if(action==="listCities"){if(!result.ok)return res.status(502).json({error:result.data?.error||"sheet_request_failed"});return res.status(200).json({cities:Array.isArray(result.data.cities)?result.data.cities:[]});}\n    if(action==="getCityNeighborhoods"){
+    if(action==="listCities"){if(!result.ok)return res.status(502).json({error:result.data?.error||"sheet_request_failed"});return res.status(200).json({cities:Array.isArray(result.data.cities)?result.data.cities:[]});}
+    if(action==="getCityNeighborhoods"){
       if(!result.ok)return res.status(502).json({error:result.data?.error||"sheet_request_failed"});
       return res.status(200).json({city,state,neighborhoods:Array.isArray(result.data.neighborhoods)?result.data.neighborhoods:[]});
     }
