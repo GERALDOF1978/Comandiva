@@ -60,15 +60,35 @@ export default async function handler(req,res){
     if(channel==="DELIVERY"){
       const cfg=deliveryConfig.exists?deliveryConfig.data():{},neighborhood=clean(body.delivery?.neighborhood),key=neighborhood.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
       if(!key)return res.status(400).json({error:"neighborhood_required"});
-      const snap=await db.collection("restaurants").doc(restaurantId).collection("deliveryAreas").where("active","==",true).get();
-      const normalize=v=>clean(v).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
-      const area=snap.docs.map(d=>({id:d.id,...d.data()})).find(x=>normalize(x.neighborhoodKey||x.neighborhood)===key);
-      if(!area)return res.status(422).json({error:"outside_delivery_area",neighborhood});
-      if(totalCents<Number(area.minimumOrderCents||0))return res.status(422).json({error:"minimum_order",minimumOrderCents:Number(area.minimumOrderCents||0)});
-      originalDeliveryFeeCents=Number(area.feeCents||0);
-      let free=false;if(cfg.freeEnabled&&cfg.freeType==="NEIGHBORHOOD"&&totalCents>=Number(cfg.freeMinimumCents||0)&&key===normalize(cfg.freeNeighborhood))free=true;
-      deliveryFeeCents=free?0:originalDeliveryFeeCents;
-      deliveryMeta={mode:"NEIGHBORHOOD",neighborhood:area.neighborhood||neighborhood,areaId:area.id,estimatedMinutes:Number(area.estimatedMinutes||0),freeShipping:free,originalFeeCents:originalDeliveryFeeCents};
+      const normalize=v=>clean(v).normalize("NFD").replace(/[\\u0300-\\u036f]/g,"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\\s+/g," ").trim();
+      if(cfg.mode==="DISTANCE"){
+        const source=restaurant.data(),pub=settings.data();
+        const originAddress=[pub.address||source.address,pub.number||source.number,pub.neighborhood||source.neighborhood,pub.city||source.city,pub.state||source.state,"Brasil"].filter(Boolean).join(", ");
+        if(!clean(pub.address||source.address)||!clean(pub.number||source.number))return res.status(422).json({error:"origin_address_incomplete"});
+        const dest=body.delivery;
+        if(!clean(dest.city)||!clean(dest.state)||!clean(dest.neighborhood))return res.status(422).json({error:"invalid_address"});
+        const destinationAddress=[dest.address,dest.number,dest.neighborhood,dest.city,dest.state,"Brasil"].filter(Boolean).join(", ");
+        const route=await serverRoute({address:originAddress},{address:destinationAddress});
+        if(!Number.isFinite(route.distanceKm)||route.distanceKm<=0)return res.status(422).json({error:"route_not_found"});
+        const ranges=await db.collection("restaurants").doc(restaurantId).collection("deliveryRanges").where("active","==",true).get();
+        const match=ranges.docs.map(d=>({id:d.id,...d.data()})).filter(x=>Number.isFinite(Number(x.minKm))&&Number.isFinite(Number(x.maxKm))&&Number(x.maxKm)>Number(x.minKm)).sort((a,b)=>Number(a.minKm)-Number(b.minKm)).find(x=>route.distanceKm>=Number(x.minKm)&&route.distanceKm<=Number(x.maxKm));
+        if(!match)return res.status(422).json({error:"outside_delivery_distance",distanceKm:route.distanceKm});
+        if(totalCents<Number(match.minimumOrderCents||0))return res.status(422).json({error:"minimum_order",minimumOrderCents:Number(match.minimumOrderCents||0)});
+        originalDeliveryFeeCents=Number(match.feeCents||0);
+        if(!Number.isFinite(originalDeliveryFeeCents)||originalDeliveryFeeCents<0)return res.status(422).json({error:"invalid_delivery_fee"});
+        const free=!!cfg.freeEnabled&&cfg.freeType==="RADIUS"&&route.distanceKm<=Number(cfg.freeMaxKm||0)&&totalCents>=Number(cfg.freeMinimumCents||0);
+        deliveryFeeCents=free?0:originalDeliveryFeeCents;
+        deliveryMeta={mode:"DISTANCE",distanceKm:route.distanceKm,routeMinutes:route.durationMinutes,rangeId:match.id,estimatedMinutes:Number(match.estimatedMinutes||0),freeShipping:free,originalFeeCents:originalDeliveryFeeCents};
+      }else{
+        const snap=await db.collection("restaurants").doc(restaurantId).collection("deliveryAreas").where("active","==",true).get();
+        const area=snap.docs.map(d=>({id:d.id,...d.data()})).find(x=>normalize(x.neighborhoodKey||x.neighborhood)===key);
+        if(!area)return res.status(422).json({error:"outside_delivery_area",neighborhood});
+        if(totalCents<Number(area.minimumOrderCents||0))return res.status(422).json({error:"minimum_order",minimumOrderCents:Number(area.minimumOrderCents||0)});
+        originalDeliveryFeeCents=Number(area.feeCents||0);
+        const free=!!cfg.freeEnabled&&cfg.freeType==="NEIGHBORHOOD"&&totalCents>=Number(cfg.freeMinimumCents||0)&&key===normalize(cfg.freeNeighborhood);
+        deliveryFeeCents=free?0:originalDeliveryFeeCents;
+        deliveryMeta={mode:"NEIGHBORHOOD",neighborhood:area.neighborhood||neighborhood,areaId:area.id,estimatedMinutes:Number(area.estimatedMinutes||0),freeShipping:free,originalFeeCents:originalDeliveryFeeCents};
+      }
     }
     const orderRef=db.collection("restaurants").doc(restaurantId).collection("orders").doc();
     const number=Date.now();
