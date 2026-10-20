@@ -63,7 +63,7 @@ export default async function handler(req,res){
       const normalize=v=>clean(v).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
       const areaRef=db.collection("restaurants").doc(restaurantId).collection("deliveryAreas");
       const savedAreas=await areaRef.where("active","==",true).get();
-      const savedArea=savedAreas.docs.map(d=>({id:d.id,...d.data()})).find(x=>normalize(x.neighborhoodKey||x.neighborhood)===key&&(!clean(x.city)||normalize(x.city)===normalize(body.delivery?.city))&&(!clean(x.state)||normalize(x.state)===normalize(body.delivery?.state)));
+      const savedArea=savedAreas.docs.map(d=>({id:d.id,...d.data()})).find(x=>normalize(x.neighborhoodKey||x.neighborhood)===key&&normalize(x.city)===normalize(body.delivery?.city)&&normalize(x.state)===normalize(body.delivery?.state));
       const useSavedArea=!!savedArea;
       if(useSavedArea){
         if(totalCents<Number(savedArea.minimumOrderCents||0))return res.status(422).json({error:"minimum_order",minimumOrderCents:Number(savedArea.minimumOrderCents||0)});
@@ -115,7 +115,7 @@ export default async function handler(req,res){
         }
       }else{
         const snap=await db.collection("restaurants").doc(restaurantId).collection("deliveryAreas").where("active","==",true).get();
-        const area=snap.docs.map(d=>({id:d.id,...d.data()})).find(x=>normalize(x.neighborhoodKey||x.neighborhood)===key&&(!clean(x.city)||normalize(x.city)===normalize(body.delivery?.city))&&(!clean(x.state)||normalize(x.state)===normalize(body.delivery?.state)));
+        const area=snap.docs.map(d=>({id:d.id,...d.data()})).find(x=>normalize(x.neighborhoodKey||x.neighborhood)===key&&normalize(x.city)===normalize(body.delivery?.city)&&normalize(x.state)===normalize(body.delivery?.state));
         if(!area)return res.status(422).json({error:"outside_delivery_area",neighborhood});
         if(totalCents<Number(area.minimumOrderCents||0))return res.status(422).json({error:"minimum_order",minimumOrderCents:Number(area.minimumOrderCents||0)});
         originalDeliveryFeeCents=Number(area.feeCents||0);
