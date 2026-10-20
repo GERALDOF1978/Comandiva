@@ -40,14 +40,14 @@ export default async function handler(req,res){
   const restaurantId=clean(req.query?.restaurantId);
   const action=clean(req.query?.action)||"getDeliveryTable";
   const city=clean(req.query?.city),state=clean(req.query?.state);
-  if(action!=="getDeliveryTable"&&action!=="getCityNeighborhoods")return res.status(400).json({error:"invalid_action"});
+  if(action!=="getDeliveryTable"&&action!=="getCityNeighborhoods"&&action!=="listCities")return res.status(400).json({error:"invalid_action"});
   if(action==="getCityNeighborhoods"&&!city)return res.status(400).json({error:"city_required"});
   if(action==="getDeliveryTable"&&!restaurantId)return res.status(400).json({error:"restaurant_required"});
   const base=process.env.DELIVERY_SHEETS_WEBAPP_URL,secret=process.env.DELIVERY_SHEETS_SECRET;
   if(!base)return res.status(503).json({error:"sheet_not_configured"});
   try{
     let result=await sheetGet(base,restaurantId,secret,action,city,state);
-    if(action==="getCityNeighborhoods"){
+    if(action==="listCities"){if(!result.ok)return res.status(502).json({error:result.data?.error||"sheet_request_failed"});return res.status(200).json({cities:Array.isArray(result.data.cities)?result.data.cities:[]});}\n    if(action==="getCityNeighborhoods"){
       if(!result.ok)return res.status(502).json({error:result.data?.error||"sheet_request_failed"});
       return res.status(200).json({city,state,neighborhoods:Array.isArray(result.data.neighborhoods)?result.data.neighborhoods:[]});
     }
