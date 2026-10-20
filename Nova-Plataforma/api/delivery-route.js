@@ -31,6 +31,23 @@ export default async function handler(req,res){
  if(req.method!=="POST")return res.status(405).json({error:"method_not_allowed"});
  try{
   const b=req.body||{};
+  if(b.action==="geocode"){
+    const a=b.address||{},street=clean(a.address),number=clean(a.number),city=clean(a.city),state=clean(a.state);
+    if(!street||!number||!city||!state)return res.status(400).json({error:"invalid_address"});
+    const queries=[
+      [street,number,clean(a.neighborhood),city,state,"Brasil"].filter(Boolean).join(", "),
+      [street+", "+number,city,state,"Brasil"].join(", "),
+      [street,clean(a.neighborhood),city,state,"Brasil"].filter(Boolean).join(", "),
+      [street,city,state,"Brasil"].join(", ")
+    ];
+    try{
+      for(let i=0;i<queries.length;i++){
+        try{const p=await geocodeAddress(queries[i]);return res.status(200).json({ok:true,...p,precision:i<2?"address":"street",approximate:i>=2})}
+        catch(e){if(e.message!=="address_not_found")throw e}
+      }
+      return res.status(422).json({error:"destination_not_found"});
+    }catch(e){return res.status(502).json({error:e.message||"geocoder_unavailable"})}
+  }
   if(b.action==="reverse"){
     const lat=num(b.latitude),lon=num(b.longitude);
     if(lat===null||lon===null||lat<-90||lat>90||lon<-180||lon>180)return res.status(400).json({error:"invalid_coordinates"});
