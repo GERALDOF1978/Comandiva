@@ -51,3 +51,10 @@
 .routePreviewContent span{display:block;font-size:12px;line-height:1.4;color:#047857}
 .routeRecalculate{margin-top:7px;border:1px solid #a7f3d0;border-radius:8px;background:#fff;color:#047857;padding:9px 12px;font-size:12px;font-weight:700;cursor:pointer}
 .routeRecalculate:disabled{opacity:.6;cursor:wait}
+
+/* Seleção de bairro sem digitação livre */
+.deliveryNeighborhoodPicker{display:flex;flex-direction:column;gap:12px;padding:14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px}
+.deliveryNeighborhoodPicker label{display:flex;flex-direction:column;gap:6px;font-weight:700}
+.deliveryNeighborhoodPicker select,.deliveryNeighborhoodPicker input{width:100%;min-width:0;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:9px;background:#fff;color:#101828;padding:12px;font:inherit}
+.deliveryNeighborhoodPicker select:focus,.deliveryNeighborhoodPicker input:focus{outline:2px solid #fdba74;outline-offset:1px}
+.deliveryNeighborhoodPicker small{color:#64748b;font-size:12px;line-height:1.5}
