@@ -268,3 +268,54 @@
 .driverVerification button:disabled{opacity:.5}
 
 .driverProfileHead{display:flex;align-items:center;gap:12px;min-width:0}.driverProfileHead>div:last-child{min-width:0}.driverAvatar{width:62px;height:62px;flex:0 0 62px;border-radius:50%;background:#ffedd5;color:#c2410c;display:flex;align-items:center;justify-content:center;overflow:hidden}.driverAvatar img{width:100%;height:100%;object-fit:cover}.driverPhotoEdit{display:inline-flex;position:relative;cursor:pointer;color:#c2410c;font-size:12px;font-weight:800;margin-top:8px}.driverPhotoEdit input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}.driverPhotoEdit:focus-within{outline:2px solid #f97316;outline-offset:3px}.driverPhotoError{color:#b42318!important}@media(max-width:650px){.driverProfileHead{gap:9px}.driverAvatar{width:50px;height:50px;flex-basis:50px}}
+
+/* Experiência premium do entregador — escopo exclusivo */
+.driverPortal{max-width:900px;background:#f7f9fc;color:#14213b;padding:18px 18px 110px}
+.driverPortal>header{background:linear-gradient(115deg,#fffaf5 0%,#fff 55%,#ffe0cb 100%);border:1px solid #ffe0cb;border-radius:24px;padding:20px;box-shadow:0 10px 30px #16213b0a}
+.driverPortal>header h1{font-size:clamp(20px,4vw,27px);letter-spacing:-.6px;color:#101d3c}
+.driverPortal>header>button{border:0;border-radius:15px;background:#fff;box-shadow:0 3px 12px #17243b12;font-weight:750}
+.driverPortal .driverAvatar{border:4px solid white;box-shadow:0 4px 15px #16213b18;width:72px;height:72px;flex-basis:72px}
+.driverPortal .driverPhotoEdit{font-size:12px;color:#ed5a18}
+.driverPortalCounts{gap:12px;margin:18px 0}
+.driverPortalCounts b{display:grid;grid-template-columns:38px 1fr;align-items:center;gap:1px 12px;background:#fff4ec;border:1px solid #ffe4d4;border-radius:20px;padding:17px;font-weight:500;box-shadow:0 5px 15px #15234205}
+.driverPortalCounts b:nth-child(2){background:#edf5ff;border-color:#dbeaff}
+.driverPortalCounts b svg{grid-row:span 2;color:#f06422;width:34px;height:34px;padding:7px;border-radius:12px;background:#ffdfcc}
+.driverPortalCounts b:nth-child(2) svg{color:#2563eb;background:#dbeafe}
+.driverPortalCounts b strong{font-size:30px;line-height:1.1;color:#101d3c}
+.driverPortalCounts b span{font-size:13px;color:#52617b}
+.driverPortal .driverEarnings{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.driverPortal .driverEarnings>div{border-radius:19px;background:#eafaf3;border:1px solid #cbf0de;padding:16px;gap:8px}
+.driverPortal .driverEarnings>div:nth-child(2){background:#fff7e5;border-color:#ffebbc}
+.driverPortal .driverEarnings>div:nth-child(3){background:#f2efff;border-color:#e4dcff}
+.driverPortal .driverEarnings svg{color:#07965a}
+.driverPortal .driverEarnings>div:nth-child(2) svg{color:#d99b00}
+.driverPortal .driverEarnings>div:nth-child(3) svg{color:#7653db}
+.driverPortal .driverEarnings small{font-size:12px;line-height:1.4;color:#53617a}
+.driverPortal .driverEarnings strong{font-size:clamp(15px,2.8vw,22px)}
+.driverPortal .driverTabs{margin:24px 0 15px;gap:10px}
+.driverPortal .driverTabs button{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid #e1e6ed;border-radius:16px;padding:14px 17px;font-size:13px;box-shadow:0 3px 10px #16213b06}
+.driverPortal .driverTabs button.active{background:#ff641d;border-color:#ff641d;color:white}
+.driverPortal .dispatchList{display:grid;gap:16px}
+.driverPortal .dispatchCard{background:white;border:1px solid #e8edf4;border-radius:23px;padding:23px;box-shadow:0 10px 30px #16213b0a;min-width:0}
+.driverPortal .dispatchCard>header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:16px;border-bottom:1px solid #e8edf4}
+.driverPortal .dispatchCard>header strong{font-size:17px;color:#101d3c;overflow-wrap:anywhere}
+.driverPortal .driverOrderStatus{flex-shrink:0;border-radius:999px;padding:8px 12px;background:#fff0e6;color:#d84a08;font-size:12px;font-weight:800}
+.driverPortal .driverCustomer,.driverPortal .driverAddress{display:flex;align-items:flex-start;gap:10px;margin:15px 0;color:#394962}
+.driverPortal .driverCustomer svg,.driverPortal .driverAddress svg{flex:none;margin-top:3px;color:#465574}
+.driverPortal .driverCustomer b{font-size:15px;color:#17243b}
+.driverPortal .driverMaps{display:flex;gap:8px;width:100%;min-height:48px;border-radius:13px;margin:14px 0;font-size:13px}
+.driverPortal .driverPaymentInfo{background:#f7f9fc;border-radius:16px;padding:15px;margin:15px 0}
+.driverPortal .driverPaymentInfo p{margin:0 0 10px}
+.driverPortal .driverPaymentInfo button{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;border:1px solid #fb8c54;border-radius:12px;background:#fff;color:#e65a17;font-weight:800;font-size:13px;cursor:pointer;padding:10px}
+.driverPortal .driverPaymentInfo button:disabled{opacity:.5}
+.driverPortal .dispatchFoot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:16px;border-top:1px solid #e8edf4}
+.driverPortal .driverOrderTotal{display:flex;flex-direction:column;gap:4px}
+.driverPortal .driverOrderTotal small{font-size:11px;color:#667085}
+.driverPortal .driverOrderTotal strong{font-size:21px;color:#087b4b}
+.driverPortal .dispatchFoot button{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#ff641d;min-height:50px;border-radius:13px;padding:12px 17px;box-shadow:0 6px 15px #ff641d30}
+.driverBottomNav{position:fixed;bottom:0;left:0;right:0;display:flex;align-items:stretch;justify-content:space-around;background:#fff;border-top:1px solid #e8edf4;box-shadow:0 -5px 25px #16213b0a;padding:9px 12px max(12px,env(safe-area-inset-bottom));z-index:50}
+.driverBottomNav button,.driverBottomNav a{display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:0;background:transparent;text-decoration:none;color:#64748b;font-size:11px;font-weight:750;cursor:pointer;padding:5px}
+.driverBottomNav .active{color:#f05d19}
+@media(min-width:950px){.driverBottomNav{left:50%;right:auto;transform:translateX(-50%);width:900px;border:1px solid #e8edf4;border-radius:20px 20px 0 0}}
+@media(max-width:650px){.driverPortal{padding:12px 12px 110px}.driverPortal>header{padding:15px;border-radius:19px}.driverPortal .driverAvatar{width:54px;height:54px;flex-basis:54px}.driverPortalCounts b{padding:12px;grid-template-columns:30px 1fr;gap:1px 7px}.driverPortalCounts b svg{width:29px;height:29px;padding:6px}.driverPortalCounts b strong{font-size:25px}.driverPortal .driverEarnings>div{padding:12px}.driverPortal .driverEarnings strong{font-size:15px}.driverPortal .driverEarnings small{font-size:11px}.driverPortal .dispatchCard{padding:16px}.driverPortal .dispatchCard>header strong{font-size:14px}.driverPortal .driverOrderStatus{font-size:11px;padding:7px 9px}.driverPortal .dispatchFoot button{font-size:12px;padding:10px}.driverPortal .driverTabs button{padding:12px 13px}}
+@media(max-width:380px){.driverPortal .driverEarnings{gap:6px}.driverPortal .driverEarnings>div{padding:9px}.driverPortal .driverEarnings strong{font-size:13px}.driverPortal .dispatchFoot{flex-wrap:wrap}.driverPortal .dispatchFoot button{width:100%}}
