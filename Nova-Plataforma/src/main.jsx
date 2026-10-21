@@ -4,7 +4,7 @@ import{LayoutDashboard,ShoppingBag,ChefHat,Utensils,Package,Users,Settings,Store
 import{onAuthStateChanged,signInWithEmailAndPassword,signInWithPopup,GoogleAuthProvider,signOut,sendEmailVerification,reload,createUserWithEmailAndPassword,sendPasswordResetEmail}from"firebase/auth";
 import{addDoc,collection,doc,getDoc,getDocs,onSnapshot,orderBy,query,setDoc,serverTimestamp,updateDoc}from"firebase/firestore";
 import{auth,db,startAnalytics}from"./lib/firebase";
-import"./style.css";
+import"./style.css?driver-premium=20261021-v2";
 
 const groups=[
  ["GESTÃO",[["Início",LayoutDashboard],["Pedidos",ShoppingBag],["Cardápio",Package],["Clientes",Users],["Financeiro",WalletCards]]],
