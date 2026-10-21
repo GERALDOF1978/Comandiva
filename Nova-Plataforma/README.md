@@ -121,3 +121,9 @@ A ausência da VPS ou do WhatsApp não pode impedir pedidos ou pagamentos.
 Preservar regras de negócio maduras do Comandiva e substituir gradualmente MySQL/Drizzle, armazenamento S3/MinIO e autenticação própria pela nova infraestrutura.
 
 O código original permanece disponível como referência durante a reconstrução.
+
+## Publicação consolidada — módulo do entregador
+
+Esta revisão reúne na branch `main` as funcionalidades do aplicativo do entregador: primeiro acesso com Firebase Authentication, confirmação de e-mail, recuperação de senha, pedidos atribuídos, rota pelo Google Maps, histórico, ganhos por corrida e registro manual de pagamentos. O nome comercial da nova plataforma permanece em definição.
+
+A publicação em produção deve utilizar a branch `main` do projeto Vercel `saas-delivery`, não um deployment Preview de branches de desenvolvimento. A publicação e o funcionamento em produção precisam ser verificados na Vercel após o build.
