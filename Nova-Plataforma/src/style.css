@@ -242,3 +242,16 @@
 .driverMaps:hover{background:#dbeafe}
 .driverPortal .dispatchCard p{line-height:1.6}
 @media(max-width:650px){.driverTabs{gap:7px}.driverTabs button{padding:10px 12px}.driverMaps{width:100%}}
+
+/* Fechamento financeiro da equipe de entregas */
+.driverEarnings{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 18px}
+.driverEarnings>div{display:flex;flex-direction:column;gap:7px;background:#fff;border:1px solid #eaecf0;border-radius:12px;padding:16px;min-width:0}
+.driverEarnings small{font-size:11px;color:#667085;font-weight:700}.driverEarnings strong{font-size:19px;color:#101828;overflow-wrap:anywhere}
+.driverFeeInfo{font-size:12px;color:#475467}
+.dispatchDriverRow{flex-wrap:wrap}.dispatchDriverRow>div{flex:1 1 210px}
+.driverSettlement{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border-top:1px solid #eaecf0;margin-top:12px;padding-top:12px;font-size:12px;color:#475467}
+.driverSettlement button{border:0;border-radius:9px;background:#047857;color:white;padding:9px 12px;font-size:12px;font-weight:800;cursor:pointer}
+.driverSettlement button:disabled{opacity:.5}
+.dispatchDriverForm{grid-template-columns:1.2fr 1.2fr 1fr .8fr .8fr auto}
+@media(max-width:1000px){.dispatchDriverForm{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:650px){.driverEarnings{grid-template-columns:1fr 1fr}.driverEarnings>div{padding:12px}.driverEarnings strong{font-size:16px}.dispatchDriverForm{grid-template-columns:1fr}}
