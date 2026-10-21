@@ -200,3 +200,21 @@
 .dispatchCard p{font-size:13px;color:#475467;line-height:1.5;overflow-wrap:anywhere}
 .dispatchFoot{border-top:1px dashed #d0d5dd;padding-top:12px;font-size:12px}
 @media(max-width:900px){.dispatchPage{padding:18px 14px}.dispatchList{grid-template-columns:1fr}}
+
+/* Cadastro de entregadores do restaurante */
+.dispatchDrivers{background:#fff;border:1px solid #eaecf0;border-radius:14px;padding:18px;margin-bottom:22px}
+.dispatchDrivers .panelhead{gap:12px}.dispatchDrivers .panelhead h3{margin:0 0 5px}.dispatchDrivers .panelhead p{margin:0;color:#667085;font-size:12px}
+.dispatchDrivers .panelhead>strong{font-size:12px;color:#027a48;background:#ecfdf3;border-radius:20px;padding:7px 10px;white-space:nowrap}
+.dispatchDriverForm{display:grid;grid-template-columns:1.3fr 1fr .7fr auto;gap:10px;align-items:end;margin-bottom:16px}
+.dispatchDriverForm label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:750;color:#344054;min-width:0}
+.dispatchDriverForm input,.dispatchDriverForm select{width:100%;height:43px;border:1px solid #d0d5dd;border-radius:9px;padding:0 11px;background:#fff;color:#101828;min-width:0}
+.dispatchDriverForm button{min-height:43px;border:0;border-radius:9px;background:#f97316;color:#fff;padding:0 14px;font-size:12px;font-weight:800;cursor:pointer}
+.dispatchDriverForm button:disabled,.dispatchDriverRow button:disabled{opacity:.5;cursor:wait}
+.dispatchDriverList{display:grid;gap:8px}
+.dispatchDriverRow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid #eaecf0;border-radius:10px}
+.dispatchDriverRow>div{display:flex;flex-direction:column;gap:4px;min-width:0}.dispatchDriverRow b{font-size:13px;overflow-wrap:anywhere}.dispatchDriverRow small{font-size:11px;color:#667085;overflow-wrap:anywhere}
+.dispatchDriverRow button{border:1px solid #d0d5dd;background:#fff;border-radius:9px;padding:9px 11px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap}
+.dispatchDriverRow .driverActive{color:#027a48;border-color:#a6f4c5;background:#ecfdf3}.dispatchDriverRow .driverInactive{color:#b42318;border-color:#fecdca;background:#fff5f5}
+.dispatchDriverEmpty{color:#667085;font-size:12px}
+@media(max-width:900px){.dispatchDriverForm{grid-template-columns:repeat(2,minmax(0,1fr))}.dispatchDriverForm button{width:100%}}
+@media(max-width:650px){.dispatchDrivers{padding:13px}.dispatchDriverForm{grid-template-columns:1fr}.dispatchDriverRow{align-items:flex-start}.dispatchDriverRow button{white-space:normal;max-width:120px}}
