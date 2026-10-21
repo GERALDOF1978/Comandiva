@@ -266,3 +266,5 @@
 .driverVerification button{border:0;background:#f97316;color:white;padding:11px 14px;border-radius:9px;font-weight:800;cursor:pointer;margin:5px 9px 5px 0}
 .driverVerification button.driverSecondary{background:#f2f4f7;color:#344054}
 .driverVerification button:disabled{opacity:.5}
+
+.driverProfileHead{display:flex;align-items:center;gap:12px;min-width:0}.driverProfileHead>div:last-child{min-width:0}.driverAvatar{width:62px;height:62px;flex:0 0 62px;border-radius:50%;background:#ffedd5;color:#c2410c;display:flex;align-items:center;justify-content:center;overflow:hidden}.driverAvatar img{width:100%;height:100%;object-fit:cover}.driverPhotoEdit{display:inline-flex;position:relative;cursor:pointer;color:#c2410c;font-size:12px;font-weight:800;margin-top:8px}.driverPhotoEdit input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}.driverPhotoEdit:focus-within{outline:2px solid #f97316;outline-offset:3px}.driverPhotoError{color:#b42318!important}@media(max-width:650px){.driverProfileHead{gap:9px}.driverAvatar{width:50px;height:50px;flex-basis:50px}}
