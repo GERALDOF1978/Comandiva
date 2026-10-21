@@ -151,3 +151,21 @@
 .orderStatus.status-completed{background:#ecfdf3;color:#027a48}
 .orderStatus.status-cancelled{background:#fef2f2;color:#b42318}
 @media(max-width:650px){.ordersPage .orderFilters{margin:0 -14px 5px;padding:3px 14px 14px}.ordersPage .orderFilters .orderFilter{min-height:44px;font-size:12px}}
+
+/* Cores das ações e filtros da cozinha */
+.ordersPage .orderActions .actionAccept{background:#f97316}
+.ordersPage .orderActions .actionPrepare,.kdsCard footer .kdsStart{background:#2563eb}
+.ordersPage .orderActions .actionReady,.kdsCard footer .kdsReady{background:#059669}
+.ordersPage .orderActions .actionDispatch{background:#7c3aed}
+.ordersPage .orderActions .actionComplete{background:#0f766e}
+.kdsFilters{display:flex;gap:9px;overflow-x:auto;margin:0 0 18px;padding:2px 1px 10px}
+.kdsFilter{--kds-bg:#f2f4f7;--kds-ink:#344054;display:flex;align-items:center;gap:12px;justify-content:space-between;flex-shrink:0;min-height:44px;padding:8px 12px;background:#fff;border:1px solid #e4e7ec;border-radius:12px;color:#344054;font-size:12px;font-weight:750;cursor:pointer}
+.kdsFilter strong{min-width:25px;text-align:center;background:var(--kds-bg);color:var(--kds-ink);padding:5px 7px;border-radius:8px}
+.kdsFilter.active{background:var(--kds-bg);color:var(--kds-ink);border-color:var(--kds-ink)}
+.kdsFilter.active strong{background:var(--kds-ink);color:#fff}
+.kdsFilter-accepted{--kds-bg:#eff6ff;--kds-ink:#1d4ed8}
+.kdsFilter-preparing{--kds-bg:#fff7ed;--kds-ink:#c2410c}
+.kdsFilter-ready{--kds-bg:#ecfdf3;--kds-ink:#027a48}
+.kdsCard header .orderStatus{align-self:flex-start}
+.kdsCard footer button:disabled{opacity:.55;cursor:wait}
+@media(max-width:650px){.kdsFilters{margin-right:-14px;padding-right:14px}.kdsFilter{font-size:12px}}
