@@ -133,3 +133,21 @@
 .orderActions button{min-height:42px}
 .orderActions button:disabled{opacity:.55;cursor:wait}
 @media(max-width:650px){.ordersSummary{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.ordersSummary>div{padding:12px}.ordersSummary strong{font-size:24px}.ordersPage .orderFilters{margin-bottom:3px}.ordersPage .orderCard{box-shadow:0 2px 10px #10182808}}
+
+/* Pedidos: filtros com contadores e cores de etapa */
+.ordersPage .orderFilters{display:flex;gap:9px;overflow-x:auto;padding:2px 1px 14px;scrollbar-width:thin}
+.ordersPage .orderFilters .orderFilter{--status-bg:#f2f4f7;--status-ink:#344054;display:inline-flex;align-items:center;justify-content:space-between;gap:12px;flex:0 0 auto;min-height:45px;border:1px solid #e4e7ec;background:#fff;color:#344054;border-radius:12px;padding:8px 10px 8px 13px;font-size:12px;font-weight:750}
+.ordersPage .orderFilters .orderFilter strong{display:inline-flex;align-items:center;justify-content:center;min-width:25px;height:25px;padding:0 6px;border-radius:8px;background:var(--status-bg);color:var(--status-ink);font-size:12px;font-weight:900;font-variant-numeric:tabular-nums}
+.ordersPage .orderFilters .orderFilter.active{border-color:var(--status-ink);background:var(--status-bg);color:var(--status-ink);box-shadow:0 0 0 1px var(--status-ink)}
+.ordersPage .orderFilters .orderFilter.active strong{background:var(--status-ink);color:#fff}
+.ordersPage .orderFilter-received{--status-bg:#fff7ed!important;--status-ink:#c2410c!important}
+.ordersPage .orderFilter-pending_payment{--status-bg:#fef3c7!important;--status-ink:#92400e!important}
+.ordersPage .orderFilter-preparing{--status-bg:#eff6ff!important;--status-ink:#1d4ed8!important}
+.ordersPage .orderFilter-ready{--status-bg:#ecfdf3!important;--status-ink:#027a48!important}
+.ordersPage .orderFilter-out_for_delivery{--status-bg:#f5f3ff!important;--status-ink:#6d28d9!important}
+.ordersPage .orderFilter-open{--status-bg:#f2f4f7!important;--status-ink:#344054!important}
+.ordersPage .orderFilter-all{--status-bg:#f8fafc!important;--status-ink:#475467!important}
+.orderStatus.status-out_for_delivery{background:#f5f3ff;color:#6d28d9}
+.orderStatus.status-completed{background:#ecfdf3;color:#027a48}
+.orderStatus.status-cancelled{background:#fef2f2;color:#b42318}
+@media(max-width:650px){.ordersPage .orderFilters{margin:0 -14px 5px;padding:3px 14px 14px}.ordersPage .orderFilters .orderFilter{min-height:44px;font-size:12px}}
