@@ -1,6 +1,7 @@
 import {randomInt,randomBytes,createHash} from "node:crypto";
 import {cert,getApps,initializeApp} from "firebase-admin/app";
 import {FieldValue,getFirestore} from "firebase-admin/firestore";
+import {getAuth} from "firebase-admin/auth";
 
 function init(){
   if(getApps().length)return;
@@ -118,6 +119,9 @@ export default async function handler(req,res){
     }
     if(quoteOnly)return res.status(200).json({ok:true,quote:true,subtotalCents:totalCents,deliveryFeeCents,totalCents:totalCents+deliveryFeeCents,distanceKm:deliveryMeta?.distanceKm??null});
     if(body.expectedDeliveryFeeCents!==undefined&&Number(body.expectedDeliveryFeeCents)!==deliveryFeeCents)return res.status(409).json({error:"delivery_fee_changed",deliveryFeeCents,totalCents:totalCents+deliveryFeeCents});
+    let customerUid=null;
+    const token=String(req.headers.authorization||"").replace(/^Bearer\\s+/i,"").trim();
+    if(token){try{customerUid=(await getAuth().verifyIdToken(token)).uid}catch{return res.status(401).json({error:"invalid_customer_session"})}}
     const orderRef=db.collection("restaurants").doc(restaurantId).collection("orders").doc();
     const deliveryPin=channel==="DELIVERY"?String(randomInt(0,10000)).padStart(4,"0"):null;
     const pinSalt=deliveryPin?randomBytes(16).toString("hex"):null;
@@ -126,7 +130,7 @@ export default async function handler(req,res){
     if(changeForCents!==null&&(!Number.isSafeInteger(changeForCents)||changeForCents<totalCents+deliveryFeeCents||changeForCents>100000000))return res.status(400).json({error:"invalid_change_amount"});
     const number=Date.now();
     try{
-      const orderData=stripUndefined({number,channel,status:paymentMethod==="PIX"?"PENDING_PAYMENT":"RECEIVED",paymentStatus:"PENDING",paymentMethod,changeForCents,deliveryPinHash:pinHash,deliveryPinSalt:pinSalt,deliveryPinAttempts:0,subtotalCents:totalCents,deliveryFeeCents,originalDeliveryFeeCents,totalCents:totalCents+deliveryFeeCents,customerSnapshot:{name,phone},deliverySnapshot:channel==="DELIVERY"?{cep:clean(body.delivery.cep),address:clean(body.delivery.address),number:clean(body.delivery.number),complement:clean(body.delivery.complement),neighborhood:clean(body.delivery.neighborhood),city:clean(body.delivery.city),state:clean(body.delivery.state),latitude:null,longitude:null,...deliveryMeta}:null,table:channel==="TABLE"?clean(body.table):null,items,source:"PUBLIC_MENU",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
+      const orderData=stripUndefined({number,channel,status:paymentMethod==="PIX"?"PENDING_PAYMENT":"RECEIVED",paymentStatus:"PENDING",paymentMethod,changeForCents,deliveryPinHash:pinHash,deliveryPinSalt:pinSalt,deliveryPinAttempts:0,subtotalCents:totalCents,deliveryFeeCents,originalDeliveryFeeCents,totalCents:totalCents+deliveryFeeCents,customerUid,customerSnapshot:{name,phone},deliverySnapshot:channel==="DELIVERY"?{cep:clean(body.delivery.cep),address:clean(body.delivery.address),number:clean(body.delivery.number),complement:clean(body.delivery.complement),neighborhood:clean(body.delivery.neighborhood),city:clean(body.delivery.city),state:clean(body.delivery.state),latitude:null,longitude:null,...deliveryMeta}:null,table:channel==="TABLE"?clean(body.table):null,items,source:"PUBLIC_MENU",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
       await orderRef.set(orderData);
     }catch(err){
       console.error("order-write",{name:err?.name,message:err?.message,code:err?.code,stack:err?.stack});
