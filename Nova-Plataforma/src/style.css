@@ -218,3 +218,18 @@
 .dispatchDriverEmpty{color:#667085;font-size:12px}
 @media(max-width:900px){.dispatchDriverForm{grid-template-columns:repeat(2,minmax(0,1fr))}.dispatchDriverForm button{width:100%}}
 @media(max-width:650px){.dispatchDrivers{padding:13px}.dispatchDriverForm{grid-template-columns:1fr}.dispatchDriverRow{align-items:flex-start}.dispatchDriverRow button{white-space:normal;max-width:120px}}
+
+/* Portal isolado do entregador */
+.driverPortal{min-height:100vh;background:#f8fafc;padding:22px;max-width:900px;margin:auto}
+.driverPortal>header{display:flex;justify-content:space-between;align-items:center;gap:16px;background:#fff;border:1px solid #eaecf0;border-radius:14px;padding:18px;margin-bottom:16px}
+.driverPortal header small{color:#ea580c;font-weight:800;font-size:11px}.driverPortal header h1{font-size:23px;margin:6px 0}.driverPortal header p{font-size:12px;color:#667085;margin:0}
+.driverPortal>header button{border:1px solid #d0d5dd;border-radius:9px;padding:10px 15px;background:#fff;cursor:pointer}
+.driverPortalCounts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+.driverPortalCounts b{padding:16px;border-radius:12px;background:#fff;border:1px solid #eaecf0;font-size:13px}
+.driverPortal .dispatchFoot button{border:0;background:#f97316;color:white;border-radius:9px;padding:11px 15px;font-weight:800;cursor:pointer}
+.driverPortal .dispatchFoot button:disabled{opacity:.5}
+.dispatchDriverLink{font-size:12px;color:#475467;overflow-wrap:anywhere;margin:12px 0}.dispatchDriverLink a{color:#2563eb}
+.dispatchAssign{display:flex;flex-direction:column;gap:7px;margin-top:12px;font-size:12px;font-weight:700;color:#475467}
+.dispatchAssign select{height:40px;border:1px solid #d0d5dd;border-radius:9px;background:#fff;padding:0 10px}
+.dispatchAssigned{color:#027a48!important;font-size:12px!important}
+@media(max-width:650px){.driverPortal{padding:12px}.driverPortal header h1{font-size:19px}.driverPortalCounts{gap:8px}.driverPortalCounts b{padding:12px;font-size:12px}.dispatchDriverForm{grid-template-columns:1fr}}
