@@ -14,14 +14,14 @@ export default async function handler(req,res){
   const drivers=db.collection("restaurants").doc(restaurantId).collection("drivers");
   if(req.method==="GET"){const snap=await drivers.limit(200).get();return res.status(200).json({drivers:snap.docs.map(d=>({id:d.id,...d.data(),createdAt:undefined,updatedAt:undefined}))})}
   if(req.method==="POST"){
-   const name=String(req.body?.name||"").trim(),phone=String(req.body?.phone||"").replace(/\D/g,""),vehicle=String(req.body?.vehicle||"MOTO").toUpperCase(),email=String(req.body?.email||"").trim().toLowerCase();
-   if(name.length<2||name.length>100||phone.length<10||phone.length>13||!["MOTO","BIKE","CARRO"].includes(vehicle)||!/^\S+@\S+\.\S+$/.test(email))return res.status(400).json({error:"invalid_driver"});
-   const duplicate=await drivers.where("email","==",email).limit(1).get();if(!duplicate.empty)return res.status(409).json({error:"email_already_registered"});const doc=await drivers.add({name,phone,vehicle,email,active:true,createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
+   const name=String(req.body?.name||"").trim(),phone=String(req.body?.phone||"").replace(/\D/g,""),vehicle=String(req.body?.vehicle||"MOTO").toUpperCase(),feeCents=Number(req.body?.feeCents??0),email=String(req.body?.email||"").trim().toLowerCase();
+   if(name.length<2||name.length>100||phone.length<10||phone.length>13||!["MOTO","BIKE","CARRO"].includes(vehicle)||!/^\S+@\S+\.\S+$/.test(email)||!Number.isInteger(feeCents)||feeCents<0||feeCents>100000)return res.status(400).json({error:"invalid_driver"});
+   const duplicate=await drivers.where("email","==",email).limit(1).get();if(!duplicate.empty)return res.status(409).json({error:"email_already_registered"});const doc=await drivers.add({name,phone,vehicle,email,feeCents,active:true,createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
    return res.status(201).json({ok:true,id:doc.id});
   }
-  const id=String(req.body?.driverId||""),active=req.body?.active;
-  if(!/^[a-zA-Z0-9_-]{10,100}$/.test(id)||typeof active!=="boolean")return res.status(400).json({error:"invalid_request"});
+  const id=String(req.body?.driverId||""),active=req.body?.active,feeCents=req.body?.feeCents;
+  if(!/^[a-zA-Z0-9_-]{10,100}$/.test(id)||(typeof active!=="boolean"&&!(Number.isInteger(feeCents)&&feeCents>=0&&feeCents<=100000)))return res.status(400).json({error:"invalid_request"});
   const ref=drivers.doc(id);if(!(await ref.get()).exists)return res.status(404).json({error:"not_found"});
-  await ref.update({active,updatedAt:FieldValue.serverTimestamp()});return res.status(200).json({ok:true});
+  const patch={updatedAt:FieldValue.serverTimestamp()};if(typeof active==="boolean")patch.active=active;if(Number.isInteger(feeCents)&&feeCents>=0&&feeCents<=100000)patch.feeCents=feeCents;await ref.update(patch);return res.status(200).json({ok:true});
  }catch(e){console.error("drivers",e);return res.status(500).json({error:"internal_error"})}
 }
