@@ -14,9 +14,9 @@ export default async function handler(req,res){
   const drivers=db.collection("restaurants").doc(restaurantId).collection("drivers");
   if(req.method==="GET"){const snap=await drivers.limit(200).get();return res.status(200).json({drivers:snap.docs.map(d=>({id:d.id,...d.data(),createdAt:undefined,updatedAt:undefined}))})}
   if(req.method==="POST"){
-   const name=String(req.body?.name||"").trim(),phone=String(req.body?.phone||"").replace(/\D/g,""),vehicle=String(req.body?.vehicle||"MOTO").toUpperCase();
-   if(name.length<2||name.length>100||phone.length<10||phone.length>13||!["MOTO","BIKE","CARRO"].includes(vehicle))return res.status(400).json({error:"invalid_driver"});
-   const doc=await drivers.add({name,phone,vehicle,active:true,createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
+   const name=String(req.body?.name||"").trim(),phone=String(req.body?.phone||"").replace(/\D/g,""),vehicle=String(req.body?.vehicle||"MOTO").toUpperCase(),email=String(req.body?.email||"").trim().toLowerCase();
+   if(name.length<2||name.length>100||phone.length<10||phone.length>13||!["MOTO","BIKE","CARRO"].includes(vehicle)||!/^\S+@\S+\.\S+$/.test(email))return res.status(400).json({error:"invalid_driver"});
+   const duplicate=await drivers.where("email","==",email).limit(1).get();if(!duplicate.empty)return res.status(409).json({error:"email_already_registered"});const doc=await drivers.add({name,phone,vehicle,email,active:true,createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
    return res.status(201).json({ok:true,id:doc.id});
   }
   const id=String(req.body?.driverId||""),active=req.body?.active;
