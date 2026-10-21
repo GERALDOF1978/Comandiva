@@ -319,3 +319,13 @@
 @media(min-width:950px){.driverBottomNav{left:50%;right:auto;transform:translateX(-50%);width:900px;border:1px solid #e8edf4;border-radius:20px 20px 0 0}}
 @media(max-width:650px){.driverPortal{padding:12px 12px 110px}.driverPortal>header{padding:15px;border-radius:19px}.driverPortal .driverAvatar{width:54px;height:54px;flex-basis:54px}.driverPortalCounts b{padding:12px;grid-template-columns:30px 1fr;gap:1px 7px}.driverPortalCounts b svg{width:29px;height:29px;padding:6px}.driverPortalCounts b strong{font-size:25px}.driverPortal .driverEarnings>div{padding:12px}.driverPortal .driverEarnings strong{font-size:15px}.driverPortal .driverEarnings small{font-size:11px}.driverPortal .dispatchCard{padding:16px}.driverPortal .dispatchCard>header strong{font-size:14px}.driverPortal .driverOrderStatus{font-size:11px;padding:7px 9px}.driverPortal .dispatchFoot button{font-size:12px;padding:10px}.driverPortal .driverTabs button{padding:12px 13px}}
 @media(max-width:380px){.driverPortal .driverEarnings{gap:6px}.driverPortal .driverEarnings>div{padding:9px}.driverPortal .driverEarnings strong{font-size:13px}.driverPortal .dispatchFoot{flex-wrap:wrap}.driverPortal .dispatchFoot button{width:100%}}
+
+/* Acabamento do cabeçalho do portal do entregador */
+.driverPortal>header{position:relative;align-items:center}
+.driverPortal .driverProfileHead{flex:1;min-width:0;align-items:center}
+.driverPortal .driverProfileHead>div:last-child{flex:1;min-width:0}
+.driverPortal .driverProfileHead small{display:block;line-height:1.3;margin:0 0 5px;letter-spacing:.035em}
+.driverPortal .driverProfileHead h1{margin:0 0 5px;line-height:1.2;overflow-wrap:anywhere}
+.driverPortal .driverProfileHead p{line-height:1.4}
+.driverPortal .driverPhotoEdit{display:inline-flex;align-items:center;width:max-content;max-width:100%;margin-top:10px;padding:5px 0;line-height:1.3}
+@media(max-width:650px){.driverPortal>header{gap:10px;align-items:flex-start}.driverPortal .driverProfileHead{align-items:flex-start;gap:10px}.driverPortal .driverProfileHead small{margin:0 0 7px;font-size:10px}.driverPortal .driverProfileHead h1{font-size:21px;line-height:1.18}.driverPortal .driverProfileHead p{font-size:11px}.driverPortal .driverPhotoEdit{margin-top:9px}.driverPortal>header>button{flex-shrink:0;padding:10px 12px}}
