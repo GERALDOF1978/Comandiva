@@ -255,3 +255,14 @@
 .dispatchDriverForm{grid-template-columns:1.2fr 1.2fr 1fr .8fr .8fr auto}
 @media(max-width:1000px){.dispatchDriverForm{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:650px){.driverEarnings{grid-template-columns:1fr 1fr}.driverEarnings>div{padding:12px}.driverEarnings strong{font-size:16px}.dispatchDriverForm{grid-template-columns:1fr}}
+
+/* Primeiro acesso e verificação de e-mail do entregador */
+.driverLogin{min-height:100vh;background:#f8fafc;display:flex;align-items:center;justify-content:center;padding:20px}
+.driverLogin .loginBox{width:min(100%,430px)}
+.driverLoginLinks{display:flex;gap:12px;flex-wrap:wrap;justify-content:space-between;margin-top:16px}
+.driverLoginLinks button{background:transparent;border:0;color:#c2410c;font-size:12px;font-weight:700;cursor:pointer;padding:5px 0}
+.driverVerification{padding:16px;background:#fff;border:1px solid #eaecf0;border-radius:12px}
+.driverVerification p{font-size:13px;color:#475467;overflow-wrap:anywhere}
+.driverVerification button{border:0;background:#f97316;color:white;padding:11px 14px;border-radius:9px;font-weight:800;cursor:pointer;margin:5px 9px 5px 0}
+.driverVerification button.driverSecondary{background:#f2f4f7;color:#344054}
+.driverVerification button:disabled{opacity:.5}
