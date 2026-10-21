@@ -169,3 +169,17 @@
 .kdsCard header .orderStatus{align-self:flex-start}
 .kdsCard footer button:disabled{opacity:.55;cursor:wait}
 @media(max-width:650px){.kdsFilters{margin-right:-14px;padding-right:14px}.kdsFilter{font-size:12px}}
+
+/* Início: indicadores operacionais complementares */
+.dashboardOperational{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:-6px 0 20px}
+.dashboardOperational button{border:1px solid #eaecf0;background:#fff;border-radius:13px;padding:15px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;cursor:pointer;min-width:0}
+.dashboardOperational button:hover{border-color:#fdba74;background:#fffaf5}
+.dashboardOperational span{font-size:12px;font-weight:750;color:#475467}
+.dashboardOperational strong{font-size:25px;color:#101828;line-height:1;font-variant-numeric:tabular-nums}
+.dashboardOperational small{font-size:11px;color:#667085}
+.dashboardOperational button:nth-child(1) strong{color:#b45309}
+.dashboardOperational button:nth-child(2) strong{color:#027a48}
+.dashboardOperational button:nth-child(3) strong{color:#6d28d9}
+.dashboardOperational button:nth-child(4) strong{color:#b42318}
+@media(max-width:900px){.dashboardOperational{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.dashboardOperational{gap:9px;margin-top:-6px}.dashboardOperational button{padding:12px}.dashboardOperational strong{font-size:23px}}
