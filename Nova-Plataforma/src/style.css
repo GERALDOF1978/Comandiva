@@ -233,3 +233,12 @@
 .dispatchAssign select{height:40px;border:1px solid #d0d5dd;border-radius:9px;background:#fff;padding:0 10px}
 .dispatchAssigned{color:#027a48!important;font-size:12px!important}
 @media(max-width:650px){.driverPortal{padding:12px}.driverPortal header h1{font-size:19px}.driverPortalCounts{gap:8px}.driverPortalCounts b{padding:12px;font-size:12px}.dispatchDriverForm{grid-template-columns:1fr}}
+
+/* Navegação e histórico do entregador */
+.driverTabs{display:flex;gap:10px;margin:0 0 16px;overflow-x:auto}
+.driverTabs button{border:1px solid #d0d5dd;background:#fff;color:#344054;border-radius:10px;padding:11px 15px;font-weight:800;font-size:12px;white-space:nowrap;cursor:pointer}
+.driverTabs button.active{background:#fff7ed;color:#c2410c;border-color:#fdba74}
+.driverMaps{display:inline-flex;align-items:center;justify-content:center;margin:7px 0 12px;padding:10px 12px;border-radius:9px;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;text-decoration:none;font-size:12px;font-weight:800}
+.driverMaps:hover{background:#dbeafe}
+.driverPortal .dispatchCard p{line-height:1.6}
+@media(max-width:650px){.driverTabs{gap:7px}.driverTabs button{padding:10px 12px}.driverMaps{width:100%}}
