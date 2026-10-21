@@ -16,7 +16,7 @@ export default async function handler(req,res){
   const driver=matches.docs[0],orders=restaurant.collection("orders");
   if(req.method==="GET"){
    const snap=await orders.where("driverId","==",driver.id).limit(100).get();
-   return res.status(200).json({driver:{id:driver.id,name:driver.data().name,vehicle:driver.data().vehicle},orders:snap.docs.map(d=>{const o=d.data();return {id:d.id,number:o.number||d.id,status:o.status,customerName:o.customerSnapshot?.name||"",address:o.customerSnapshot?.address||"",numberAddress:o.customerSnapshot?.number||"",neighborhood:o.customerSnapshot?.neighborhood||"",city:o.customerSnapshot?.city||"",totalCents:o.totalCents||0}})});
+   return res.status(200).json({driver:{id:driver.id,name:driver.data().name,vehicle:driver.data().vehicle},orders:snap.docs.map(d=>{const o=d.data();return {id:d.id,number:o.number||d.id,status:o.status,customerName:o.customerSnapshot?.name||"",customerPhone:o.customerSnapshot?.phone||"",address:o.deliverySnapshot?.address||"",numberAddress:o.deliverySnapshot?.number||"",complement:o.deliverySnapshot?.complement||"",neighborhood:o.deliverySnapshot?.neighborhood||"",city:o.deliverySnapshot?.city||"",state:o.deliverySnapshot?.state||"",cep:o.deliverySnapshot?.cep||"",totalCents:o.totalCents||0,deliveryFeeCents:o.deliveryFeeCents||0,completedAt:o.statusTimestamps?.COMPLETED?.toDate?.()?.toISOString()||null}})});
   }
   const orderId=String(req.body?.orderId||""),status=String(req.body?.status||"");
   if(!/^[\w-]{5,128}$/.test(orderId)||!["OUT_FOR_DELIVERY","COMPLETED"].includes(status))return res.status(400).json({error:"invalid_request"});
