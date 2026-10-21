@@ -183,3 +183,20 @@
 .dashboardOperational button:nth-child(4) strong{color:#b42318}
 @media(max-width:900px){.dashboardOperational{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){.dashboardOperational{gap:9px;margin-top:-6px}.dashboardOperational button{padding:12px}.dashboardOperational strong{font-size:23px}}
+
+/* Central de entregadores - acompanhamento pelo restaurante */
+.dispatchPage{padding:28px;max-width:1400px;margin:auto}
+.dispatchNotice{padding:13px 16px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;border-radius:12px;font-size:12px;line-height:1.5;margin-bottom:18px}
+.dispatchFilters{display:flex;gap:10px;overflow-x:auto;padding:2px 0 16px}
+.dispatchFilters button{border:1px solid #e4e7ec;border-radius:12px;background:#fff;padding:10px 13px;display:flex;align-items:center;gap:12px;white-space:nowrap;font-weight:750;font-size:12px;cursor:pointer}
+.dispatchFilters button strong{background:#f2f4f7;padding:5px 9px;border-radius:8px}
+.dispatchFilters button.active{border-color:#2563eb;background:#eff6ff;color:#1d4ed8}
+.dispatchFilters button.active strong{background:#2563eb;color:#fff}
+.dispatchList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.dispatchCard{border:1px solid #eaecf0;border-radius:14px;background:#fff;padding:17px;min-width:0}
+.dispatchCard header,.dispatchFoot{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.dispatchCard header{border-bottom:1px solid #eaecf0;padding-bottom:12px}
+.dispatchCard header strong{overflow-wrap:anywhere}
+.dispatchCard p{font-size:13px;color:#475467;line-height:1.5;overflow-wrap:anywhere}
+.dispatchFoot{border-top:1px dashed #d0d5dd;padding-top:12px;font-size:12px}
+@media(max-width:900px){.dispatchPage{padding:18px 14px}.dispatchList{grid-template-columns:1fr}}
