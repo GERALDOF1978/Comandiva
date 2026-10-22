@@ -497,3 +497,26 @@
 
 /* Cadastro recolhido e canais de venda */
 .catalogFormColumn{display:flex;flex-direction:column;gap:14px;min-width:0}.catalogFormColumn>.saveButton{align-self:flex-start}.productChannels{display:grid;gap:12px;margin:12px 0;padding:16px;border:1px solid #e4e7ec;border-radius:14px;background:#fafbfc}.productChannels>b{font-size:14px;color:#344054}.productChannels>small{font-size:12px;color:#667085;line-height:1.5}.productChannels .checkLine{margin:0}
+
+
+/* Entrada premium: respeita a identidade visual configurada por restaurante */
+.premiumServiceEntry{--entry-accent:#ff6b22;--entry-dark:#121a2a;position:relative;isolation:isolate;overflow:hidden;background:radial-gradient(ellipse at 10% 10%,color-mix(in srgb,var(--entry-accent) 22%,#fff) 0,transparent 50%),linear-gradient(155deg,#f8f5f0,#e9edf3);padding:clamp(14px,4vw,32px)}
+.premiumEntryGlow{position:absolute;z-index:-1;inset:auto -25% -30% auto;width:75vw;max-width:700px;aspect-ratio:1;border-radius:50%;background:color-mix(in srgb,var(--entry-accent) 17%,transparent);filter:blur(85px);pointer-events:none}
+.premiumEntryPanel{width:min(100%,510px);padding:0;overflow:hidden;border:1px solid rgba(255,255,255,.9);border-radius:30px;background:#fff;box-shadow:0 24px 85px #15243b26,0 4px 14px #15243b12}
+.premiumEntryCover{height:clamp(135px,27vw,185px);background:linear-gradient(125deg,color-mix(in srgb,var(--entry-dark) 85%,#000),color-mix(in srgb,var(--entry-accent) 65%,var(--entry-dark)));background-size:cover;background-position:center;position:relative;padding:22px}
+.premiumEntryCover:after{content:"";position:absolute;inset:0;background:linear-gradient(125deg,transparent 30%,#ffffff1c 50%,transparent 70%);pointer-events:none}
+.premiumEntryPill{position:relative;z-index:1;display:inline-flex;padding:8px 12px;border:1px solid #ffffff70;border-radius:100px;background:#ffffff24;backdrop-filter:blur(8px);color:#fff;font-size:10px;font-weight:800;letter-spacing:1.7px}
+.premiumEntryIdentity{display:flex;align-items:center;gap:16px;padding:0 27px;margin-top:-36px;position:relative;z-index:1}
+.premiumEntryLogo{width:82px;height:82px;flex:none;display:grid;place-items:center;background:#fff;border:5px solid #fff;border-radius:23px;box-shadow:0 8px 28px #15243b25;overflow:hidden;color:var(--entry-accent)}
+.premiumEntryLogo img{width:100%;height:100%;object-fit:contain}.premiumEntryLogo svg{width:36px;height:36px}
+.premiumEntryName{padding-top:38px;min-width:0}.premiumEntryName small{font-size:10px;font-weight:800;letter-spacing:1.6px;color:var(--entry-accent)}.premiumEntryName h1{margin:3px 0 0;color:var(--entry-dark);font-size:clamp(23px,5vw,32px);line-height:1.15;overflow-wrap:anywhere}
+.premiumEntryIntro{padding:27px 27px 0}.premiumEntryIntro h2{margin:0;font-size:clamp(23px,5vw,29px);line-height:1.15;letter-spacing:-.8px;color:#172033}.premiumEntryIntro p{margin:9px 0 0;font-size:14px;color:#667085}
+.premiumEntryChoices{padding:0 27px;margin:22px 0 26px;gap:11px}
+.premiumEntryChoices button{min-height:88px;padding:14px;gap:14px;border:1px solid #e8e9ed;border-radius:19px;background:linear-gradient(120deg,#fff,#fbfcfe);box-shadow:0 3px 12px #16253a08;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.premiumEntryChoices button:hover,.premiumEntryChoices button:focus-visible{transform:translateY(-2px);background:color-mix(in srgb,var(--entry-accent) 5%,white);border-color:var(--entry-accent);box-shadow:0 9px 24px #16253a14}
+.premiumEntryChoices .premiumEntryIcon{display:grid;place-items:center;flex:none;width:51px;height:51px;border-radius:15px;background:color-mix(in srgb,var(--entry-accent) 12%,white);color:var(--entry-accent)}
+.premiumEntryChoices .premiumEntryIcon svg{width:25px;height:25px}.premiumEntryChoices button>svg:last-child{width:19px;flex:none;color:var(--entry-accent)}
+.premiumEntryChoices button b{font-size:17px;color:#182338}.premiumEntryChoices button small{font-size:12px;line-height:1.35;color:#647084}
+.premiumEntryFooter{text-align:center;padding:15px;border-top:1px solid #f0f1f4;background:#fafbfc;color:#98a2b3;font-size:10px;letter-spacing:.4px}.premiumEntryFooter strong{font-weight:900;letter-spacing:1.4px;color:var(--entry-dark)}
+@media(max-width:420px){.premiumServiceEntry{padding:12px}.premiumEntryPanel{border-radius:24px}.premiumEntryIdentity{padding:0 19px}.premiumEntryIntro{padding:23px 19px 0}.premiumEntryChoices{padding:0 19px}.premiumEntryChoices button{min-height:82px}}
+@media(prefers-reduced-motion:reduce){.premiumEntryChoices button{transition:none}}
