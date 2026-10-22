@@ -8,8 +8,8 @@ export default async function handler(req,res){
  if(!/^[\w-]{2,128}$/.test(slug)||!/^[\w-]{3,130}$/.test(tabId)||!/^[a-f0-9]{48}$/.test(access))return res.status(400).json({error:"invalid_link"});
  const db=getFirestore(),mapping=await db.collection("restaurantSlugs").doc(slug).get();if(!mapping.exists||mapping.data().active===false)return res.status(404).json({error:"not_found"});
  const base=db.collection("restaurants").doc(mapping.data().restaurantId),ref=base.collection("tabs").doc(tabId),tab=await ref.get();
- if(!tab.exists||tab.data().customerAccessToken!==access||tab.data().status==="CLOSED")return res.status(403).json({error:"invalid_or_closed_tab"});
- if(req.method==="GET"){const d=tab.data();return res.status(200).json({tab:{label:d.label,type:d.type,status:d.status,totalCents:d.totalCents,items:(d.items||[]).map(i=>({name:i.name,qty:i.qty,priceCents:i.priceCents}))}})}
+ if(!tab.exists||tab.data().customerAccessToken!==access)return res.status(403).json({error:"invalid_tab_link"});
+ if(req.method==="GET"){const d=tab.data();return res.status(200).json({tab:{label:d.label,type:d.type,status:d.status}})}
  const action=clean(input.action);
  if(action==="ORDER"){
  const name=clean(input.name).slice(0,90),phone=clean(input.phone).replace(/\D/g,"").slice(0,15),items=input.items;
@@ -18,13 +18,14 @@ export default async function handler(req,res){
  const productSnaps=await Promise.all(ids.map(id=>base.collection("products").doc(id).get()));
  const lines=[];for(let i=0;i<items.length;i++){const p=productSnaps[i],qty=Number(items[i].qty);if(!p.exists||p.data().active===false||!Number.isInteger(qty)||qty<1||qty>30||!Number.isInteger(p.data().priceCents)||p.data().priceCents<0)return res.status(400).json({error:"invalid_item"});lines.push({productId:ids[i],name:clean(p.data().name),qty,priceCents:p.data().priceCents,totalCents:qty*p.data().priceCents})}
  const sum=lines.reduce((n,x)=>n+x.totalCents,0),orderRef=base.collection("orders").doc();
- await db.runTransaction(async tx=>{const current=await tx.get(ref);if(!current.exists||current.data().customerAccessToken!==access||current.data().status!=="OPEN")throw new Error("not_open");const d=current.data();tx.set(orderRef,{channel:"TABLE",table:(d.type==="TABLE"?"Mesa ":"Comanda ")+d.label,tabId,number:"M"+orderRef.id.slice(0,6).toUpperCase(),customerSnapshot:{name,phone},items:lines,totalCents:0,status:"RECEIVED",paymentStatus:"PENDING",paymentMethod:"CASH",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});tx.update(ref,{items:[...(d.items||[]),...lines.map(x=>({...x,addedAt:new Date().toISOString()}))],totalCents:Number(d.totalCents||0)+sum,updatedAt:FieldValue.serverTimestamp()})});
+ await db.runTransaction(async tx=>{const current=await tx.get(ref);if(!current.exists||current.data().customerAccessToken!==access||current.data().status!=="OPEN")throw new Error("not_open");const d=current.data();tx.set(orderRef,{channel:"TABLE",table:(d.type==="TABLE"?"Mesa ":"Comanda ")+d.label,tabId,number:"M"+orderRef.id.slice(0,6).toUpperCase(),customerSnapshot:{name,phone},items:lines,totalCents:0,status:"RECEIVED",paymentStatus:"PENDING",paymentMethod:"CASH",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});tx.update(ref,{items:[...(d.items||[]),...lines.map(x=>({...x,addedAt:new Date().toISOString()}))],totalCents:Number(d.totalCents||0)+sum,customerPhones:[...new Set([...(d.customerPhones||[]),phone])],updatedAt:FieldValue.serverTimestamp()})});
  return res.status(200).json({ok:true,orderId:orderRef.id});
  }
  if(action==="REQUEST_BILL"){
- await db.runTransaction(async tx=>{const current=await tx.get(ref);if(!current.exists||current.data().customerAccessToken!==access||current.data().status!=="OPEN")throw new Error("not_open");tx.update(ref,{status:"BILL_REQUESTED",requestedPaymentMethod:["CASH","CARD_ON_DELIVERY"].includes(input.paymentMethod)?input.paymentMethod:null,updatedAt:FieldValue.serverTimestamp()})});
+ const phone=clean(input.phone).replace(/\\D/g,"");if(phone.length<10)return res.status(400).json({error:"invalid_phone"});
+ await db.runTransaction(async tx=>{const current=await tx.get(ref);if(!current.exists||current.data().customerAccessToken!==access||current.data().status!=="OPEN")throw new Error("not_open");if(!(current.data().customerPhones||[]).includes(phone))throw new Error("phone_not_found");tx.update(ref,{status:"BILL_REQUESTED",requestedPaymentMethod:["CASH","CARD_ON_DELIVERY"].includes(input.paymentMethod)?input.paymentMethod:null,updatedAt:FieldValue.serverTimestamp()})});
  return res.status(200).json({ok:true});
  }
  return res.status(400).json({error:"invalid_action"});
- }catch(e){if(e.message==="not_open")return res.status(409).json({error:"not_open"});console.error("public-tab",e);return res.status(500).json({error:"internal_error"})}
+ }catch(e){if(e.message==="not_open")return res.status(409).json({error:"not_open"});if(e.message==="phone_not_found")return res.status(403).json({error:"phone_not_found"});console.error("public-tab",e);return res.status(500).json({error:"internal_error"})}
 }
