@@ -18,12 +18,12 @@ export default async function handler(req,res){
  const type=body.type==="TABLE"?"TABLE":body.type==="INDIVIDUAL"?"INDIVIDUAL":null,label=String(body.label||"").trim().slice(0,70);
  if(!type||!label)return res.status(400).json({error:"invalid_tab"});
  const ref=tabs.doc(type+"_"+label.toLowerCase().replace(/[^a-z0-9]/g,"_"));
- await db.runTransaction(async tx=>{const snap=await tx.get(ref);if(snap.exists&&snap.data().status!=="CLOSED")throw new Error("already_open");tx.set(ref,{type,label,status:"OPEN",items:[],totalCents:0,createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp(),createdBy:user.uid,customerAccessToken:randomBytes(24).toString("hex")})});
+ await db.runTransaction(async tx=>{const snap=await tx.get(ref);if(snap.exists&&snap.data().status!=="CLOSED")throw new Error("already_open");tx.set(ref,{type,label,status:"OPEN",items:[],totalCents:0,createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp(),createdBy:user.uid,customerAccessToken:snap.exists&&snap.data().customerAccessToken||randomBytes(24).toString("hex")})});
  return res.status(200).json({ok:true,id:ref.id});
  }
  if(!/^[\w-]{3,130}$/.test(id))return res.status(400).json({error:"invalid_tab"});
  const ref=tabs.doc(id);
- if(action==="QR_TOKEN"){const snap=await ref.get();if(!snap.exists||snap.data().status==="CLOSED")return res.status(409).json({error:"not_open"});if(!snap.data().customerAccessToken)await ref.update({customerAccessToken:randomBytes(24).toString("hex")});return res.status(200).json({ok:true})}
+ if(action==="QR_TOKEN"){const snap=await ref.get();if(!snap.exists)return res.status(404).json({error:"not_found"});if(!snap.data().customerAccessToken)await ref.update({customerAccessToken:randomBytes(24).toString("hex")});return res.status(200).json({ok:true})}
  if(action==="ADD"){
  const productId=String(body.productId||""),qty=Number(body.qty||1);
  if(!/^[\w-]{5,128}$/.test(productId)||!Number.isInteger(qty)||qty<1||qty>50)return res.status(400).json({error:"invalid_item"});
