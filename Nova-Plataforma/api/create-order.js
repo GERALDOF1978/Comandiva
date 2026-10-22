@@ -40,7 +40,7 @@ export default async function handler(req,res){
       const qty=Number(raw.qty);
       if(!Number.isInteger(qty)||qty<1||qty>99)return res.status(400).json({error:"invalid_quantity"});
       const product=await db.collection("restaurants").doc(restaurantId).collection("products").doc(clean(raw.productId)).get();
-      if(!product.exists||product.data().active===false)return res.status(400).json({error:"product_unavailable"});
+      if(!product.exists||product.data().active===false||(channel==="TABLE"?product.data().sellAtTable===false:product.data().sellForDelivery===false))return res.status(400).json({error:"product_unavailable"});
       const p=product.data(),selected=[],groups=Array.isArray(p.optionGroups)?p.optionGroups:[];
       const incoming=Array.isArray(raw.options)?raw.options:[];
       for(const g of groups){
