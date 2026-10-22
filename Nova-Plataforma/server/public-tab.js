@@ -9,7 +9,7 @@ export default async function handler(req,res){
  const db=getFirestore(),mapping=await db.collection("restaurantSlugs").doc(slug).get();if(!mapping.exists||mapping.data().active===false)return res.status(404).json({error:"not_found"});
  const base=db.collection("restaurants").doc(mapping.data().restaurantId),ref=base.collection("tabs").doc(tabId),tab=await ref.get();
  if(!tab.exists||tab.data().customerAccessToken!==access)return res.status(403).json({error:"invalid_tab_link"});
- if(req.method==="GET"){const d=tab.data();return res.status(200).json({tab:{label:d.label,type:d.type,status:d.status}})}
+ if(req.method==="GET"){const d=tab.data();const ordersSnap=await base.collection("orders").where("tabId","==",tabId).limit(200).get();const orders=ordersSnap.docs.filter(o=>o.data().channel==="TABLE"&&o.data().status!=="CANCELLED"&&!o.id.startsWith("tabpayment_")).map(o=>({id:o.id,number:o.data().number,status:o.data().status,items:(o.data().items||[]).map(i=>({name:i.name,qty:i.qty,priceCents:i.priceCents,totalCents:i.totalCents})),createdAt:o.data().createdAt?.toDate?.()?.toISOString()||null})).sort((a,b)=>(a.createdAt||"").localeCompare(b.createdAt||""));return res.status(200).json({tab:{label:d.label,type:d.type,status:d.status,totalCents:Number(d.totalCents||0),orders}})}
  const action=clean(input.action);
  if(action==="ORDER"){
  const name=clean(input.name).slice(0,90),phone=clean(input.phone).replace(/\D/g,"").slice(0,15),items=input.items;
