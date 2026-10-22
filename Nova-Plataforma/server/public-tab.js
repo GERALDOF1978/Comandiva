@@ -21,6 +21,13 @@ export default async function handler(req,res){
  await db.runTransaction(async tx=>{const current=await tx.get(ref);if(!current.exists||current.data().customerAccessToken!==access||current.data().status!=="OPEN")throw new Error("not_open");const d=current.data();tx.set(orderRef,{channel:"TABLE",table:(d.type==="TABLE"?"Mesa ":"Comanda ")+d.label,tabId,number:"M"+orderRef.id.slice(0,6).toUpperCase(),customerSnapshot:{name,phone},items:lines,totalCents:0,status:"RECEIVED",paymentStatus:"PENDING",paymentMethod:"CASH",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});tx.update(ref,{items:[...(d.items||[]),...lines.map(x=>({...x,addedAt:new Date().toISOString()}))],totalCents:Number(d.totalCents||0)+sum,customerPhones:[...new Set([...(d.customerPhones||[]),phone])],updatedAt:FieldValue.serverTimestamp()})});
  return res.status(200).json({ok:true,orderId:orderRef.id});
  }
+ if(action==="CALL_WAITER"){
+ const reason=clean(input.reason).slice(0,100);
+ if(!["Chamar atendente","Pedir talheres","Pedir guardanapos","Solicitar ajuda"].includes(reason))return res.status(400).json({error:"invalid_reason"});
+ const callRef=base.collection("serviceCalls").doc();
+ await db.runTransaction(async tx=>{const current=await tx.get(ref);if(!current.exists||current.data().customerAccessToken!==access||current.data().status!=="OPEN")throw new Error("not_open");const d=current.data();tx.set(callRef,{tabId,table:(d.type==="TABLE"?"Mesa ":"Comanda ")+d.label,reason,status:"PENDING",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()})});
+ return res.status(200).json({ok:true});
+ }
  if(action==="REQUEST_BILL"){
  const phone=clean(input.phone).replace(/\\D/g,"");if(phone.length<10)return res.status(400).json({error:"invalid_phone"});
  await db.runTransaction(async tx=>{const current=await tx.get(ref);if(!current.exists||current.data().customerAccessToken!==access||current.data().status!=="OPEN")throw new Error("not_open");if(!(current.data().customerPhones||[]).includes(phone))throw new Error("phone_not_found");tx.update(ref,{status:"BILL_REQUESTED",requestedPaymentMethod:["CASH","CARD_ON_DELIVERY"].includes(input.paymentMethod)?input.paymentMethod:null,updatedAt:FieldValue.serverTimestamp()})});
