@@ -17,7 +17,7 @@ export default async function handler(req,res){
  if(req.method==="GET"){const [snap,calls]=await Promise.all([tabs.limit(300).get(),base.collection("serviceCalls").where("status","==","PENDING").limit(100).get()]);return res.status(200).json({tabs:snap.docs.map(d=>({id:d.id,...d.data(),createdAt:d.data().createdAt?.toDate?.()?.toISOString()||null,updatedAt:d.data().updatedAt?.toDate?.()?.toISOString()||null})),serviceCalls:calls.docs.map(d=>({id:d.id,...d.data(),createdAt:d.data().createdAt?.toDate?.()?.toISOString()||null}))})}
  const action=String(body.action||""),id=String(body.tabId||"");
  if(action==="RESOLVE_SERVICE_CALL"){
- const callId=String(body.callId||"");if(!/^[\\w-]{5,128}$/.test(callId))return res.status(400).json({error:"invalid_call"});
+ const callId=String(body.callId||"");if(!/^[a-zA-Z0-9_-]{5,128}$/.test(callId))return res.status(400).json({error:"invalid_call"});
  const callRef=base.collection("serviceCalls").doc(callId);
  await db.runTransaction(async tx=>{const snap=await tx.get(callRef);if(!snap.exists||snap.data().status!=="PENDING")throw new Error("invalid_status");tx.update(callRef,{status:"DONE",resolvedBy:user.uid,updatedAt:FieldValue.serverTimestamp()})});
  return res.status(200).json({ok:true});
