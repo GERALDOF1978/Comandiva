@@ -387,3 +387,34 @@
 .publicMenu .publicNoImage{display:grid;place-items:center;background:#f2f4f7;color:#98a2b3}
 .publicMenu .cartBar{background:#f97316;color:white;border:0;border-radius:16px;box-shadow:0 12px 32px #c2410c55;font-weight:800}
 @media(max-width:760px){.publicMenu .publicHero{padding:30px 22px 54px;min-height:210px}.publicMenu .publicLogo{width:62px;height:62px;border-radius:17px}.publicMenu .publicWelcome{margin:-25px 14px 0;padding:18px;align-items:flex-start}.publicMenu .publicWelcome p{max-width:220px}.publicMenu .publicProfileButton{padding:11px;gap:4px}.publicMenu .publicProfileButton span{display:none}.publicMenu .categoryNav{padding:9px 15px;margin-top:10px}.publicMenu .publicContent{padding:12px 15px 110px}.publicMenu .publicProducts{grid-template-columns:1fr;gap:12px}.publicMenu .publicProduct{padding:13px;min-height:138px}.publicMenu .publicProduct>img,.publicMenu .publicNoImage{width:116px;height:116px}.publicMenu .publicSectionHeading h2{font-size:21px}}
+
+
+/* Identidade independente para cada loja */
+.publicMenu .publicHero{background:linear-gradient(115deg,var(--menu-secondary,#101828),#344054)}
+.publicMenu .publicHero.hasCover{background-size:cover;background-position:center}
+.publicMenu .publicLogo{background:var(--menu-accent,#f97316)}
+.publicMenu .publicWelcome small,.publicMenu .publicProductFooter strong{color:var(--menu-accent,#f97316)}
+.publicMenu .publicProfileButton{color:var(--menu-accent,#f97316);background:white;border-color:var(--menu-accent,#f97316)}
+.publicMenu .publicProductAdd{color:white;background:var(--menu-accent,#f97316)}
+.publicMenu .cartBar,.publicMenu .checkoutButton{background:var(--menu-accent,#f97316)}
+.publicMenu.menuStyle-elegant .publicHero h1,.publicMenu.menuStyle-elegant .publicWelcome h2,.publicMenu.menuStyle-elegant .publicSectionHeading h2{font-family:Georgia,serif;letter-spacing:-.015em}
+.publicMenu.menuStyle-elegant .publicProduct{border-radius:7px;box-shadow:none}
+.publicMenu.menuStyle-playful .publicProduct{border-radius:26px}
+.publicMenu.menuStyle-playful .publicProduct>img{border-radius:22px}
+.publicMenu.menuStyle-playful .publicProfileButton{border-radius:25px}
+.brandSettings{grid-column:1/-1;background:#f8fafc;border:1px solid #e4e7ec;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px;margin:14px 0}
+.brandSettings h3{font-size:18px}.brandSettings p,.brandSettings>small{color:#667085;font-size:12px}
+.brandSettings label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700}
+.brandSettings input:not([type=color]),.brandSettings select{width:100%;padding:11px;border:1px solid #d0d5dd;border-radius:9px;background:white}
+.brandColorGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.brandColorGrid input[type=color]{width:100%;height:42px;border:1px solid #d0d5dd;border-radius:8px;padding:3px;background:white}
+.brandPreview{position:relative;isolation:isolate;overflow:hidden;min-height:170px;color:white;border-radius:14px;padding:20px;display:flex;flex-direction:column;justify-content:space-between}
+.brandPreviewCover{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.3;z-index:-1}
+.brandPreviewContent{display:flex;align-items:center;gap:12px}
+.brandPreviewContent>svg{width:42px;height:42px;padding:10px;background:#ffffff30;border-radius:10px}
+.brandPreviewLogo{width:52px;height:52px;object-fit:contain;background:white;border-radius:10px}
+.brandPreviewContent div{display:flex;flex-direction:column;gap:4px}.brandPreviewContent b{font-size:23px}.brandPreviewContent small{color:#f2f4f7}
+.brandPreview>span{align-self:flex-start;border-radius:9px;padding:10px 18px;font-size:12px;font-weight:800}
+.brandPreview.menuStyle-elegant b{font-family:Georgia,serif}
+.brandPreview.menuStyle-playful{border-radius:26px}
+@media(max-width:520px){.brandColorGrid{grid-template-columns:1fr}.brandSettings{padding:14px}}
