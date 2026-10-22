@@ -120,7 +120,7 @@ export default async function handler(req,res){
     if(quoteOnly)return res.status(200).json({ok:true,quote:true,subtotalCents:totalCents,deliveryFeeCents,totalCents:totalCents+deliveryFeeCents,distanceKm:deliveryMeta?.distanceKm??null});
     if(body.expectedDeliveryFeeCents!==undefined&&Number(body.expectedDeliveryFeeCents)!==deliveryFeeCents)return res.status(409).json({error:"delivery_fee_changed",deliveryFeeCents,totalCents:totalCents+deliveryFeeCents});
     let customerUid=null;
-    const token=String(req.headers.authorization||"").replace(/^Bearer\\s+/i,"").trim();
+    const token=String(req.headers.authorization||"").replace(/^Bearer\s+/i,"").trim();
     if(token){try{customerUid=(await getAuth().verifyIdToken(token)).uid}catch{return res.status(401).json({error:"invalid_customer_session"})}}
     const orderRef=db.collection("restaurants").doc(restaurantId).collection("orders").doc();
     const deliveryPin=channel==="DELIVERY"?String(randomInt(0,10000)).padStart(4,"0"):null;
