@@ -30,7 +30,7 @@ export default async function handler(req,res){
  const productId=String(body.productId||""),qty=Number(body.qty||1);
  if(!/^[\w-]{5,128}$/.test(productId)||!Number.isInteger(qty)||qty<1||qty>50)return res.status(400).json({error:"invalid_item"});
  const product=await base.collection("products").doc(productId).get();
- if(!product.exists||product.data().active===false)return res.status(404).json({error:"product_unavailable"});
+ if(!product.exists||product.data().active===false||product.data().sellAtTable===false)return res.status(404).json({error:"product_unavailable"});
  const p=product.data(),price=Number(p.priceCents);
  if(!Number.isInteger(price)||price<0)return res.status(400).json({error:"invalid_price"});
  await db.runTransaction(async tx=>{const snap=await tx.get(ref);if(!snap.exists||snap.data().status!=="OPEN")throw new Error("not_open");const data=snap.data();const kitchenRef=base.collection("orders").doc();tx.set(kitchenRef,{channel:"TABLE",table:(data.type==="TABLE"?"Mesa ":"Comanda ")+data.label,tabId:id,number:"M"+kitchenRef.id.slice(0,6).toUpperCase(),customerSnapshot:{name:(data.type==="TABLE"?"Mesa ":"Comanda ")+data.label},items:[{productId,name:String(p.name||"Produto"),qty,unitPriceCents:price,priceCents:price,totalCents:qty*price}],totalCents:0,status:"RECEIVED",paymentStatus:"PENDING",paymentMethod:"CASH",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});tx.update(ref,{items:[...(data.items||[]),{productId,name:String(p.name||"Produto"),qty,priceCents:price,addedAt:new Date().toISOString()}],totalCents:Number(data.totalCents||0)+qty*price,updatedAt:FieldValue.serverTimestamp()})});
