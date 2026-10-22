@@ -562,3 +562,35 @@
 .tableSelfPremium .tableSelfQty{display:flex;align-items:center;gap:10px}.tableSelfPremium .tableSelfQty button{width:35px;height:35px;border:0;border-radius:11px;background:var(--table-accent);color:white;font-size:22px;font-weight:700;cursor:pointer}.tableSelfPremium .tableSelfQty span{font-weight:800;min-width:14px;text-align:center}
 .tableSelfPremium .tableSelfWaiter{border-radius:19px}.tableSelfPremium .tableSelfActions{display:grid;gap:10px}.tableSelfPremium .tableSelfActions button{border:0;border-radius:13px;padding:15px;background:var(--table-dark);color:white;font-weight:800;cursor:pointer}.tableSelfPremium .tableSelfActions button:first-child{background:var(--table-accent)}.tableSelfPremium .tableSelfActions button:disabled{opacity:.5}.tableSelfPremium .tableSelfActions small{color:#667085;line-height:1.5}
 @media(max-width:460px){.tableSelfPremium{padding:0 12px 70px}.tablePremiumCover{height:160px}.tablePremiumWelcome{margin-top:-28px;padding:15px}.tablePremiumBrand img,.tablePremiumBrand>svg{width:54px;height:54px}.tablePremiumBrand h1{font-size:20px}.tableSelfPremium .tableSelfIdentity{grid-template-columns:1fr}.tablePremiumProductImage,.tablePremiumProductFallback{width:96px;height:96px}.tableSelfPremium .tableSelfProduct{padding:12px}.tablePremiumProductInfo>b{font-size:16px}}
+
+/* Cardápio de mesa compacto e com pedidos vinculados */
+.tableSelfPremium .tablePremiumWelcome{margin-bottom:8px;padding:13px 15px}
+.tableSelfPremium .tablePremiumStatus{margin-top:8px}
+.tableSelfPremium .tablePremiumWelcome>p{margin-top:5px}
+.tableSelfPremium .tablePremiumSectionHeading{margin:12px 2px 7px}
+.tableSelfPremium .tablePremiumCategories{padding-bottom:7px}
+.tableSelfPremium .tableSelfIdentity{margin:5px 0 10px}
+.tableSelfPremium section{margin:10px 0 14px}
+.tableSelfPremium section>h2{margin-bottom:6px;font-size:18px}
+.tableSelfPremium .tableSelfProduct{margin:6px 0;padding:10px 12px;border-radius:14px}
+.tableSelfPremium .tablePremiumProductInfo{gap:4px}
+.tableSelfPremium .tablePremiumProductImage,.tableSelfPremium .tablePremiumProductFallback{width:88px;height:88px}
+.tableSelfQuickActions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:8px 0 12px}
+.tableSelfQuickActions button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;background:#fff;border:1px solid #dce5e5;border-radius:12px;padding:8px 2px;font-size:19px;cursor:pointer}
+.tableSelfQuickActions span{font-size:10px;color:#344054;font-weight:700}
+.tableSelfHistory{background:#fff;border:1px solid #e1e8e8;border-radius:16px;padding:13px;margin:10px 0}
+.tableSelfHistoryTitle,.tableSelfOrderHead,.tableSelfOrderItem,.tableSelfGrandTotal{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tableSelfHistoryTitle h2{font-size:19px;margin:0}.tableSelfHistoryTitle strong,.tableSelfGrandTotal strong{color:var(--table-accent)}
+.tableSelfOrder{padding:10px 0;border-bottom:1px solid #e9eeee}
+.tableSelfOrderHead{margin-bottom:6px;font-size:13px}.tableSelfOrderHead span{background:#e8f5ec;color:#166534;border-radius:20px;padding:4px 8px;font-size:11px;font-weight:700}
+.tableSelfOrderItem{font-size:13px;color:#475467;margin:4px 0}
+.tableSelfGrandTotal{padding-top:11px;font-size:16px}
+.tableSelfMore{padding:12px;background:#effaf3;border-radius:14px;margin:10px 0}
+.tableSelfMore p{margin:0 0 9px;font-size:13px;color:#365447}
+.tableSelfMore button,.tableSelfCartDetails button{width:100%;border:0;border-radius:11px;background:var(--table-accent);color:#fff;font-weight:800;padding:13px;cursor:pointer}
+.tableSelfCart{position:sticky;bottom:8px;z-index:10;background:#fff;border:1px solid #d9e8de;border-radius:13px;padding:6px;box-shadow:0 5px 25px #0002;margin:10px 0}
+.tableSelfCartToggle{width:100%;border:0;border-radius:10px;background:var(--table-accent);color:white;font-weight:800;padding:13px;cursor:pointer}
+.tableSelfCartDetails{padding:10px;font-size:13px}.tableSelfCartDetails>div{padding:5px 0}.tableSelfCartDetails button{margin-top:10px}
+.tableSelfCheckout{margin:12px 0}.tableSelfCheckout>button{width:100%;border:1px solid #cbd5e1;border-radius:12px;padding:12px;background:#fff;color:#142238;font-weight:800}
+.tableSelfCheckout>div{background:#fff;border-radius:12px;padding:10px;margin-top:7px}.tableSelfCheckout>div p{font-size:13px}
+.tableSelfCheckout>div button{padding:10px 16px;border-radius:9px;border:1px solid #d5dddd;background:#eff7f2;margin-right:8px;font-weight:700}
