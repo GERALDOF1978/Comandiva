@@ -456,3 +456,16 @@
 .customerOrder small{overflow-wrap:anywhere}.customerOrder strong{white-space:nowrap}
 .customerPrivacy{color:#667085;font-size:12px}
 @media(max-width:760px){.customerStats{grid-template-columns:repeat(2,minmax(0,1fr))}.customerTools{flex-direction:column}.customerTools select{max-width:none}.customerItem{grid-template-columns:minmax(0,1fr) minmax(0,120px) 18px;padding:13px}.customerStats article{padding:13px}.customerStats strong{font-size:19px}}
+
+
+.dateRange{display:flex;align-items:end;flex-wrap:wrap;gap:10px;padding:13px 15px;background:#fff;border:1px solid #e4e7ec;border-radius:14px}
+.dateRange label{display:flex;flex-direction:column;gap:5px;color:#667085;font-size:12px;font-weight:600}
+.dateRange input{font:inherit;color:#101828;padding:9px 11px;border:1px solid #d0d5dd;border-radius:9px;background:#fff}
+.dateRange button,.dispatchDriverActions button{border:0;border-radius:9px;padding:10px 14px;background:#172554;color:white;font-weight:600;cursor:pointer}
+.dispatchDriverActions{display:flex;justify-content:flex-end;margin:14px 0}
+.dispatchDriverRow{flex-wrap:wrap}
+.driverWhatsApp{display:inline-flex;align-items:center;justify-content:center;padding:9px 12px;border-radius:9px;background:#e8f8ed;color:#166534;text-decoration:none;font-size:12px;font-weight:700}
+.driverManagerHistory{margin:15px 0;padding:17px;border:1px solid #e4e7ec;border-radius:13px;background:#fff}
+.driverManagerHistory h3{margin:0 0 7px}.driverManagerHistory>p{font-size:13px;color:#667085}
+.driverManagerHistory .customerOrder button{border:0;border-radius:8px;padding:8px 10px;background:#172554;color:white;cursor:pointer}
+@media(max-width:760px){.dateRange{align-items:stretch}.dateRange label{flex:1;min-width:130px}.dateRange input{width:100%;box-sizing:border-box}.dispatchDriverRow{gap:8px}.driverManagerHistory .customerOrder{flex-wrap:wrap}}
