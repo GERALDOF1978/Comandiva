@@ -346,3 +346,44 @@
 .driverPortal .driverTabs{margin:15px 0 12px}
 @media(max-width:650px){.driverPortal{padding:53px 12px 110px}.driverPortal>header{padding:16px 11px 15px 90px;gap:6px;margin-bottom:12px;border-radius:19px}.driverPortal .driverProfileHead .driverAvatar{left:-10px;top:-22px;width:96px;height:96px}.driverPortal .driverProfileHead small{top:-37px;font-size:10px}.driverPortal .driverProfileHead h1{font-size:20px}.driverPortal .driverProfileHead p{font-size:11px}.driverPortal .driverPhotoEdit{font-size:11px;padding:7px 10px;margin-top:8px}.driverPortal>header>button{padding:9px;min-width:49px;font-size:12px}.driverPortalCounts{margin:12px 0;gap:9px}.driverPortal .driverEarnings{gap:8px;margin-bottom:12px}.driverPortal .driverTabs{margin:15px 0 12px}}
 @media(max-width:380px){.driverPortal>header{padding-left:80px}.driverPortal .driverProfileHead .driverAvatar{width:85px;height:85px}.driverPortal .driverProfileHead h1{font-size:18px}.driverPortal .driverProfileHead p{font-size:10px}.driverPortal>header>button{min-width:43px;padding:8px}}
+
+
+/* Comandiva: vitrine pública premium */
+.publicMenu{--menu-accent:#f97316;background:#f8fafc;min-height:100vh;color:#101828}
+.publicMenu .publicHero{position:relative;isolation:isolate;overflow:hidden;background:linear-gradient(115deg,#101828 0%,#1d2939 63%,#344054 100%);color:white;padding:38px max(24px,calc((100vw - 1080px)/2));min-height:230px;display:flex;gap:20px;align-items:center}
+.publicMenu .publicHero:after{content:"";position:absolute;right:-55px;bottom:-130px;width:320px;height:320px;border:65px solid #f9731625;border-radius:50%;z-index:-1}
+.publicMenu .publicHero h1{font-size:clamp(28px,5vw,44px);font-weight:850;letter-spacing:-.045em;line-height:1.1;margin:6px 0 10px}
+.publicMenu .publicHero small{font-size:11px;letter-spacing:.2em;font-weight:800;color:#fdba74}
+.publicMenu .publicHero p{font-size:14px;color:#e2e8f0;margin-bottom:12px}
+.publicMenu .publicHero span{display:inline-flex;align-items:center;gap:6px;color:#cbd5e1;font-size:12px}
+.publicMenu .publicHero span svg{width:15px}
+.publicMenu .publicLogo{width:76px;height:76px;border-radius:22px;background:linear-gradient(135deg,#fb923c,#ea580c);display:grid;place-items:center;flex-shrink:0;box-shadow:0 12px 28px #0004}
+.publicMenu .publicLogo svg{width:34px;height:34px;color:white}
+.publicMenu .publicWelcome{max-width:1120px;margin:-22px auto 0;position:relative;z-index:2;background:white;border:1px solid #eaecf0;box-shadow:0 14px 35px #10182812;border-radius:20px;padding:22px 26px;display:flex;justify-content:space-between;align-items:center;gap:18px}
+.publicMenu .publicWelcome small{color:#ea580c;font-size:10px;letter-spacing:.16em;font-weight:850}
+.publicMenu .publicWelcome h2{font-size:clamp(19px,3vw,26px);letter-spacing:-.03em;margin:5px 0}
+.publicMenu .publicWelcome p{font-size:13px;color:#667085}
+.publicMenu .publicProfileButton{background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:13px 16px;color:#9a3412;font-weight:800;display:flex;align-items:center;gap:9px;white-space:nowrap;cursor:pointer}
+.publicMenu .publicProfileButton:hover{background:#ffedd5}
+.publicMenu .categoryNav{max-width:1120px;margin:18px auto 0;padding:8px 4px;display:flex;gap:9px;overflow-x:auto;scrollbar-width:none}
+.publicMenu .categoryNav a{flex:none;text-decoration:none;border-radius:999px;background:white;border:1px solid #e4e7ec;color:#344054;font-size:13px;font-weight:750;padding:11px 19px;box-shadow:0 2px 8px #10182807}
+.publicMenu .categoryNav a:hover{background:#fff7ed;color:#c2410c;border-color:#fdba74}
+.publicMenu .publicContent{max-width:1120px;margin:auto;padding:10px 0 120px}
+.publicMenu .publicCategory{scroll-margin-top:24px;margin-bottom:28px}
+.publicMenu .publicSectionHeading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:12px 0 17px}
+.publicMenu .publicSectionHeading h2{font-size:24px;letter-spacing:-.035em;color:#101828}
+.publicMenu .publicSectionHeading span{font-size:12px;color:#98a2b3;font-weight:700}
+.publicMenu .publicProducts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.publicMenu .publicProduct{width:100%;background:white;border:1px solid #eaecf0;border-radius:18px;padding:18px;display:flex;gap:16px;justify-content:space-between;text-align:left;cursor:pointer;box-shadow:0 4px 18px #10182808;min-height:154px;transition:transform .15s,box-shadow .15s,border-color .15s}
+.publicMenu .publicProduct:hover{transform:translateY(-2px);box-shadow:0 12px 26px #10182812;border-color:#fdba74}
+.publicMenu .publicProductText{display:flex;flex-direction:column;min-width:0;flex:1}
+.publicMenu .publicProductText>b{font-size:17px;font-weight:800;color:#101828}
+.publicMenu .publicProductText>p{font-size:13px;color:#667085;margin:8px 0;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.publicMenu .publicProductFooter{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto}
+.publicMenu .publicProductFooter strong{font-size:20px;color:#c2410c;letter-spacing:-.025em}
+.publicMenu .publicProductAdd{background:#fff2e5;color:#ea580c;border-radius:11px;width:34px;height:34px;display:grid;place-items:center}
+.publicMenu .publicProductText>small{font-size:11px;color:#b45309;font-weight:700;margin-top:3px}
+.publicMenu .publicProduct>img,.publicMenu .publicNoImage{width:124px;height:124px;object-fit:cover;border-radius:14px;flex-shrink:0}
+.publicMenu .publicNoImage{display:grid;place-items:center;background:#f2f4f7;color:#98a2b3}
+.publicMenu .cartBar{background:#f97316;color:white;border:0;border-radius:16px;box-shadow:0 12px 32px #c2410c55;font-weight:800}
+@media(max-width:760px){.publicMenu .publicHero{padding:30px 22px 54px;min-height:210px}.publicMenu .publicLogo{width:62px;height:62px;border-radius:17px}.publicMenu .publicWelcome{margin:-25px 14px 0;padding:18px;align-items:flex-start}.publicMenu .publicWelcome p{max-width:220px}.publicMenu .publicProfileButton{padding:11px;gap:4px}.publicMenu .publicProfileButton span{display:none}.publicMenu .categoryNav{padding:9px 15px;margin-top:10px}.publicMenu .publicContent{padding:12px 15px 110px}.publicMenu .publicProducts{grid-template-columns:1fr;gap:12px}.publicMenu .publicProduct{padding:13px;min-height:138px}.publicMenu .publicProduct>img,.publicMenu .publicNoImage{width:116px;height:116px}.publicMenu .publicSectionHeading h2{font-size:21px}}
