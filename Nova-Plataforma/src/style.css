@@ -477,3 +477,20 @@
 
 
 .tableSelf{max-width:760px;margin:0 auto;padding:20px 16px 60px;display:grid;gap:18px;color:#101828}.tableSelf>header{padding:24px;background:#172554;color:#fff;border-radius:18px}.tableSelf>header h1{margin:8px 0}.tableSelf>header p{color:#dbeafe}.tableSelfBill{display:grid;gap:7px;background:#fff;border:1px solid #e4e7ec;padding:18px;border-radius:14px}.tableSelfBill strong{font-size:26px}.tableSelfBill span{color:#667085;font-size:13px}.tableSelfIdentity{display:grid;grid-template-columns:1fr 1fr;gap:10px}.tableSelfIdentity input{min-width:0;border:1px solid #d0d5dd;border-radius:10px;padding:13px;font:inherit}.tableSelf section{background:#fff;border:1px solid #e4e7ec;border-radius:14px;padding:16px}.tableSelf section h2{font-size:20px}.tableSelfProduct{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid #eaecf0}.tableSelfProduct:last-child{border-bottom:0}.tableSelfProduct>div:first-child{display:grid;gap:5px}.tableSelfProduct small{color:#667085}.tableSelfQty{display:flex;align-items:center;gap:10px}.tableSelfQty button{background:#f2f4f7;border:1px solid #d0d5dd;border-radius:9px;width:34px;height:34px;font-size:20px;cursor:pointer}.tableSelfActions{display:grid;gap:10px}.tableSelfActions button,.tabsQr button{padding:14px;border:0;border-radius:10px;background:#172554;color:#fff;font-weight:700;cursor:pointer}.tableSelfActions button:disabled{opacity:.5;cursor:not-allowed}.tabsQr{display:flex;flex-direction:column;align-items:flex-start;gap:10px}.tabsQr img{width:220px;max-width:100%;height:auto;border:1px solid #e4e7ec;border-radius:12px}@media(max-width:600px){.tableSelfIdentity{grid-template-columns:1fr}}
+
+/* Escolha do atendimento antes do cardápio */
+.serviceEntry{min-height:100dvh;background:linear-gradient(145deg,#fff7ed,#f4f7fb);display:grid;place-items:center;padding:22px}
+.serviceEntryPanel{width:min(100%,520px);background:#fff;border:1px solid #e7e9ef;border-radius:26px;padding:clamp(22px,5vw,38px);box-shadow:0 18px 60px #1d293914}
+.serviceEntryPanel>small{color:#e76c13;font-size:12px;letter-spacing:1.5px;font-weight:800}
+.serviceEntryPanel h1{font-size:clamp(26px,5vw,36px);margin:12px 0;color:#172033}
+.serviceEntryPanel p{color:#667085;line-height:1.6}
+.serviceEntryChoices{display:grid;gap:12px;margin-top:26px}
+.serviceEntryChoices button{display:flex;align-items:center;text-align:left;gap:16px;width:100%;padding:19px 16px;border:1px solid #e3e7ed;border-radius:17px;background:#fff;color:#202c40;cursor:pointer}
+.serviceEntryChoices button:hover,.serviceEntryChoices button:focus-visible{border-color:#f97316;background:#fff8f2}
+.serviceEntryChoices button>svg:first-child{width:27px;height:27px;color:#e76c13;flex-shrink:0}
+.serviceEntryChoices button>svg:last-child{margin-left:auto;width:18px;color:#98a2b3}
+.serviceEntryChoices button span{display:grid;gap:4px}
+.serviceEntryChoices button b{font-size:17px}
+.serviceEntryChoices button small{font-size:13px;color:#667085}
+.serviceEntryBack,.serviceChange{border:0;background:transparent;color:#e76c13;cursor:pointer;font-weight:700;padding:8px 0}
+.serviceCheckoutLabel{padding:12px 14px;border-radius:12px;background:#fff7ed;color:#344054;margin:0 0 16px}
