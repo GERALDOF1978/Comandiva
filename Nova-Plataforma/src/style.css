@@ -649,3 +649,15 @@
 
 /* Vitrine promocional horizontal */
 .publicPromoSection{padding:18px 22px 4px;max-width:1200px;margin:auto}.publicPromoSection .publicSectionHeading{display:flex;align-items:center;justify-content:space-between;gap:12px}.publicPromoSection .publicSectionHeading button{border:0;background:transparent;color:#e66b18;font-weight:700;cursor:pointer}.publicPromoRail{display:flex;overflow-x:auto;gap:12px;padding:10px 0 18px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}.publicPromoCard{flex:0 0 210px;min-height:118px;border:1px solid #e5e7eb;border-radius:18px;background:#fff;text-align:left;overflow:hidden;display:flex;flex-direction:column;gap:6px;padding:12px;scroll-snap-align:start;cursor:pointer;box-shadow:0 5px 15px #1018280b}.publicPromoCard img{width:calc(100% + 24px);height:100px;object-fit:cover;margin:-12px -12px 6px}.publicPromoCard strong{font-size:15px;color:#172033}.publicPromoCard small{color:#64748b;line-height:1.35}.publicPromoCard.selected{border:2px solid #ef7d22;background:#fff9f1}.promoProductPicker{display:flex;flex-direction:column;gap:10px}.promoProductChecks{max-height:270px;overflow:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;border:1px solid #e2e8f0;border-radius:12px;padding:12px}.promoProductChecks .checkLine{display:flex;align-items:center;gap:8px}.growthItem .growthActions{display:flex;gap:8px;flex-wrap:wrap}@media(max-width:600px){.publicPromoSection{padding:14px 20px 2px}.publicPromoCard{flex-basis:180px}.promoProductChecks{grid-template-columns:1fr}}
+
+/* Separação visual do cardápio e carrinho na mesa */
+.tableSelfPremium .tableSelfCart{position:sticky;bottom:12px;z-index:15;margin:22px 0 16px;padding:12px;border:2px solid var(--table-accent,#16834a);border-radius:20px;background:#edf8f1;box-shadow:0 14px 38px #14223830}
+.tableSelfPremium .tableSelfCartToggle{background:var(--table-accent,#16834a);padding:17px 14px;border-radius:13px;font-size:15px;box-shadow:0 4px 12px #0002}
+.tableSelfPremium .tableSelfCartDetails{margin-top:10px;padding:14px;background:#fff;border:1px solid #d5e5db;border-radius:14px;font-size:14px;color:#142238}
+.tableSelfPremium .tableSelfCartDetails>div{border-bottom:1px solid #e5e7eb;padding:9px 0;font-weight:650}
+.tableSelfPremium .tableSelfCartDetails>button{margin-top:12px;background:var(--table-accent,#16834a);padding:16px;border-radius:12px;font-size:15px;min-height:50px}
+.tableSelfPremium .tableCartReminder{font-size:13px;line-height:1.45;background:#fff7ed;border:1px solid #fdba74;border-radius:10px;padding:10px;color:#9a3412;margin:10px 0}
+.tableSelfPremium .tableCartError{font-size:13px;line-height:1.45;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px;color:#991b1b;margin:10px 0}
+.tableSelfPremium .tableSelfIdentity label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:750;color:#26374a;min-width:0}
+.tableSelfPremium .tableSelfIdentity label input{width:100%;min-width:0}
+@media(max-width:600px){.tableSelfPremium .tableSelfCart{margin:16px 0;padding:9px;border-radius:16px}.tableSelfPremium .tableSelfCartToggle{font-size:14px;padding:15px 9px}}
