@@ -7,6 +7,14 @@
     {
       "source": "/master/",
       "destination": "/"
+    },
+    {
+      "source": "/login",
+      "destination": "/"
+    },
+    {
+      "source": "/login/",
+      "destination": "/"
     }
   ]
 }
