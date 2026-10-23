@@ -29,7 +29,7 @@ export default async function handler(req,res){
  return res.status(200).json({ok:true});
  }
  if(action==="REQUEST_BILL"){
- const phone=clean(input.phone).replace(/\\D/g,"");if(phone.length<10)return res.status(400).json({error:"invalid_phone"});
+ const phone=clean(input.phone).replace(/\D/g,"");if(phone.length<10)return res.status(400).json({error:"invalid_phone"});
  await db.runTransaction(async tx=>{const current=await tx.get(ref);if(!current.exists||current.data().customerAccessToken!==access||current.data().status!=="OPEN")throw new Error("not_open");if(!(current.data().customerPhones||[]).includes(phone))throw new Error("phone_not_found");tx.update(ref,{status:"BILL_REQUESTED",requestedPaymentMethod:["CASH","CARD_ON_DELIVERY"].includes(input.paymentMethod)?input.paymentMethod:null,updatedAt:FieldValue.serverTimestamp()})});
  return res.status(200).json({ok:true});
  }
