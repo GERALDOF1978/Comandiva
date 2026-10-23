@@ -634,3 +634,15 @@
 .growthItem button,.growthActions button,.growthActions a{border:1px solid #d6dbe3;border-radius:10px;background:#fff;padding:10px 12px;font-weight:700;color:#16213c;text-decoration:none;cursor:pointer}
 .growthActions{display:flex;flex-wrap:wrap;gap:10px}
 @media(max-width:560px){.growthForm{grid-template-columns:1fr}}
+
+/* Exemplo de planilha com colunas e linhas no painel de importação */
+.menuCsvHelp{max-width:100%;width:100%;min-width:0}
+.menuCsvHelp p{margin:8px 0;line-height:1.45}
+.csvSheetScroll{max-width:100%;overflow-x:auto;border:1px solid #cbd5e1;border-radius:8px;background:#fff;margin:10px 0}
+.csvSheet{border-collapse:collapse;width:max-content;min-width:100%;font-size:12px;text-align:left;color:#1e293b}
+.csvSheet th,.csvSheet td{border:1px solid #d8e0e8;padding:8px 10px;white-space:nowrap}
+.csvSheet thead th,.csvSheet tbody th{background:#edf2f7;color:#475569;text-align:center;font-weight:700}
+.csvSheet tbody tr:first-child td{background:#e5f3e9;color:#166534;font-weight:750}
+.csvSheet tbody tr:nth-child(3) td{background:#f8fafc}
+.checkoutPaymentBar .checkoutChangeField{display:flex;flex-direction:column;align-items:stretch;gap:6px;margin-top:10px;font-size:12px;font-weight:750;color:#26334b}
+.checkoutPaymentBar .checkoutChangeField input{display:block;width:100%;box-sizing:border-box;min-height:42px;border:1px solid #cfd8e3;border-radius:9px;padding:9px 12px;font:inherit;background:#fff;color:#142238}
