@@ -18,6 +18,40 @@ export default async function handler(req,res){
     const authHeader=req.headers.authorization||"";
     if(!authHeader.startsWith("Bearer ")) return res.status(401).json({error:"unauthorized"});
     const decoded=await getAuth().verifyIdToken(authHeader.slice(7),true);
+    if(["createPlan","setPlanActive","assignSubscription"].includes(req.body?.action)){
+      const db=getFirestore(),master=await db.collection("platformAdmins").doc(decoded.uid).get();
+      if(master.data()?.active!==true)return res.status(403).json({error:"master_access_denied"});
+      const {action,planId,restaurantId,name,priceCents,active}=req.body;
+      const validId=v=>typeof v==="string"&&/^[a-zA-Z0-9_-]{1,128}$/.test(v);
+      const now=FieldValue.serverTimestamp();
+      if(action==="createPlan"){
+        if(!validId(planId)||planId==="trial"||typeof name!=="string"||name.trim().length<3||name.length>80||!Number.isSafeInteger(priceCents)||priceCents<0||priceCents>100000000)return res.status(400).json({error:"invalid_plan"});
+        const ref=db.collection("plans").doc(planId);
+        if((await ref.get()).exists)return res.status(409).json({error:"plan_exists"});
+        await ref.create({name:name.trim(),priceCents,active:true,createdAt:now,updatedAt:now});
+        return res.status(201).json({ok:true});
+      }
+      if(action==="setPlanActive"){
+        if(!validId(planId)||typeof active!=="boolean")return res.status(400).json({error:"invalid_plan"});
+        const ref=db.collection("plans").doc(planId);
+        if(!(await ref.get()).exists)return res.status(404).json({error:"plan_not_found"});
+        await ref.update({active,updatedAt:now});
+        return res.status(200).json({ok:true});
+      }
+      if(!validId(restaurantId)||!validId(planId))return res.status(400).json({error:"invalid_subscription"});
+      const restaurantRef=db.collection("restaurants").doc(restaurantId);
+      if(!(await restaurantRef.get()).exists)return res.status(404).json({error:"restaurant_not_found"});
+      if(planId!=="trial"){
+        const plan=await db.collection("plans").doc(planId).get();
+        if(!plan.exists||plan.data().active!==true)return res.status(400).json({error:"plan_unavailable"});
+      }
+      const batch=db.batch();
+      batch.set(db.collection("subscriptions").doc(restaurantId),{restaurantId,planId,status:planId==="trial"?"trial":"pending_payment",updatedAt:now,...(planId==="trial"?{trialEndsAt:new Date(Date.now()+30*86400000)}:{})},{merge:true});
+      batch.update(restaurantRef,{planId,updatedAt:now});
+      batch.create(restaurantRef.collection("audit").doc(),{action:"MASTER_ASSIGN_PLAN",planId,actorUid:decoded.uid,createdAt:now});
+      await batch.commit();
+      return res.status(200).json({ok:true});
+    }
     if(req.body?.action==="setRestaurantStatus"){
       const db=getFirestore();
       const master=await db.collection("platformAdmins").doc(decoded.uid).get();
@@ -57,7 +91,7 @@ export default async function handler(req,res){
     batch.create(db.collection("userRestaurantAccess").doc(decoded.uid).collection("restaurants").doc(restaurantRef.id),{restaurantId:restaurantRef.id,restaurantName:name.trim(),role:"owner",active:true,createdAt:now});
     batch.create(db.collection("restaurantSlugs").doc(slug),{restaurantId:restaurantRef.id,active:true,createdAt:now});
     batch.create(restaurantRef.collection("settings").doc("public"),{name:name.trim(),type,phone:phone.trim(),slug,published:false,createdAt:now,updatedAt:now});
-    batch.create(db.collection("subscriptions").doc(restaurantRef.id),{restaurantId:restaurantRef.id,planId:"trial",status:"trial",createdAt:now});
+    batch.create(db.collection("subscriptions").doc(restaurantRef.id),{restaurantId:restaurantRef.id,planId:"trial",status:"trial",trialEndsAt:new Date(Date.now()+30*86400000),createdAt:now});
     batch.create(restaurantRef.collection("audit").doc(),{action:"RESTAURANT_CREATED",actorUid:decoded.uid,actorEmail:decoded.email,createdAt:now});
     await batch.commit();
     return res.status(201).json({ok:true,restaurantId:restaurantRef.id,slug});
