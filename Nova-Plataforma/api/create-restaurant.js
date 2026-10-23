@@ -18,6 +18,22 @@ export default async function handler(req,res){
     const authHeader=req.headers.authorization||"";
     if(!authHeader.startsWith("Bearer ")) return res.status(401).json({error:"unauthorized"});
     const decoded=await getAuth().verifyIdToken(authHeader.slice(7),true);
+    if(req.body?.action==="setRestaurantStatus"){
+      const db=getFirestore();
+      const master=await db.collection("platformAdmins").doc(decoded.uid).get();
+      if(master.data()?.active!==true)return res.status(403).json({error:"master_access_denied"});
+      const {restaurantId,status}=req.body;
+      if(typeof restaurantId!=="string"||!/^[a-zA-Z0-9_-]{1,128}$/.test(restaurantId)||!["active","suspended"].includes(status))return res.status(400).json({error:"invalid_request"});
+      const ref=db.collection("restaurants").doc(restaurantId),snap=await ref.get();
+      if(!snap.exists)return res.status(404).json({error:"restaurant_not_found"});
+      const batch=db.batch(),now=FieldValue.serverTimestamp();
+      batch.update(ref,{status,updatedAt:now});
+      const slug=snap.data().slug;
+      if(typeof slug==="string"&&/^[a-z0-9-]{1,80}$/.test(slug))batch.set(db.collection("restaurantSlugs").doc(slug),{active:status==="active"},{merge:true});
+      batch.create(ref.collection("audit").doc(),{action:"MASTER_SET_STATUS",status,actorUid:decoded.uid,createdAt:now});
+      await batch.commit();
+      return res.status(200).json({ok:true});
+    }
     if(!decoded.email) return res.status(400).json({error:"email_required"});
     const {name,type,phone}=req.body||{};
     if(typeof name!=="string"||name.trim().length<3||name.trim().length>100) return res.status(400).json({error:"invalid_name"});
