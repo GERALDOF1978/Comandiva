@@ -594,3 +594,15 @@
 .tableSelfCheckout{margin:12px 0}.tableSelfCheckout>button{width:100%;border:1px solid #cbd5e1;border-radius:12px;padding:12px;background:#fff;color:#142238;font-weight:800}
 .tableSelfCheckout>div{background:#fff;border-radius:12px;padding:10px;margin-top:7px}.tableSelfCheckout>div p{font-size:13px}
 .tableSelfCheckout>div button{padding:10px 16px;border-radius:9px;border:1px solid #d5dddd;background:#eff7f2;margin-right:8px;font-weight:700}
+
+/* Alertas de atendimento visíveis na Central de Pedidos */
+.ordersServiceAlerts{margin:14px 0 18px;padding:14px;border:1px solid #f4bf79;background:#fff8ec;border-radius:16px;box-shadow:0 5px 20px #92400e10}
+.ordersServiceAlertsTitle{font-weight:850;font-size:16px;color:#9a3412;margin-bottom:10px}
+.ordersServiceAlertItem{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;border:1px solid #f5ddbd;border-radius:12px;padding:11px;margin-top:7px}
+.ordersServiceAlertItem>div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.ordersServiceAlertItem b{font-size:14px;color:#142238}
+.ordersServiceAlertItem span{font-size:13px;color:#5b4636}
+.ordersServiceAlertItem small{font-size:11px;color:#8a6d58}
+.ordersServiceAlertItem button{border:0;background:#e65b0a;color:#fff;font-size:12px;font-weight:800;padding:10px 12px;border-radius:10px;flex-shrink:0;cursor:pointer}
+.ordersServiceAlertItem button:disabled{opacity:.5}
+@media(max-width:460px){.ordersServiceAlerts{padding:10px;margin:10px 0}.ordersServiceAlertItem{gap:8px}.ordersServiceAlertItem button{padding:9px;font-size:11px}}
