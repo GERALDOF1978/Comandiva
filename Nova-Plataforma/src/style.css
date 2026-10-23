@@ -620,3 +620,17 @@
 .menuCsvHelp{max-width:360px;font-size:12px;margin-bottom:10px}
 .menuCsvHelp summary{cursor:pointer;font-weight:750;text-decoration:underline}
 .menuCsvHelp code{display:block;overflow-x:auto;white-space:nowrap;padding:7px;background:#eef2f6;border-radius:6px}
+
+/* Módulos de crescimento */
+.growthPage{display:flex;flex-direction:column;gap:14px}
+.growthPage h2,.growthPage h3,.growthPage p{margin:0}
+.growthPage label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700}
+.growthPage input,.growthPage textarea{width:100%;box-sizing:border-box;border:1px solid #d8dde6;border-radius:10px;padding:12px;font:inherit;background:#fff;color:#142238}
+.growthForm{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.growthForm button{grid-column:1/-1;justify-self:start}
+.growthItem{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid #e5e7eb;border-radius:12px;padding:12px}
+.growthItem>div{display:flex;flex-direction:column;gap:5px}
+.growthItem small{color:#667085}
+.growthItem button,.growthActions button,.growthActions a{border:1px solid #d6dbe3;border-radius:10px;background:#fff;padding:10px 12px;font-weight:700;color:#16213c;text-decoration:none;cursor:pointer}
+.growthActions{display:flex;flex-wrap:wrap;gap:10px}
+@media(max-width:560px){.growthForm{grid-template-columns:1fr}}
