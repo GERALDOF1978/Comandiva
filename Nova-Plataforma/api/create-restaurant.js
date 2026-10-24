@@ -53,6 +53,25 @@ export default async function handler(req,res){
       const members=await db.collection("restaurants").doc(id).collection("members").get();
       return res.status(200).json({role,permissions,employees:members.docs.map(d=>({uid:d.id,email:d.data().email||"",name:d.data().name||"",role:d.data().role||"employee",active:d.data().active===true,permissions:Array.isArray(d.data().permissions)?d.data().permissions:[]}))});
     }
+    if(req.method==="POST"&&req.body?.action==="addEmployee"){
+      const {restaurantId,email,name,role,permissions}=req.body||{};
+      const valid=v=>typeof v==="string"&&/^[a-zA-Z0-9_-]{5,128}$/.test(v);
+      const roles=["manager","attendant","kitchen","driver","finance","employee"];
+      const modules=["Início","Pedidos","Cardápio","Clientes","Financeiro","Cozinha","Mesas e comandas","Delivery","Entregadores","Promoções","Marketing","Configurações","Meu plano","Funcionários e permissões"];
+      if(!valid(restaurantId)||typeof email!=="string"||email.length>254||!email.includes("@")||!roles.includes(role)||!Array.isArray(permissions)||permissions.some(p=>!modules.includes(p)))return res.status(400).json({error:"invalid_employee"});
+      const db=getFirestore(),restaurant=db.collection("restaurants").doc(restaurantId),owner=await restaurant.collection("members").doc(decoded.uid).get();
+      if(!owner.exists||owner.data().role!=="owner"||owner.data().active!==true)return res.status(403).json({error:"owner_only"});
+      let target;try{target=await getAuth().getUserByEmail(email.trim().toLowerCase())}catch(e){if(e.code==="auth/user-not-found")return res.status(404).json({error:"employee_account_not_found"});throw e}
+      if(target.uid===decoded.uid)return res.status(400).json({error:"cannot_add_self"});
+      const existing=await restaurant.collection("members").doc(target.uid).get();
+      if(existing.exists)return res.status(409).json({error:"employee_already_exists"});
+      const restaurantSnap=await restaurant.get();if(!restaurantSnap.exists)return res.status(404).json({error:"restaurant_not_found"});
+      const batch=db.batch(),now=FieldValue.serverTimestamp();
+      batch.create(restaurant.collection("members").doc(target.uid),{uid:target.uid,email:target.email,name:typeof name==="string"?name.trim().slice(0,100):"",role,permissions:[...new Set(permissions)],active:true,createdAt:now});
+      batch.set(db.collection("userRestaurantAccess").doc(target.uid).collection("restaurants").doc(restaurantId),{restaurantId,restaurantName:restaurantSnap.data().name||"",role,active:true,createdAt:now});
+      batch.create(restaurant.collection("audit").doc(),{action:"OWNER_ADD_EMPLOYEE",actorUid:decoded.uid,targetUid:target.uid,createdAt:now});
+      await batch.commit();return res.status(201).json({ok:true});
+    }
     if(req.method==="POST"&&req.body?.action==="setEmployeePermissions"){
       const {restaurantId,uid,permissions,active}=req.body||{};
       const valid=v=>typeof v==="string"&&/^[a-zA-Z0-9_-]{5,128}$/.test(v);
