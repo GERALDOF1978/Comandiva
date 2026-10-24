@@ -42,6 +42,34 @@ export default async function handler(req,res){
   return res.status(200).json({subscription:{planId,status:raw?.status||"unknown",trialEndsAt:iso(raw?.trialEndsAt),updatedAt:iso(raw?.updatedAt)},plan:plan?.exists?{name:plan.data().name,priceCents:plan.data().priceCents,active:plan.data().active}:null});
 
     }
+    if(req.method==="GET"&&req.query.action==="employees"){
+      const id=String(req.query.restaurantId||"");if(!/^[a-zA-Z0-9_-]{5,128}$/.test(id))return res.status(400).json({error:"invalid_restaurant"});
+      const db=getFirestore(),access=await db.collection("restaurants").doc(id).collection("members").doc(decoded.uid).get();
+      if(!access.exists||access.data().active!==true)return res.status(403).json({error:"access_denied"});
+      const role=access.data().role||"employee";
+      const permissionKeys=["Início","Pedidos","Cardápio","Clientes","Financeiro","Cozinha","Mesas e comandas","Delivery","Entregadores","Promoções","Marketing","Configurações","Meu plano","Funcionários e permissões"];
+      const permissions=role==="owner"?permissionKeys:(Array.isArray(access.data().permissions)?access.data().permissions:[]);
+      if(role!=="owner")return res.status(200).json({role,permissions,employees:[]});
+      const members=await db.collection("restaurants").doc(id).collection("members").get();
+      return res.status(200).json({role,permissions,employees:members.docs.map(d=>({uid:d.id,email:d.data().email||"",name:d.data().name||"",role:d.data().role||"employee",active:d.data().active===true,permissions:Array.isArray(d.data().permissions)?d.data().permissions:[]}))});
+    }
+    if(req.method==="POST"&&req.body?.action==="setEmployeePermissions"){
+      const {restaurantId,uid,permissions,active}=req.body||{};
+      const valid=v=>typeof v==="string"&&/^[a-zA-Z0-9_-]{5,128}$/.test(v);
+      const allowed=["Início","Pedidos","Cardápio","Clientes","Financeiro","Cozinha","Mesas e comandas","Delivery","Entregadores","Promoções","Marketing","Configurações","Meu plano","Funcionários e permissões"];
+      if(!valid(restaurantId)||!valid(uid)||!Array.isArray(permissions)||permissions.length>allowed.length||permissions.some(p=>!allowed.includes(p))||typeof active!=="boolean")return res.status(400).json({error:"invalid_permissions"});
+      const db=getFirestore(),members=db.collection("restaurants").doc(restaurantId).collection("members");
+      const owner=await members.doc(decoded.uid).get();
+      if(!owner.exists||owner.data().role!=="owner"||owner.data().active!==true)return res.status(403).json({error:"owner_only"});
+      const target=await members.doc(uid).get();
+      if(!target.exists)return res.status(404).json({error:"employee_not_found"});
+      if(target.data().role==="owner"||uid===decoded.uid)return res.status(403).json({error:"owner_cannot_be_changed"});
+      const batch=db.batch();
+      batch.update(target.ref,{permissions:[...new Set(permissions)],active,updatedAt:FieldValue.serverTimestamp()});
+      batch.set(db.collection("userRestaurantAccess").doc(uid).collection("restaurants").doc(restaurantId),{active,role:target.data().role||"employee"},{merge:true});
+      batch.create(db.collection("restaurants").doc(restaurantId).collection("audit").doc(),{action:"OWNER_UPDATE_EMPLOYEE_PERMISSIONS",actorUid:decoded.uid,targetUid:uid,createdAt:FieldValue.serverTimestamp()});
+      await batch.commit();return res.status(200).json({ok:true});
+    }
     if(["createPlan","setPlanActive","assignSubscription"].includes(req.body?.action)){
       const db=getFirestore(),master=await db.collection("platformAdmins").doc(decoded.uid).get();
       if(master.data()?.active!==true)return res.status(403).json({error:"master_access_denied"});
