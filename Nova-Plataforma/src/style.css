@@ -677,3 +677,12 @@
 .loginPage .dishyAuthLink a,.loginPage .loginFoot a{color:#c6530c;font-weight:700;text-decoration:underline;text-underline-offset:3px}
 .loginPage .loginFoot{line-height:1.8}
 @media(max-width:480px){.loginPage{justify-content:flex-start;padding-top:28px;gap:18px}.loginPage .loginBrand img{width:46px;height:46px}.loginPage .loginBox h1{font-size:27px}}
+
+/* Keep restaurant sign-out reachable on mobile while menu content scrolls */
+.app>aside{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.app>aside>nav{min-height:0;flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;padding-bottom:12px;scrollbar-width:thin}
+.app>aside>.account{flex:0 0 auto;margin-top:0;padding:14px 8px max(12px,env(safe-area-inset-bottom));background:#101828;border-top:1px solid #344054;position:relative;z-index:2}
+.app>aside>.account button{min-height:42px;width:100%;padding:8px 4px;color:#fff}
+.driverAccessScreen{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px;background:#101828}
+.driverAccessCard{width:min(430px,100%);background:#fff;border-radius:20px;padding:28px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px;box-shadow:0 20px 45px #0003}
+.driverAccessCard>svg{color:#f97316}.driverAccessCard h1{font-size:25px;color:#101828}.driverAccessCard p{font-size:14px;line-height:1.5;color:#667085;overflow-wrap:anywhere}.driverAccessCard button{background:#f97316;border:0;border-radius:10px;color:white;padding:12px 20px;font-weight:800;cursor:pointer;width:100%}.driverAccessCard a{color:#b54708;font-weight:700;text-decoration:underline}
