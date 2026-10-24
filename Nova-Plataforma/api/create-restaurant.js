@@ -46,7 +46,7 @@ export default async function handler(req,res){
         if(!plan.exists||plan.data().active!==true)return res.status(400).json({error:"plan_unavailable"});
       }
       const batch=db.batch();
-      batch.set(db.collection("subscriptions").doc(restaurantId),{restaurantId,planId,status:planId==="trial"?"trial":"pending_payment",updatedAt:now,...(planId==="trial"?{trialEndsAt:new Date(Date.now()+30*86400000)}:{})},{merge:true});
+      batch.set(db.collection("subscriptions").doc(restaurantId),{restaurantId,planId,status:planId==="trial"?"trial":"pending_payment",updatedAt:now,...(planId==="trial"?{trialDurationDays:180}:{}),...(planId==="trial"?{trialEndsAt:new Date(Date.now()+180*86400000)}:{})},{merge:true});
       batch.update(restaurantRef,{planId,updatedAt:now});
       batch.create(restaurantRef.collection("audit").doc(),{action:"MASTER_ASSIGN_PLAN",planId,actorUid:decoded.uid,createdAt:now});
       await batch.commit();
@@ -91,7 +91,7 @@ export default async function handler(req,res){
     batch.create(db.collection("userRestaurantAccess").doc(decoded.uid).collection("restaurants").doc(restaurantRef.id),{restaurantId:restaurantRef.id,restaurantName:name.trim(),role:"owner",active:true,createdAt:now});
     batch.create(db.collection("restaurantSlugs").doc(slug),{restaurantId:restaurantRef.id,active:true,createdAt:now});
     batch.create(restaurantRef.collection("settings").doc("public"),{name:name.trim(),type,phone:phone.trim(),slug,published:false,createdAt:now,updatedAt:now});
-    batch.create(db.collection("subscriptions").doc(restaurantRef.id),{restaurantId:restaurantRef.id,planId:"trial",status:"trial",trialEndsAt:new Date(Date.now()+30*86400000),createdAt:now});
+    batch.create(db.collection("subscriptions").doc(restaurantRef.id),{restaurantId:restaurantRef.id,planId:"trial",status:"trial",trialEndsAt:new Date(Date.now()+180*86400000),trialDurationDays:180,createdAt:now});
     batch.create(restaurantRef.collection("audit").doc(),{action:"RESTAURANT_CREATED",actorUid:decoded.uid,actorEmail:decoded.email,createdAt:now});
     await batch.commit();
     return res.status(201).json({ok:true,restaurantId:restaurantRef.id,slug});
