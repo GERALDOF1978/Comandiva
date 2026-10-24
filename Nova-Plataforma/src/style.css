@@ -686,3 +686,15 @@
 .driverAccessScreen{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px;background:#101828}
 .driverAccessCard{width:min(430px,100%);background:#fff;border-radius:20px;padding:28px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px;box-shadow:0 20px 45px #0003}
 .driverAccessCard>svg{color:#f97316}.driverAccessCard h1{font-size:25px;color:#101828}.driverAccessCard p{font-size:14px;line-height:1.5;color:#667085;overflow-wrap:anywhere}.driverAccessCard button{background:#f97316;border:0;border-radius:10px;color:white;padding:12px 20px;font-weight:800;cursor:pointer;width:100%}.driverAccessCard a{color:#b54708;font-weight:700;text-decoration:underline}
+
+/* Dishy: fixed five-action quick navigation for restaurant mobile panel */
+.restaurantQuickNav{display:none}
+@media(max-width:768px){
+.app{padding-bottom:calc(66px + env(safe-area-inset-bottom))}
+.restaurantQuickNav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;bottom:0;left:0;right:0;z-index:35;background:#fff;border-top:1px solid #e4e7ec;box-shadow:0 -5px 20px #10182812;padding:6px 5px calc(6px + env(safe-area-inset-bottom));min-height:64px}
+.restaurantQuickNav button{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;min-width:0;min-height:50px;background:transparent;border:0;border-radius:10px;color:#667085;font-size:10px;font-weight:700;cursor:pointer;padding:5px 1px}
+.restaurantQuickNav button span{white-space:nowrap;font-size:clamp(9px,2.45vw,11px)}
+.restaurantQuickNav button.active{color:#c6530c;background:#fff2e8}
+.app>aside.open{z-index:45;height:100dvh;max-height:100dvh}
+.app>.scrim{z-index:40}
+}
