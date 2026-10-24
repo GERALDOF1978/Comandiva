@@ -18,9 +18,20 @@ export default async function handler(req,res){
     const authHeader=req.headers.authorization||"";
     if(!authHeader.startsWith("Bearer ")) return res.status(401).json({error:"unauthorized"});
     const decoded=await getAuth().verifyIdToken(authHeader.slice(7),true);
+    if(req.method==="GET"&&req.query.action==="employees"){
+      const id=String(req.query.restaurantId||"");if(!/^[a-zA-Z0-9_-]{5,128}$/.test(id))return res.status(400).json({error:"invalid_restaurant"});
+      const db=getFirestore(),access=await db.collection("restaurants").doc(id).collection("members").doc(decoded.uid).get();
+      if(!access.exists||access.data().active!==true)return res.status(403).json({error:"access_denied"});
+      const role=access.data().role||"employee";
+      const permissionKeys=["Início","Pedidos","Cardápio","Clientes","Financeiro","Cozinha","Mesas e comandas","Delivery","Entregadores","Promoções","Marketing","Configurações","Meu plano","Funcionários e permissões"];
+      const permissions=role==="owner"?permissionKeys:(Array.isArray(access.data().permissions)?access.data().permissions:[]);
+      if(role!=="owner")return res.status(200).json({role,permissions,employees:[]});
+      const members=await db.collection("restaurants").doc(id).collection("members").get();
+      return res.status(200).json({role,permissions,employees:members.docs.map(d=>({uid:d.id,email:d.data().email||"",name:d.data().name||"",role:d.data().role||"employee",active:d.data().active===true,permissions:Array.isArray(d.data().permissions)?d.data().permissions:[]}))});
+    }
     if(req.method==="GET"){
         const restaurantId=String(req.query.restaurantId||"");if(!/^[a-zA-Z0-9_-]{5,128}$/.test(restaurantId))return res.status(400).json({error:"invalid_restaurant"});
-  const db=getFirestore();const access=await db.collection("userRestaurantAccess").doc(user.uid).collection("restaurants").doc(restaurantId).get();
+  const db=getFirestore();const access=await db.collection("userRestaurantAccess").doc(decoded.uid).collection("restaurants").doc(restaurantId).get();
   if(!access.exists||access.data().active!==true)return res.status(403).json({error:"access_denied"});
   const [subscription,restaurant]=await Promise.all([db.collection("subscriptions").doc(restaurantId).get(),db.collection("restaurants").doc(restaurantId).get()]);
   if(!restaurant.exists)return res.status(404).json({error:"restaurant_not_found"});
@@ -41,17 +52,6 @@ export default async function handler(req,res){
   res.setHeader("Cache-Control","private, no-store");
   return res.status(200).json({subscription:{planId,status:raw?.status||"unknown",trialEndsAt:iso(raw?.trialEndsAt),updatedAt:iso(raw?.updatedAt)},plan:plan?.exists?{name:plan.data().name,priceCents:plan.data().priceCents,active:plan.data().active}:null});
 
-    }
-    if(req.method==="GET"&&req.query.action==="employees"){
-      const id=String(req.query.restaurantId||"");if(!/^[a-zA-Z0-9_-]{5,128}$/.test(id))return res.status(400).json({error:"invalid_restaurant"});
-      const db=getFirestore(),access=await db.collection("restaurants").doc(id).collection("members").doc(decoded.uid).get();
-      if(!access.exists||access.data().active!==true)return res.status(403).json({error:"access_denied"});
-      const role=access.data().role||"employee";
-      const permissionKeys=["Início","Pedidos","Cardápio","Clientes","Financeiro","Cozinha","Mesas e comandas","Delivery","Entregadores","Promoções","Marketing","Configurações","Meu plano","Funcionários e permissões"];
-      const permissions=role==="owner"?permissionKeys:(Array.isArray(access.data().permissions)?access.data().permissions:[]);
-      if(role!=="owner")return res.status(200).json({role,permissions,employees:[]});
-      const members=await db.collection("restaurants").doc(id).collection("members").get();
-      return res.status(200).json({role,permissions,employees:members.docs.map(d=>({uid:d.id,email:d.data().email||"",name:d.data().name||"",role:d.data().role||"employee",active:d.data().active===true,permissions:Array.isArray(d.data().permissions)?d.data().permissions:[]}))});
     }
     if(req.method==="POST"&&req.body?.action==="addEmployee"){
       const {restaurantId,email,name,role,permissions}=req.body||{};
