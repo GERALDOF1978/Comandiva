@@ -708,3 +708,16 @@
 /* Single Dishy Complete commercial offer */
 .dishySinglePlan{display:flex;justify-content:center;align-items:stretch}
 .dishySinglePlan .dishyPlan{width:min(100%,570px);flex:0 1 570px}
+
+/* Dishy settings sections and employee access */
+.settingsTabBar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:18px}
+.settingsTabBar button{border:1px solid #e3e6ed;background:#fff;border-radius:11px;padding:12px 15px;font-weight:700;color:#475467;cursor:pointer}
+.settingsTabBar button.active{background:#fff1e7;border-color:#f97316;color:#b45309}
+.employeeAccessCard,.employeeAddForm{background:#fff;border:1px solid #e4e7ec;border-radius:15px;padding:18px;margin-top:18px}
+.employeeAccessHeader{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.employeeAccessHeader strong,.employeeAccessHeader small{display:block}.employeeAccessHeader small{margin-top:4px;color:#667085}
+.employeePermissionGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:18px 0}
+.employeePermissionGrid label{display:flex;gap:8px;align-items:center;font-size:13px}
+.employeeAddForm{display:grid;gap:11px;max-width:580px}
+.employeeAddForm input,.employeeAddForm select{width:100%;min-height:42px;border:1px solid #d0d5dd;border-radius:9px;padding:9px;background:#fff;color:#101828}
+.employeeAccess input[type=checkbox]{accent-color:#ea580c}
