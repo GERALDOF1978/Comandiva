@@ -1,20 +1,10 @@
 {
   "rewrites": [
-    {
-      "source": "/master",
-      "destination": "/"
-    },
-    {
-      "source": "/master/",
-      "destination": "/"
-    },
-    {
-      "source": "/login",
-      "destination": "/"
-    },
-    {
-      "source": "/login/",
-      "destination": "/"
-    }
+    { "source": "/master", "destination": "/" },
+    { "source": "/master/", "destination": "/" },
+    { "source": "/login", "destination": "/" },
+    { "source": "/login/", "destination": "/" },
+    { "source": "/cadastro", "destination": "/" },
+    { "source": "/cadastro/", "destination": "/" }
   ]
 }
