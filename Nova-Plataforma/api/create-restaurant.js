@@ -1,3 +1,4 @@
+import {createCipheriv,randomBytes} from "node:crypto";
 import {cert,getApps,initializeApp} from "firebase-admin/app";
 import {getAuth} from "firebase-admin/auth";
 import {FieldValue,getFirestore} from "firebase-admin/firestore";
@@ -18,6 +19,29 @@ export default async function handler(req,res){
     const authHeader=req.headers.authorization||"";
     if(!authHeader.startsWith("Bearer ")) return res.status(401).json({error:"unauthorized"});
     const decoded=await getAuth().verifyIdToken(authHeader.slice(7),true);
+    if((req.method==="GET"&&req.query.action==="mpCredentials")||(req.method==="POST"&&req.body?.action==="mpCredentials")){
+      const restaurantId=String(req.method==="GET"?req.query.restaurantId:req.body?.restaurantId||"");
+      if(!/^[a-zA-Z0-9_-]{5,128}$/.test(restaurantId))return res.status(400).json({error:"invalid_restaurant"});
+      const db=getFirestore(),restaurant=db.collection("restaurants").doc(restaurantId);
+      const [member,restaurantSnap]=await Promise.all([restaurant.collection("members").doc(decoded.uid).get(),restaurant.get()]);
+      if(!restaurantSnap.exists)return res.status(404).json({error:"restaurant_not_found"});
+      if(restaurantSnap.data().ownerUid!==decoded.uid&&(!member.exists||member.data().active!==true||member.data().role!=="owner"))return res.status(403).json({error:"owner_only"});
+      const ref=restaurant.collection("privateIntegrations").doc("mercadoPago");
+      if(req.method==="GET"){
+        const snap=await ref.get(),data=snap.data()||{};
+        return res.status(200).json({configured:!!data.encryptedAccessToken,publicKey:data.publicKey||"",lastVerifiedAt:data.lastVerifiedAt?.toDate?.()?.toISOString?.()||null});
+      }
+      const accessToken=String(req.body.accessToken||"").trim(),publicKey=String(req.body.publicKey||"").trim();
+      if(!/^APP_USR-[A-Za-z0-9-]{20,}$/.test(accessToken)||!/^APP_USR-[A-Za-z0-9-]{10,}$/.test(publicKey))return res.status(400).json({error:"invalid_production_credentials"});
+      const keyHex=process.env.PAYMENT_CREDENTIALS_ENCRYPTION_KEY;
+      if(!/^[a-fA-F0-9]{64}$/.test(keyHex||""))return res.status(503).json({error:"encryption_key_not_configured"});
+      const mp=await fetch("https://api.mercadopago.com/users/me",{headers:{Authorization:"Bearer "+accessToken},signal:AbortSignal.timeout(10000)});
+      if(!mp.ok)return res.status(400).json({error:"mercado_pago_credentials_rejected"});
+      const iv=randomBytes(12),cipher=createCipheriv("aes-256-gcm",Buffer.from(keyHex,"hex"),iv);
+      const encrypted=Buffer.concat([cipher.update(accessToken,"utf8"),cipher.final()]);
+      await ref.set({provider:"mercado_pago",encryptedAccessToken:encrypted.toString("base64"),iv:iv.toString("base64"),authTag:cipher.getAuthTag().toString("base64"),publicKey,accountId:String((await mp.json()).id||""),lastVerifiedAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp(),updatedBy:decoded.uid});
+      return res.status(200).json({ok:true,configured:true});
+    }
     if((req.method==="GET"&&req.query.action==="shifts")||(req.method==="POST"&&req.body?.action==="shift")){
       const restaurantId=String(req.method==="GET"?req.query.restaurantId:req.body?.restaurantId||"");
       if(!/^[a-zA-Z0-9_-]{5,128}$/.test(restaurantId))return res.status(400).json({error:"invalid_restaurant"});
