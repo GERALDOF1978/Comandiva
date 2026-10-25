@@ -24,7 +24,7 @@ export default async function handler(req,res){
   try{
     init(); const db=getFirestore(); const body=req.body||{};
     const slug=clean(body.slug), channel=body.channel, paymentMethod=body.paymentMethod, quoteOnly=body.quoteOnly===true;
-    if(!slug||!["DELIVERY","PICKUP","TABLE"].includes(channel)||!["PIX","CASH","CARD_ON_DELIVERY"].includes(paymentMethod))return res.status(400).json({error:"invalid_order"});
+    if(!slug||!["DELIVERY","PICKUP","TABLE"].includes(channel)||!["PIX","CARD_ONLINE","CASH","CARD_ON_DELIVERY"].includes(paymentMethod))return res.status(400).json({error:"invalid_order"});
     const name=clean(body.customer?.name),phone=clean(body.customer?.phone);
     if(!quoteOnly&&(name.length<2||phone.replace(/\D/g,"").length<10))return res.status(400).json({error:"invalid_customer"});
     if(channel==="DELIVERY"&&(!clean(body.delivery?.address)||!clean(body.delivery?.number)))return res.status(400).json({error:"invalid_address"});
@@ -130,7 +130,7 @@ export default async function handler(req,res){
     if(changeForCents!==null&&(!Number.isSafeInteger(changeForCents)||changeForCents<totalCents+deliveryFeeCents||changeForCents>100000000))return res.status(400).json({error:"invalid_change_amount"});
     const number=Date.now();
     try{
-      const orderData=stripUndefined({number,channel,status:paymentMethod==="PIX"?"PENDING_PAYMENT":"RECEIVED",paymentStatus:"PENDING",paymentMethod,changeForCents,deliveryPinHash:pinHash,deliveryPinSalt:pinSalt,deliveryPinAttempts:0,subtotalCents:totalCents,deliveryFeeCents,originalDeliveryFeeCents,totalCents:totalCents+deliveryFeeCents,customerUid,customerSnapshot:{name,phone},notes:clean(body.notes).slice(0,500),deliverySnapshot:channel==="DELIVERY"?{cep:clean(body.delivery.cep),address:clean(body.delivery.address),number:clean(body.delivery.number),complement:clean(body.delivery.complement),neighborhood:clean(body.delivery.neighborhood),city:clean(body.delivery.city),state:clean(body.delivery.state),latitude:null,longitude:null,...deliveryMeta}:null,table:channel==="TABLE"?clean(body.table):null,items,source:"PUBLIC_MENU",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
+      const orderData=stripUndefined({number,channel,status:["PIX","CARD_ONLINE"].includes(paymentMethod)?"PENDING_PAYMENT":"RECEIVED",paymentStatus:"PENDING",paymentMethod,changeForCents,deliveryPinHash:pinHash,deliveryPinSalt:pinSalt,deliveryPinAttempts:0,subtotalCents:totalCents,deliveryFeeCents,originalDeliveryFeeCents,totalCents:totalCents+deliveryFeeCents,customerUid,customerSnapshot:{name,phone},notes:clean(body.notes).slice(0,500),deliverySnapshot:channel==="DELIVERY"?{cep:clean(body.delivery.cep),address:clean(body.delivery.address),number:clean(body.delivery.number),complement:clean(body.delivery.complement),neighborhood:clean(body.delivery.neighborhood),city:clean(body.delivery.city),state:clean(body.delivery.state),latitude:null,longitude:null,...deliveryMeta}:null,table:channel==="TABLE"?clean(body.table):null,items,source:"PUBLIC_MENU",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
       await orderRef.set(orderData);
     }catch(err){
       console.error("order-write",{name:err?.name,message:err?.message,code:err?.code,stack:err?.stack});
@@ -139,6 +139,6 @@ export default async function handler(req,res){
       e.writeMessage=String(err?.message||"unknown").slice(0,180);
       throw e;
     }
-    return res.status(201).json({ok:true,orderId:orderRef.id,number,subtotalCents:totalCents,deliveryFeeCents,originalDeliveryFeeCents,totalCents:totalCents+deliveryFeeCents,paymentMethod,deliveryPin,status:paymentMethod==="PIX"?"PENDING_PAYMENT":"RECEIVED"});
+    return res.status(201).json({ok:true,orderId:orderRef.id,number,subtotalCents:totalCents,deliveryFeeCents,originalDeliveryFeeCents,totalCents:totalCents+deliveryFeeCents,paymentMethod,deliveryPin,status:["PIX","CARD_ONLINE"].includes(paymentMethod)?"PENDING_PAYMENT":"RECEIVED"});
   }catch(e){console.error("create-order",e);const code=e?.message||"internal_error";const known=["address_not_found","origin_not_found","destination_not_found","route_not_found","geocoder_unavailable","routing_unavailable","order_write_failed","origin_address_incomplete"];const safe=known.includes(code)?code:code==="Firebase Admin não configurado"?"firebase_admin_not_configured":"internal_error";return res.status(safe==="origin_address_incomplete"?422:safe==="internal_error"?500:502).json({error:safe,...(code==="order_write_failed"?{firestoreCode:e.firestoreCode||"unknown",writeMessage:e.writeMessage||"unknown"}:{})})}
 }
