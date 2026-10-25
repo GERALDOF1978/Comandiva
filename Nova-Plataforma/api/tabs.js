@@ -43,7 +43,7 @@ export default async function handler(req,res){
  return res.status(200).json({ok:true});
  }
  if(action==="REQUEST_BILL"||action==="REOPEN"||action==="CLOSE"){
- if(action==="CLOSE"&&!["PIX","CASH","CARD_ON_DELIVERY"].includes(body.paymentMethod))return res.status(400).json({error:"invalid_payment"});
+ if(action==="CLOSE"&&!["CASH","CARD_ON_DELIVERY"].includes(body.paymentMethod))return res.status(400).json({error:"invalid_payment"});
  await db.runTransaction(async tx=>{const snap=await tx.get(ref);if(!snap.exists)throw new Error("not_found");const d=snap.data();if(action==="REQUEST_BILL"&&d.status!=="OPEN"||action==="REOPEN"&&d.status!=="BILL_REQUESTED"||action==="CLOSE"&&d.status!=="BILL_REQUESTED")throw new Error("invalid_status");const patch={status:action==="REQUEST_BILL"?"BILL_REQUESTED":action==="REOPEN"?"OPEN":"CLOSED",updatedAt:FieldValue.serverTimestamp()};if(action==="CLOSE"){patch.paymentMethod=body.paymentMethod;patch.closedAt=FieldValue.serverTimestamp();patch.closedBy=user.uid;const orderRef=base.collection("orders").doc("tabpayment_"+id+"_"+Date.now());tx.set(orderRef,{channel:"TABLE",table:(d.type==="TABLE"?"Mesa ":"Comanda ")+d.label,tabId:id,number:"C"+orderRef.id.slice(-8).toUpperCase(),customerSnapshot:{name:(d.type==="TABLE"?"Mesa ":"Comanda ")+d.label},items:d.items||[],totalCents:Number(d.totalCents||0),status:"COMPLETED",paymentStatus:"PAID",paymentMethod:body.paymentMethod,createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});patch.financeOrderId=orderRef.id}tx.update(ref,patch)});
  return res.status(200).json({ok:true});
  }
