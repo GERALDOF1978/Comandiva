@@ -1,3 +1,4 @@
+import {startTabPix} from "../server/tab-pix.js";
 import publicTabHandler from "../server/public-tab.js";
 import {randomBytes} from "node:crypto";
 import {cert,getApps,initializeApp} from "firebase-admin/app";
@@ -31,6 +32,7 @@ export default async function handler(req,res){
  }
  if(!/^[\w-]{3,130}$/.test(id))return res.status(400).json({error:"invalid_tab"});
  const ref=tabs.doc(id);
+ if(action==="CREATE_PIX"){try{return res.status(200).json({ok:true,payment:await startTabPix(base,ref,restaurantId)})}catch(e){return res.status(409).json({error:e.message})}}
  if(action==="QR_TOKEN"){const snap=await ref.get();if(!snap.exists)return res.status(404).json({error:"not_found"});if(!snap.data().customerAccessToken)await ref.update({customerAccessToken:randomBytes(24).toString("hex")});return res.status(200).json({ok:true})}
  if(action==="ADD"){
  const productId=String(body.productId||""),qty=Number(body.qty||1);
