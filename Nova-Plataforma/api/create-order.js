@@ -215,13 +215,15 @@ export default async function handler(req,res){
         const webhookUrl=base?"https://"+String(base).replace(/^https?:\/\//,"").replace(/\/$/,"")+"/api/create-order?action=payment-status&restaurantId="+encodeURIComponent(restaurantId):undefined;
         let endpoint,payload;
         if(paymentMethod==="PIX"){
-          const email=clean(body.customer?.email).toLowerCase();
-          if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))throw new Error("payment_email_required");
+          const suppliedEmail=clean(body.customer?.email).toLowerCase();
+          const email=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(suppliedEmail)?suppliedEmail:"pedido-"+orderRef.id+"@example.com";
           endpoint="https://api.mercadopago.com/v1/payments";
           payload={transaction_amount:amount,description:"Pedido "+number,payment_method_id:"pix",payer:{email,first_name:name.slice(0,80)},external_reference:externalReference,...(webhookUrl?{notification_url:webhookUrl}:{})};
         }else{
           endpoint="https://api.mercadopago.com/checkout/preferences";
-          payload={items:[{title:"Pedido "+number,quantity:1,unit_price:amount,currency_id:"BRL"}],external_reference:externalReference,payment_methods:{excluded_payment_types:[{id:"ticket"},{id:"bank_transfer"}]},...(webhookUrl?{notification_url:webhookUrl}:{})};
+          const returnBase="https://"+String(base).replace(/^https?:\/\//,"").replace(/\/$/,"");
+          const returnUrl=returnBase+"/?loja="+encodeURIComponent(slug)+"&pedido="+encodeURIComponent(orderRef.id);
+          payload={items:[{title:"Pedido "+number,quantity:1,unit_price:amount,currency_id:"BRL"}],external_reference:externalReference,back_urls:{success:returnUrl+"&mp_return=success",pending:returnUrl+"&mp_return=pending",failure:returnUrl+"&mp_return=failure"},payment_methods:{excluded_payment_types:[{id:"ticket"},{id:"bank_transfer"}]},...(webhookUrl?{notification_url:webhookUrl}:{})};
         }
         const response=await fetch(endpoint,{method:"POST",headers:{Authorization:"Bearer "+accessToken,"Content-Type":"application/json","X-Idempotency-Key":orderRef.id},body:JSON.stringify(payload),signal:AbortSignal.timeout(15000)});
         const mp=await response.json();
