@@ -43,6 +43,7 @@ async function reconcile(db,restaurantId,orderId,payment){
     if(order.providerPaymentId&&String(order.providerPaymentId)!==String(payment.id))return;
     if(order.paymentStatus==="PAID"||order.status==="CANCELLED")return;
     const approved=payment.status==="approved";
+    if(approved&&order.tabId){const tabRef=db.collection("restaurants").doc(restaurantId).collection("tabs").doc(order.tabId);const tab=await tx.get(tabRef);if(tab.exists&&tab.data().pixPayment?.paymentId===String(payment.id)&&tab.data().status==="BILL_REQUESTED"){tx.update(tabRef,{status:"CLOSED",paymentMethod:"PIX",financeOrderId:orderId,closedAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()})}}
     tx.update(ref,{providerPaymentId:String(payment.id),providerPaymentStatus:String(payment.status),paymentStatus:approved?"PAID":payment.status==="rejected"||payment.status==="cancelled"?"FAILED":"PENDING",...(approved?{status:"RECEIVED",paidAt:FieldValue.serverTimestamp()}:{}),updatedAt:FieldValue.serverTimestamp()});
   });
 }
