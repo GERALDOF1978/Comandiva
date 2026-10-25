@@ -1,4 +1,4 @@
-import {randomInt,randomBytes,createHash} from "node:crypto";
+import {randomInt,randomBytes,createHash,createDecipheriv,randomUUID} from "node:crypto";
 import {cert,getApps,initializeApp} from "firebase-admin/app";
 import {FieldValue,getFirestore} from "firebase-admin/firestore";
 import {getAuth} from "firebase-admin/auth";
@@ -139,6 +139,48 @@ export default async function handler(req,res){
       e.writeMessage=String(err?.message||"unknown").slice(0,180);
       throw e;
     }
-    return res.status(201).json({ok:true,orderId:orderRef.id,number,subtotalCents:totalCents,deliveryFeeCents,originalDeliveryFeeCents,totalCents:totalCents+deliveryFeeCents,paymentMethod,deliveryPin,status:["PIX","CARD_ONLINE"].includes(paymentMethod)?"PENDING_PAYMENT":"RECEIVED"});
+    let payment=null;
+    if(["PIX","CARD_ONLINE"].includes(paymentMethod)){
+      try{
+        const config=(await db.collection("restaurants").doc(restaurantId).collection("privateIntegrations").doc("mercadoPago").get()).data();
+        const key=process.env.PAYMENT_CREDENTIALS_ENCRYPTION_KEY;
+        if(!config?.encryptedAccessToken||!config?.iv||!config?.authTag||!/^[a-fA-F0-9]{64}$/.test(key||""))throw new Error("payment_not_configured");
+        const decipher=createDecipheriv("aes-256-gcm",Buffer.from(key,"hex"),Buffer.from(config.iv,"base64"));
+        decipher.setAuthTag(Buffer.from(config.authTag,"base64"));
+        const accessToken=Buffer.concat([decipher.update(Buffer.from(config.encryptedAccessToken,"base64")),decipher.final()]).toString("utf8");
+        const amount=(totalCents+deliveryFeeCents)/100;
+        if(amount<=0)throw new Error("invalid_payment_amount");
+        const externalReference=restaurantId+":"+orderRef.id;
+        const base=process.env.VERCEL_PROJECT_PRODUCTION_URL||process.env.PAYMENT_PUBLIC_HOST;
+        const webhookUrl=base?"https://"+String(base).replace(/^https?:\/\//,"").replace(/\/$/,"")+"/api/payment-status":undefined;
+        let endpoint,payload;
+        if(paymentMethod==="PIX"){
+          const email=clean(body.customer?.email).toLowerCase();
+          if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))throw new Error("payment_email_required");
+          endpoint="https://api.mercadopago.com/v1/payments";
+          payload={transaction_amount:amount,description:"Pedido "+number,payment_method_id:"pix",payer:{email,first_name:name.slice(0,80)},external_reference:externalReference,...(webhookUrl?{notification_url:webhookUrl}:{})};
+        }else{
+          endpoint="https://api.mercadopago.com/checkout/preferences";
+          payload={items:[{title:"Pedido "+number,quantity:1,unit_price:amount,currency_id:"BRL"}],external_reference:externalReference,payment_methods:{excluded_payment_types:[{id:"ticket"},{id:"bank_transfer"}]},...(webhookUrl?{notification_url:webhookUrl}:{})};
+        }
+        const response=await fetch(endpoint,{method:"POST",headers:{Authorization:"Bearer "+accessToken,"Content-Type":"application/json","X-Idempotency-Key":orderRef.id},body:JSON.stringify(payload),signal:AbortSignal.timeout(15000)});
+        const mp=await response.json();
+        if(!response.ok)throw new Error("mercado_pago_create_failed_"+response.status);
+        if(paymentMethod==="PIX"){
+          const transaction=mp.point_of_interaction?.transaction_data||{};
+          if(!transaction.qr_code||!mp.id)throw new Error("pix_response_incomplete");
+          payment={type:"PIX",qrCode:transaction.qr_code,qrCodeBase64:transaction.qr_code_base64||null,paymentId:String(mp.id)};
+        }else{
+          if(!mp.init_point)throw new Error("card_checkout_unavailable");
+          payment={type:"CARD_ONLINE",checkoutUrl:mp.init_point,preferenceId:String(mp.id)};
+        }
+        await orderRef.update({provider:"mercado_pago",providerPaymentId:payment.paymentId||null,providerPreferenceId:payment.preferenceId||null,updatedAt:FieldValue.serverTimestamp()});
+      }catch(paymentError){
+        console.error("payment-creation",{orderId:orderRef.id,message:paymentError.message});
+        await orderRef.update({paymentStatus:"ERROR",paymentError:String(paymentError.message).slice(0,120),updatedAt:FieldValue.serverTimestamp()}).catch(()=>{});
+        return res.status(502).json({error:paymentError.message==="payment_email_required"?"payment_email_required":paymentError.message==="payment_not_configured"?"payment_not_configured":"payment_creation_failed",orderId:orderRef.id});
+      }
+    }
+    return res.status(201).json({ok:true,orderId:orderRef.id,number,subtotalCents:totalCents,deliveryFeeCents,originalDeliveryFeeCents,totalCents:totalCents+deliveryFeeCents,paymentMethod,deliveryPin,payment,status:["PIX","CARD_ONLINE"].includes(paymentMethod)?"PENDING_PAYMENT":"RECEIVED"});
   }catch(e){console.error("create-order",e);const code=e?.message||"internal_error";const known=["address_not_found","origin_not_found","destination_not_found","route_not_found","geocoder_unavailable","routing_unavailable","order_write_failed","origin_address_incomplete"];const safe=known.includes(code)?code:code==="Firebase Admin não configurado"?"firebase_admin_not_configured":"internal_error";return res.status(safe==="origin_address_incomplete"?422:safe==="internal_error"?500:502).json({error:safe,...(code==="order_write_failed"?{firestoreCode:e.firestoreCode||"unknown",writeMessage:e.writeMessage||"unknown"}:{})})}
 }
