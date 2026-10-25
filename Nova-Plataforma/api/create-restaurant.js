@@ -18,12 +18,45 @@ export default async function handler(req,res){
     const authHeader=req.headers.authorization||"";
     if(!authHeader.startsWith("Bearer ")) return res.status(401).json({error:"unauthorized"});
     const decoded=await getAuth().verifyIdToken(authHeader.slice(7),true);
+    if((req.method==="GET"&&req.query.action==="shifts")||(req.method==="POST"&&req.body?.action==="shift")){
+      const restaurantId=String(req.method==="GET"?req.query.restaurantId:req.body?.restaurantId||"");
+      if(!/^[a-zA-Z0-9_-]{5,128}$/.test(restaurantId))return res.status(400).json({error:"invalid_restaurant"});
+      const db=getFirestore(),restaurant=db.collection("restaurants").doc(restaurantId);
+      const actor=await restaurant.collection("members").doc(decoded.uid).get();
+      if(!actor.exists||actor.data().active!==true)return res.status(403).json({error:"access_denied"});
+      const role=actor.data().role;
+      const supervisor=role==="owner"||(role==="manager"&&Array.isArray(actor.data().permissions)&&actor.data().permissions.includes("Equipe em serviço"));
+      const shifts=restaurant.collection("staffShifts");
+      if(req.method==="GET"){
+        const snap=supervisor?await shifts.limit(150).get():await shifts.where("uid","==",decoded.uid).limit(20).get();
+        return res.status(200).json({supervisor,shifts:snap.docs.map(d=>({uid:d.id,name:d.data().name||"",email:d.data().email||"",status:d.data().status||"off",requestedAt:d.data().requestedAt?.toDate?.()?.toISOString?.()||null,startedAt:d.data().startedAt?.toDate?.()?.toISOString?.()||null,endedAt:d.data().endedAt?.toDate?.()?.toISOString?.()||null}))});
+      }
+      const operation=String(req.body.operation||"");
+      const uid=operation==="request"?decoded.uid:String(req.body.uid||"");
+      if(!/^[a-zA-Z0-9_-]{5,128}$/.test(uid))return res.status(400).json({error:"invalid_employee"});
+      if(operation!=="request"&&!supervisor)return res.status(403).json({error:"supervisor_only"});
+      if(!["request","approve","end","reject"].includes(operation))return res.status(400).json({error:"invalid_operation"});
+      const member=await restaurant.collection("members").doc(uid).get();
+      if(!member.exists||member.data().active!==true||member.data().role==="owner")return res.status(403).json({error:"invalid_employee"});
+      const ref=shifts.doc(uid),now=FieldValue.serverTimestamp();
+      await db.runTransaction(async tx=>{
+        const current=await tx.get(ref),status=current.exists?current.data().status:"off";
+        if(operation==="request"&&status!=="off"&&status!=="ended"&&status!=="rejected")throw new Error("shift_already_pending_or_active");
+        if(operation==="approve"&&status!=="pending")throw new Error("shift_not_pending");
+        if(operation==="end"&&status!=="active")throw new Error("shift_not_active");
+        if(operation==="reject"&&status!=="pending")throw new Error("shift_not_pending");
+        const next=operation==="request"?"pending":operation==="approve"?"active":operation==="end"?"ended":"rejected";
+        tx.set(ref,{uid,name:member.data().name||"",email:member.data().email||"",status:next,updatedAt:now,...(operation==="request"?{requestedAt:now,startedAt:null,endedAt:null}:operation==="approve"?{startedAt:now,approvedBy:decoded.uid}:operation==="end"?{endedAt:now,endedBy:decoded.uid}:{rejectedAt:now,rejectedBy:decoded.uid})},{merge:true});
+        tx.set(restaurant.collection("audit").doc(),{action:"SHIFT_"+operation.toUpperCase(),actorUid:decoded.uid,targetUid:uid,createdAt:now});
+      });
+      return res.status(200).json({ok:true});
+    }
     if(req.method==="GET"&&req.query.action==="employees"){
       const id=String(req.query.restaurantId||"");if(!/^[a-zA-Z0-9_-]{5,128}$/.test(id))return res.status(400).json({error:"invalid_restaurant"});
       const db=getFirestore(),access=await db.collection("restaurants").doc(id).collection("members").doc(decoded.uid).get();
       if(!access.exists||access.data().active!==true)return res.status(403).json({error:"access_denied"});
       const role=access.data().role||"employee";
-      const permissionKeys=["Início","Pedidos","Cardápio","Clientes","Financeiro","Cozinha","Mesas e comandas","Delivery","Entregadores","Promoções","Marketing","Configurações","Meu plano","Funcionários e permissões"];
+      const permissionKeys=["Início","Pedidos","Cardápio","Clientes","Financeiro","Cozinha","Mesas e comandas","Delivery","Entregadores","Promoções","Marketing","Configurações","Meu plano","Funcionários e permissões","Equipe em serviço"];
       const permissions=role==="owner"?permissionKeys:(Array.isArray(access.data().permissions)?access.data().permissions:[]);
       if(role!=="owner")return res.status(200).json({role,permissions,employees:[]});
       const members=await db.collection("restaurants").doc(id).collection("members").get();
