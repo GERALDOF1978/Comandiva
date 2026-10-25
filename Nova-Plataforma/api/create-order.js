@@ -151,7 +151,8 @@ export default async function handler(req,res){
         const amount=(totalCents+deliveryFeeCents)/100;
         if(amount<=0)throw new Error("invalid_payment_amount");
         const externalReference=restaurantId+":"+orderRef.id;
-        const base=process.env.VERCEL_PROJECT_PRODUCTION_URL||process.env.PAYMENT_PUBLIC_HOST;
+        const base=process.env.PAYMENT_PUBLIC_HOST||process.env.VERCEL_PROJECT_PRODUCTION_URL||process.env.VERCEL_URL;
+        if(!base)throw new Error("payment_callback_not_configured");
         const webhookUrl=base?"https://"+String(base).replace(/^https?:\/\//,"").replace(/\/$/,"")+"/api/payment-status?restaurantId="+encodeURIComponent(restaurantId):undefined;
         let endpoint,payload;
         if(paymentMethod==="PIX"){
