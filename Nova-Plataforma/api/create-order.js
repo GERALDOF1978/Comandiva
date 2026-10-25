@@ -181,6 +181,6 @@ export default async function handler(req,res){
         return res.status(502).json({error:paymentError.message==="payment_email_required"?"payment_email_required":paymentError.message==="payment_not_configured"?"payment_not_configured":"payment_creation_failed",orderId:orderRef.id});
       }
     }
-    return res.status(201).json({ok:true,orderId:orderRef.id,number,subtotalCents:totalCents,deliveryFeeCents,originalDeliveryFeeCents,totalCents:totalCents+deliveryFeeCents,paymentMethod,deliveryPin,payment,status:["PIX","CARD_ONLINE"].includes(paymentMethod)?"PENDING_PAYMENT":"RECEIVED"});
+    return res.status(201).json({ok:true,orderId:orderRef.id,restaurantId,number,subtotalCents:totalCents,deliveryFeeCents,originalDeliveryFeeCents,totalCents:totalCents+deliveryFeeCents,paymentMethod,deliveryPin,payment,status:["PIX","CARD_ONLINE"].includes(paymentMethod)?"PENDING_PAYMENT":"RECEIVED"});
   }catch(e){console.error("create-order",e);const code=e?.message||"internal_error";const known=["address_not_found","origin_not_found","destination_not_found","route_not_found","geocoder_unavailable","routing_unavailable","order_write_failed","origin_address_incomplete"];const safe=known.includes(code)?code:code==="Firebase Admin não configurado"?"firebase_admin_not_configured":"internal_error";return res.status(safe==="origin_address_incomplete"?422:safe==="internal_error"?500:502).json({error:safe,...(code==="order_write_failed"?{firestoreCode:e.firestoreCode||"unknown",writeMessage:e.writeMessage||"unknown"}:{})})}
 }
