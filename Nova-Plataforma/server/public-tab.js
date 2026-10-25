@@ -1,3 +1,4 @@
+import {startTabPix} from "./tab-pix.js";
 import {cert,getApps,initializeApp} from "firebase-admin/app";
 import {getFirestore,FieldValue} from "firebase-admin/firestore";
 function init(){if(!getApps().length)initializeApp({credential:cert({projectId:process.env.FIREBASE_PROJECT_ID,clientEmail:process.env.FIREBASE_CLIENT_EMAIL,privateKey:process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g,"\n")})})}
@@ -9,7 +10,7 @@ export default async function handler(req,res){
  const db=getFirestore(),mapping=await db.collection("restaurantSlugs").doc(slug).get();if(!mapping.exists||mapping.data().active===false)return res.status(404).json({error:"not_found"});
  const base=db.collection("restaurants").doc(mapping.data().restaurantId),ref=base.collection("tabs").doc(tabId),tab=await ref.get();
  if(!tab.exists||tab.data().customerAccessToken!==access)return res.status(403).json({error:"invalid_tab_link"});
- if(req.method==="GET"){const d=tab.data();const ordersSnap=await base.collection("orders").where("tabId","==",tabId).limit(200).get();const orders=ordersSnap.docs.filter(o=>o.data().channel==="TABLE"&&o.data().status!=="CANCELLED"&&!o.id.startsWith("tabpayment_")).map(o=>({id:o.id,number:o.data().number,status:o.data().status,items:(o.data().items||[]).map(i=>({name:i.name,qty:i.qty,priceCents:i.priceCents,totalCents:i.totalCents})),createdAt:o.data().createdAt?.toDate?.()?.toISOString()||null})).sort((a,b)=>(a.createdAt||"").localeCompare(b.createdAt||""));return res.status(200).json({tab:{label:d.label,type:d.type,status:d.status,totalCents:Number(d.totalCents||0),orders}})}
+ if(req.method==="GET"){const d=tab.data();const ordersSnap=await base.collection("orders").where("tabId","==",tabId).limit(200).get();const orders=ordersSnap.docs.filter(o=>o.data().channel==="TABLE"&&o.data().status!=="CANCELLED"&&!o.id.startsWith("tabpayment_")).map(o=>({id:o.id,number:o.data().number,status:o.data().status,items:(o.data().items||[]).map(i=>({name:i.name,qty:i.qty,priceCents:i.priceCents,totalCents:i.totalCents})),createdAt:o.data().createdAt?.toDate?.()?.toISOString()||null})).sort((a,b)=>(a.createdAt||"").localeCompare(b.createdAt||""));return res.status(200).json({tab:{label:d.label,type:d.type,status:d.status,totalCents:Number(d.totalCents||0),pixPayment:d.pixPayment||null,orders}})}
  const action=clean(input.action);
  if(action==="ORDER"){
  const name=clean(input.name).slice(0,90),phone=clean(input.phone).replace(/\D/g,"").slice(0,15),items=input.items;
@@ -28,6 +29,7 @@ export default async function handler(req,res){
  await db.runTransaction(async tx=>{const current=await tx.get(ref);if(!current.exists||current.data().customerAccessToken!==access||current.data().status!=="OPEN")throw new Error("not_open");const d=current.data();tx.set(callRef,{tabId,table:(d.type==="TABLE"?"Mesa ":"Comanda ")+d.label,reason,status:"PENDING",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()})});
  return res.status(200).json({ok:true});
  }
+ if(action==="CREATE_PIX"){const phone=clean(input.phone).replace(/\D/g,"");if(phone.length<10||!(tab.data().customerPhones||[]).includes(phone))return res.status(403).json({error:"phone_not_found"});try{return res.status(200).json({ok:true,payment:await startTabPix(base,ref,mapping.data().restaurantId)})}catch(e){return res.status(409).json({error:e.message})}}
  if(action==="REQUEST_BILL"){
  const phone=clean(input.phone).replace(/\D/g,"");if(phone.length<10)return res.status(400).json({error:"invalid_phone"});
  await db.runTransaction(async tx=>{const current=await tx.get(ref);if(!current.exists||current.data().customerAccessToken!==access||current.data().status!=="OPEN")throw new Error("not_open");if(!(current.data().customerPhones||[]).includes(phone))throw new Error("phone_not_found");tx.update(ref,{status:"BILL_REQUESTED",requestedPaymentMethod:["CASH","CARD_ON_DELIVERY"].includes(input.paymentMethod)?input.paymentMethod:null,updatedAt:FieldValue.serverTimestamp()})});
