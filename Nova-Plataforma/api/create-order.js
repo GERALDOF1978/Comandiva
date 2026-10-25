@@ -152,7 +152,7 @@ export default async function handler(req,res){
         if(amount<=0)throw new Error("invalid_payment_amount");
         const externalReference=restaurantId+":"+orderRef.id;
         const base=process.env.VERCEL_PROJECT_PRODUCTION_URL||process.env.PAYMENT_PUBLIC_HOST;
-        const webhookUrl=base?"https://"+String(base).replace(/^https?:\/\//,"").replace(/\/$/,"")+"/api/payment-status":undefined;
+        const webhookUrl=base?"https://"+String(base).replace(/^https?:\/\//,"").replace(/\/$/,"")+"/api/payment-status?restaurantId="+encodeURIComponent(restaurantId):undefined;
         let endpoint,payload;
         if(paymentMethod==="PIX"){
           const email=clean(body.customer?.email).toLowerCase();
