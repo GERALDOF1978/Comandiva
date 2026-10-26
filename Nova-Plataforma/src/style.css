@@ -727,3 +727,11 @@
 .shiftActions button{border:1px solid #e4e7ec;border-radius:10px;padding:10px 14px;background:#fff;color:#101828;font-weight:700;cursor:pointer}
 .shiftActions button:first-child{background:#fff1e6;border-color:#fb923c;color:#9a3412}
 .shiftActions button:disabled{opacity:.5;cursor:not-allowed}
+
+/* Mobile quick navigation: prominent centered Home shortcut */
+@media(max-width:900px){
+.restaurantQuickNav button.quickNavHome{position:relative;align-self:center;transform:translateY(-12px);min-height:64px;border-radius:18px;background:#172c60;color:#fff;box-shadow:0 5px 16px #172c6050;padding:8px 4px;z-index:1}
+.restaurantQuickNav button.quickNavHome svg{width:26px;height:26px;stroke-width:2.4}
+.restaurantQuickNav button.quickNavHome span{font-size:11px;font-weight:800}
+.restaurantQuickNav button.quickNavHome.active{background:#f97316;color:#fff;box-shadow:0 5px 16px #f9731655}
+}
