@@ -38,7 +38,7 @@ export default async function handler(req,res){
  const incoming=Array.isArray(body.items)?body.items:[];
  if(!incoming.length||incoming.length>100)return res.status(400).json({error:"invalid_items"});
  const merged=new Map();
- for(const item of incoming){const pid=String(item.productId||""),qty=Number(item.qty);if(!/^[\\w-]{5,128}$/.test(pid)||!Number.isInteger(qty)||qty<1||qty>50)return res.status(400).json({error:"invalid_item"});merged.set(pid,(merged.get(pid)||0)+qty)}
+ for(const item of incoming){const pid=String(item.productId||""),qty=Number(item.qty);if(!/^[\w-]{5,128}$/.test(pid)||!Number.isInteger(qty)||qty<1||qty>50)return res.status(400).json({error:"invalid_item"});merged.set(pid,(merged.get(pid)||0)+qty)}
  if(merged.size>60||[...merged.values()].some(q=>q>50))return res.status(400).json({error:"invalid_items"});
  const entries=await Promise.all([...merged].map(async([pid,qty])=>{const doc=await base.collection("products").doc(pid).get();if(!doc.exists||doc.data().active===false||doc.data().sellAtTable===false)throw new Error("product_unavailable");const p=doc.data(),price=Number(p.priceCents);if(!Number.isInteger(price)||price<0)throw new Error("invalid_price");return{productId:pid,name:String(p.name||"Produto"),qty,priceCents:price}}));
  const orderRef=base.collection("orders").doc();
