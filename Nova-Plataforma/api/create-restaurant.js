@@ -16,9 +16,20 @@ export default async function handler(req,res){
   if(req.method!=="POST"&&req.method!=="GET") return res.status(405).json({error:"method_not_allowed"});
   try{
     getAdmin();
+    if(req.method==="GET"&&req.query.action==="publicBrand"){const snap=await getFirestore().doc("platformSettings/branding").get(),d=snap.data()||{};res.setHeader("Cache-Control","public, max-age=60, s-maxage=300");return res.status(200).json({logoUrl:d.logoUrl||"",bannerUrl:d.bannerUrl||""})}
     const authHeader=req.headers.authorization||"";
     if(!authHeader.startsWith("Bearer ")) return res.status(401).json({error:"unauthorized"});
     const decoded=await getAuth().verifyIdToken(authHeader.slice(7),true);
+    if((req.method==="GET"&&req.query.action==="platformBrand")||(req.method==="POST"&&req.body?.action==="platformBrand")){
+      const admin=await getFirestore().doc("platformAdmins/"+decoded.uid).get();
+      if(!admin.exists||admin.data().active!==true)return res.status(403).json({error:"master_only"});
+      const ref=getFirestore().doc("platformSettings/branding");
+      if(req.method==="GET"){const snap=await ref.get();return res.status(200).json({logoUrl:snap.data()?.logoUrl||"",bannerUrl:snap.data()?.bannerUrl||""})}
+      const logoUrl=String(req.body.logoUrl||""),bannerUrl=String(req.body.bannerUrl||"");
+      if([logoUrl,bannerUrl].some(v=>v&&(!/^https:\/\//i.test(v)||v.length>2048)))return res.status(400).json({error:"invalid_brand_url"});
+      await ref.set({logoUrl,bannerUrl,updatedBy:decoded.uid,updatedAt:FieldValue.serverTimestamp()},{merge:true});
+      return res.status(200).json({ok:true});
+    }
     if((req.method==="GET"&&req.query.action==="mpCredentials")||(req.method==="POST"&&req.body?.action==="mpCredentials")){
       const restaurantId=String(req.method==="GET"?req.query.restaurantId:req.body?.restaurantId||"");
       if(!/^[a-zA-Z0-9_-]{5,128}$/.test(restaurantId))return res.status(400).json({error:"invalid_restaurant"});
