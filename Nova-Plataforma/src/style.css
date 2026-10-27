@@ -759,3 +759,12 @@
 .dishyShowcaseControls>button{border:1px solid #e2e8f0;border-radius:50%;background:#fff;color:#14213a;width:39px;height:39px;font-size:28px;cursor:pointer}
 .dishyShowcaseControls span{display:flex;gap:8px}.dishyShowcaseControls span button{width:10px;height:10px;padding:0;border:0;border-radius:50%;background:#cbd5e1;cursor:pointer}.dishyShowcaseControls span button.selected{background:#f97316;width:25px;border-radius:10px}
 @media(max-width:650px){.dishyShowcaseGrid{gap:9px}.dishyDemoScreen{height:250px;padding:10px 8px;gap:7px}.dishyDemoHeader{padding-bottom:7px}.dishyDemoBrand{font-size:17px}.dishyDemoHeader small{font-size:8px}.dishyDemoLine{padding:8px 5px;font-size:10px;border-radius:8px}.dishyDemoLine b{font-size:9px}.dishyDemoFood{font-size:26px;gap:5px;padding:8px}.dishyDemoFood span{font-size:11px}.dishyDemoQR{font-size:78px}.dishyDemoPrice{font-size:20px}.dishyDemoAction{font-size:10px;padding:9px 4px}.dishyShowcaseCaption{padding:11px 9px 15px}.dishyShowcaseCaption h3{font-size:13px}.dishyShowcaseCaption p{font-size:11px}}
+
+
+/* Platform brand assets on the public Dishy commercial landing */
+.dishyCommercialLogoImage{height:46px;width:auto;max-width:180px;object-fit:contain;display:block}
+.dishyHeroWithBanner{position:relative;isolation:isolate}
+.dishyHeroWithBanner:before{content:"";position:absolute;inset:0;z-index:-1;background-image:linear-gradient(90deg,rgba(9,21,40,.94),rgba(9,21,40,.70) 52%,rgba(9,21,40,.30)),var(--dishy-commercial-banner);background-size:cover;background-position:center;border-radius:inherit}
+.dishyHeroWithBanner .dishyHeroText,.dishyHeroWithBanner .dishyHeroText h1,.dishyHeroWithBanner .dishyHeroText p,.dishyHeroWithBanner .dishyHeroText .dishyEyebrow{color:#fff}
+.dishyHeroWithBanner .dishyHeroText em{color:#ff8b3d}
+@media(max-width:650px){.dishyCommercialLogoImage{height:36px;max-width:135px}.dishyHeroWithBanner:before{background-image:linear-gradient(90deg,rgba(9,21,40,.92),rgba(9,21,40,.68)),var(--dishy-commercial-banner)}}
