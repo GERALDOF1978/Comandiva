@@ -20,6 +20,31 @@ export default async function handler(req,res){
     const authHeader=req.headers.authorization||"";
     if(!authHeader.startsWith("Bearer ")) return res.status(401).json({error:"unauthorized"});
     const decoded=await getAuth().verifyIdToken(authHeader.slice(7),true);
+    if(req.method==="POST"&&req.body?.action==="posSale"){
+      const body=req.body||{},rid=String(body.restaurantId||"");
+      if(!/^[a-zA-Z0-9_-]{5,128}$/.test(rid))return res.status(400).json({error:"invalid_restaurant"});
+      const db=getFirestore(),restaurant=db.collection("restaurants").doc(rid);
+      const [restaurantSnap,member,access]=await Promise.all([restaurant.get(),restaurant.collection("members").doc(decoded.uid).get(),db.collection("userRestaurantAccess").doc(decoded.uid).collection("restaurants").doc(rid).get()]);
+      if(!restaurantSnap.exists)return res.status(404).json({error:"restaurant_not_found"});
+      const isOwner=restaurantSnap.data().ownerUid===decoded.uid||(member.exists&&member.data().active===true&&member.data().role==="owner");
+      const isMember=access.exists&&access.data().active===true;
+      if(!isOwner&&!isMember)return res.status(403).json({error:"access_denied"});
+      if(!isOwner){const perms=member.data()?.permissions||access.data()?.permissions||[];if(!Array.isArray(perms)||!perms.includes("PDV"))return res.status(403).json({error:"pos_permission_required"})}
+      const method=String(body.paymentMethod||"");
+      if(!["CASH","CARD_ON_DELIVERY"].includes(method))return res.status(400).json({error:"pos_payment_not_supported"});
+      const raw=Array.isArray(body.items)?body.items:[];
+      if(!raw.length||raw.length>40)return res.status(400).json({error:"invalid_items"});
+      const grouped=new Map();
+      for(const item of raw){const id=String(item.productId||""),qty=Number(item.quantity);if(!/^[a-zA-Z0-9_-]{5,128}$/.test(id)||!Number.isInteger(qty)||qty<1||qty>99)return res.status(400).json({error:"invalid_item"});grouped.set(id,(grouped.get(id)||0)+qty)}
+      if([...grouped.values()].some(q=>q>99))return res.status(400).json({error:"invalid_quantity"});
+      const entries=await Promise.all([...grouped.keys()].map(id=>restaurant.collection("products").doc(id).get()));
+      const items=[];let totalCents=0;
+      for(const snap of entries){const p=snap.data();if(!snap.exists||p.active===false||p.available===false)return res.status(409).json({error:"product_unavailable"});const price=Number(p.priceCents),quantity=grouped.get(snap.id);if(!Number.isSafeInteger(price)||price<0)return res.status(409).json({error:"invalid_product_price"});items.push({productId:snap.id,name:String(p.name||"Produto").slice(0,120),quantity,qty:quantity,unitPriceCents:price,priceCents:price,totalCents:price*quantity});totalCents+=price*quantity}
+      if(totalCents<=0||totalCents>100000000)return res.status(400).json({error:"invalid_total"});
+      const ref=restaurant.collection("orders").doc(),now=FieldValue.serverTimestamp();
+      await ref.create({code:"PDV-"+ref.id.slice(0,6).toUpperCase(),channel:"PICKUP",source:"POS",customer:{name:String(body.customerName||"Balcão").trim().slice(0,80)||"Balcão",phone:""},customerName:String(body.customerName||"Balcão").trim().slice(0,80)||"Balcão",items,totalCents,subtotalCents:totalCents,deliveryFeeCents:0,paymentMethod:method,paymentStatus:"PAID",status:"RECEIVED",createdAt:now,updatedAt:now,paidAt:now,createdBy:decoded.uid,notes:String(body.notes||"").slice(0,500)});
+      return res.status(201).json({ok:true,orderId:ref.id,code:"PDV-"+ref.id.slice(0,6).toUpperCase(),totalCents});
+    }
     if((req.method==="GET"&&req.query.action==="platformBrand")||(req.method==="POST"&&req.body?.action==="platformBrand")){
       const admin=await getFirestore().doc("platformAdmins/"+decoded.uid).get();
       if(!admin.exists||admin.data().active!==true)return res.status(403).json({error:"master_only"});
