@@ -735,3 +735,27 @@
 .restaurantQuickNav button.quickNavHome span{font-size:11px;font-weight:800}
 .restaurantQuickNav button.quickNavHome.active{background:#f97316;color:#fff;box-shadow:0 5px 16px #f9731655}
 }
+
+
+/* Commercial product showcase: two cards per slide, responsive on mobile */
+.dishyShowcase{overflow:hidden}
+.dishyShowcaseGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;max-width:1040px;margin:26px auto 0}
+.dishyShowcaseCard{min-width:0;border:1px solid #e5e9f0;border-radius:22px;background:#fff;overflow:hidden;box-shadow:0 16px 38px rgba(15,23,42,.07)}
+.dishyDemoScreen{height:320px;background:linear-gradient(145deg,#f4f7fb,#fff);padding:18px 22px;display:flex;flex-direction:column;gap:11px;color:#17243b;overflow:hidden}
+.dishyDemoHeader{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e5e7eb;padding-bottom:12px}
+.dishyDemoBrand{font-weight:900;color:#fb7418;font-size:23px}.dishyDemoHeader small{font-size:10px;font-weight:800;letter-spacing:.08em;color:#475569}
+.dishyDemoLine{display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px;gap:8px;font-size:13px}
+.dishyDemoLine b{font-size:12px;color:#f97316;white-space:nowrap}
+.dishyDemoFood{background:linear-gradient(120deg,#1c2c1e,#4e391e);color:#fff;border-radius:14px;display:flex;align-items:center;gap:14px;padding:15px;font-size:44px}.dishyDemoFood span{font-size:17px;font-weight:800}
+.dishyDemoAction{margin-top:auto;text-align:center;padding:12px;background:#f97316;color:#fff;border-radius:10px;font-weight:800;font-size:13px}
+.dishyDemoQR{font-size:110px;text-align:center;line-height:1;color:#15223b;font-weight:900;letter-spacing:-.12em}
+.dishyDemoPrice{text-align:center;font-size:25px;font-weight:900}
+.dishyDemoScreen>small{text-align:center;color:#64748b;font-size:10px}
+.dishyDemo-pix .dishyDemoAction{background:#059669}
+.dishyDemo-kitchen{background:linear-gradient(145deg,#14243c,#253955);color:#fff}
+.dishyDemo-kitchen .dishyDemoHeader{border-color:#475569}.dishyDemo-kitchen .dishyDemoHeader small{color:#fff}
+.dishyShowcaseCaption{padding:17px 20px 20px}.dishyShowcaseCaption h3{font-size:18px;margin:0 0 6px;color:#14213a}.dishyShowcaseCaption p{font-size:13px;color:#64748b;line-height:1.5;margin:0}
+.dishyShowcaseControls{display:flex;justify-content:center;align-items:center;gap:22px;margin:22px 0}
+.dishyShowcaseControls>button{border:1px solid #e2e8f0;border-radius:50%;background:#fff;color:#14213a;width:39px;height:39px;font-size:28px;cursor:pointer}
+.dishyShowcaseControls span{display:flex;gap:8px}.dishyShowcaseControls span button{width:10px;height:10px;padding:0;border:0;border-radius:50%;background:#cbd5e1;cursor:pointer}.dishyShowcaseControls span button.selected{background:#f97316;width:25px;border-radius:10px}
+@media(max-width:650px){.dishyShowcaseGrid{gap:9px}.dishyDemoScreen{height:250px;padding:10px 8px;gap:7px}.dishyDemoHeader{padding-bottom:7px}.dishyDemoBrand{font-size:17px}.dishyDemoHeader small{font-size:8px}.dishyDemoLine{padding:8px 5px;font-size:10px;border-radius:8px}.dishyDemoLine b{font-size:9px}.dishyDemoFood{font-size:26px;gap:5px;padding:8px}.dishyDemoFood span{font-size:11px}.dishyDemoQR{font-size:78px}.dishyDemoPrice{font-size:20px}.dishyDemoAction{font-size:10px;padding:9px 4px}.dishyShowcaseCaption{padding:11px 9px 15px}.dishyShowcaseCaption h3{font-size:13px}.dishyShowcaseCaption p{font-size:11px}}
