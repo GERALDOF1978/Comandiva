@@ -768,3 +768,5 @@
 .dishyHeroWithBanner .dishyHeroText,.dishyHeroWithBanner .dishyHeroText h1,.dishyHeroWithBanner .dishyHeroText p,.dishyHeroWithBanner .dishyHeroText .dishyEyebrow{color:#fff}
 .dishyHeroWithBanner .dishyHeroText em{color:#ff8b3d}
 @media(max-width:650px){.dishyCommercialLogoImage{height:36px;max-width:135px}.dishyHeroWithBanner:before{background-image:linear-gradient(90deg,rgba(9,21,40,.92),rgba(9,21,40,.68)),var(--dishy-commercial-banner)}}
+
+.dishyRealPreview{height:320px;background:#f3f5f9;display:flex;justify-content:center;align-items:center;overflow:hidden;padding:10px}.dishyRealPreview>img{display:block;height:100%;width:100%;object-fit:contain;border-radius:12px;filter:drop-shadow(0 6px 12px rgba(10,25,45,.15))}.dishyDemoFallback{width:100%;height:100%}@media(max-width:650px){.dishyRealPreview{height:250px;padding:6px}}
