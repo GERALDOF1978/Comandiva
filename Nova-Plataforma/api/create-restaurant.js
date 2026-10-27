@@ -1,4 +1,4 @@
-import {createCipheriv,randomBytes} from "node:crypto";
+import {createCipheriv,createDecipheriv,randomBytes} from "node:crypto";
 import {cert,getApps,initializeApp} from "firebase-admin/app";
 import {getAuth} from "firebase-admin/auth";
 import {FieldValue,getFirestore} from "firebase-admin/firestore";
@@ -31,7 +31,7 @@ export default async function handler(req,res){
       if(!isOwner&&!isMember)return res.status(403).json({error:"access_denied"});
       if(!isOwner){const perms=member.data()?.permissions||access.data()?.permissions||[];if(!Array.isArray(perms)||!perms.includes("PDV"))return res.status(403).json({error:"pos_permission_required"})}
       const method=String(body.paymentMethod||"");
-      if(!["CASH","CARD_ON_DELIVERY"].includes(method))return res.status(400).json({error:"pos_payment_not_supported"});
+      if(!["CASH","CARD_ON_DELIVERY","PIX"].includes(method))return res.status(400).json({error:"pos_payment_not_supported"});
       const raw=Array.isArray(body.items)?body.items:[];
       if(!raw.length||raw.length>40)return res.status(400).json({error:"invalid_items"});
       const grouped=new Map();
@@ -42,8 +42,27 @@ export default async function handler(req,res){
       for(const snap of entries){const p=snap.data();if(!snap.exists||p.active===false||p.available===false)return res.status(409).json({error:"product_unavailable"});const price=Number(p.priceCents),quantity=grouped.get(snap.id);if(!Number.isSafeInteger(price)||price<0)return res.status(409).json({error:"invalid_product_price"});items.push({productId:snap.id,name:String(p.name||"Produto").slice(0,120),quantity,qty:quantity,unitPriceCents:price,priceCents:price,totalCents:price*quantity});totalCents+=price*quantity}
       if(totalCents<=0||totalCents>100000000)return res.status(400).json({error:"invalid_total"});
       const ref=restaurant.collection("orders").doc(),now=FieldValue.serverTimestamp();
-      await ref.create({code:"PDV-"+ref.id.slice(0,6).toUpperCase(),channel:"PICKUP",source:"POS",customer:{name:String(body.customerName||"Balcão").trim().slice(0,80)||"Balcão",phone:""},customerName:String(body.customerName||"Balcão").trim().slice(0,80)||"Balcão",items,totalCents,subtotalCents:totalCents,deliveryFeeCents:0,paymentMethod:method,paymentStatus:"PAID",status:"RECEIVED",createdAt:now,updatedAt:now,paidAt:now,createdBy:decoded.uid,notes:String(body.notes||"").slice(0,500)});
-      return res.status(201).json({ok:true,orderId:ref.id,code:"PDV-"+ref.id.slice(0,6).toUpperCase(),totalCents});
+      const ready=items.every(item=>{const p=entries.find(d=>d.id===item.productId).data();return p.requiresPreparation===false});
+      const status=method==="PIX"?"PENDING_PAYMENT":ready?"READY":"RECEIVED";
+      await ref.create({code:"PDV-"+ref.id.slice(0,6).toUpperCase(),number:"PDV-"+ref.id.slice(0,6).toUpperCase(),channel:"PICKUP",source:"POS",customer:{name:String(body.customerName||"Balcão").trim().slice(0,80)||"Balcão",phone:""},customerSnapshot:{name:String(body.customerName||"Balcão").trim().slice(0,80)||"Balcão"},customerName:String(body.customerName||"Balcão").trim().slice(0,80)||"Balcão",items,totalCents,subtotalCents:totalCents,deliveryFeeCents:0,paymentMethod:method,paymentStatus:method==="PIX"?"PENDING":"PAID",status,requiresPreparation:!ready,createdAt:now,updatedAt:now,...(method!=="PIX"?{paidAt:now}:{}),createdBy:decoded.uid,notes:String(body.notes||"").slice(0,500)});
+      if(method==="PIX"){
+        try{
+          const cfg=(await restaurant.collection("privateIntegrations").doc("mercadoPago").get()).data(),key=process.env.PAYMENT_CREDENTIALS_ENCRYPTION_KEY;
+          if(!cfg?.encryptedAccessToken||!/^[a-fA-F0-9]{64}$/.test(key||""))throw Error("payment_not_configured");
+          const decipher=createDecipheriv("aes-256-gcm",Buffer.from(key,"hex"),Buffer.from(cfg.iv,"base64"));decipher.setAuthTag(Buffer.from(cfg.authTag,"base64"));
+          const token=Buffer.concat([decipher.update(Buffer.from(cfg.encryptedAccessToken,"base64")),decipher.final()]).toString("utf8");
+          const base=process.env.PAYMENT_PUBLIC_HOST||process.env.VERCEL_PROJECT_PRODUCTION_URL||process.env.VERCEL_URL;
+          const webhook=base?"https://"+String(base).replace(/^https?:\/\//,"").replace(/\/$/,"")+"/api/create-order?action=payment-status&restaurantId="+encodeURIComponent(rid):null;
+          const payload={transaction_amount:totalCents/100,description:"Venda PDV "+ref.id.slice(0,6),payment_method_id:"pix",payer:{email:"pdv-"+ref.id+"@example.com",first_name:"Balcao"},external_reference:rid+":"+ref.id,...(webhook?{notification_url:webhook}:{})};
+          const response=await fetch("https://api.mercadopago.com/v1/payments",{method:"POST",headers:{Authorization:"Bearer "+token,"Content-Type":"application/json","X-Idempotency-Key":ref.id},body:JSON.stringify(payload),signal:AbortSignal.timeout(15000)});
+          const mp=await response.json(),data=mp.point_of_interaction?.transaction_data||{};
+          if(!response.ok||!data.qr_code||!mp.id)throw Error("pix_creation_failed");
+          await ref.update({provider:"mercado_pago",providerPaymentId:String(mp.id),updatedAt:FieldValue.serverTimestamp()});
+          return res.status(201).json({ok:true,orderId:ref.id,code:"PDV-"+ref.id.slice(0,6).toUpperCase(),totalCents,payment:{qrCode:data.qr_code,qrCodeBase64:data.qr_code_base64||null}});
+        }catch(e){await ref.update({paymentStatus:"ERROR",paymentError:String(e.message).slice(0,100)}).catch(()=>{});return res.status(502).json({error:e.message==="payment_not_configured"?"payment_not_configured":"pix_creation_failed",orderId:ref.id})}
+      }
+      return res.status(201).json({ok:true,orderId:ref.id,code:"PDV-"+ref.id.slice(0,6).toUpperCase(),totalCents,ready});
+
     }
     if((req.method==="GET"&&req.query.action==="platformBrand")||(req.method==="POST"&&req.body?.action==="platformBrand")){
       const admin=await getFirestore().doc("platformAdmins/"+decoded.uid).get();
