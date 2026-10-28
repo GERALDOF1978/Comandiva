@@ -846,3 +846,21 @@ display:flex;flex-direction:column;padding:14px;
 }
 
 .orderCard .orderCreatedAt{display:block;margin:3px 0 5px;font-size:12px;font-weight:700;color:#64748b;font-variant-numeric:tabular-nums}
+
+/* PDV: faixa operacional expressiva, com controles na mesma linha */
+.posPageLive{--pos-ink:#17243a;background:linear-gradient(145deg,#f4f8ff 0%,#fff9f2 65%,#f6fbff 100%);border-radius:20px;padding:16px}
+.posPageLive:fullscreen{overflow:auto;width:100vw;height:100vh;padding:24px;background:#f5f8fd}
+.posPageLive .posIntro{display:flex;align-items:center;gap:16px;justify-content:space-between;flex-wrap:wrap;background:linear-gradient(115deg,#172b49,#254c70);border-radius:18px;padding:18px 20px;box-shadow:0 12px 30px rgba(18,42,72,.18);color:white}
+.posPageLive .posIntro h2,.posPageLive .posIntro p,.posPageLive .posIntro small{color:#fff}
+.posPageLive .posShortcuts{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;overflow-x:auto;max-width:100%;padding:6px 2px;scrollbar-width:thin}
+.posPageLive .posShortcuts button{display:inline-flex;align-items:center;justify-content:center;gap:7px;flex:0 0 auto;white-space:nowrap;min-height:43px;padding:10px 13px;border-radius:12px;border:1px solid rgba(255,255,255,.35);background:linear-gradient(180deg,#fff,#e8f0ff);color:#16365a;font-weight:800;font-size:13px;box-shadow:0 4px 0 #a9bed6,0 7px 13px rgba(0,0,0,.16);transition:transform .16s,box-shadow .16s,filter .16s;cursor:pointer}
+.posPageLive .posShortcuts button:hover{transform:translateY(-2px);filter:brightness(1.04);box-shadow:0 6px 0 #a9bed6,0 10px 17px rgba(0,0,0,.18)}
+.posPageLive .posShortcuts button:active{transform:translateY(3px);box-shadow:0 1px 0 #a9bed6}
+.posPageLive .posShortcuts .posShortcutNew{background:linear-gradient(180deg,#ff6464,#c91935);color:white;border-color:#ff9292;box-shadow:0 4px 0 #8d1428,0 7px 16px rgba(190,20,40,.25);animation:posPulseAlert 1.2s ease-in-out infinite}
+.posPageLive .posShortcuts .posShortcutReady{background:linear-gradient(180deg,#43d18a,#0c935b);color:white;border-color:#79efb0;box-shadow:0 4px 0 #07623d,0 7px 16px rgba(4,120,70,.25);animation:posPulseAlert 1.2s ease-in-out infinite}
+.posPageLive .posShortcuts .posShortcutSoundOn{background:linear-gradient(180deg,#fff3a9,#ffce49);border-color:#ffe08a;color:#593c00}
+.posPageLive .posShortcuts .posShortcutFullscreen{background:linear-gradient(180deg,#93d9ff,#3d9fdc);border-color:#9cdeff;color:#082f4a}
+.posPageLive .posProduct{transition:transform .15s,box-shadow .15s}
+.posPageLive .posProduct:hover{transform:translateY(-3px);box-shadow:0 9px 22px rgba(25,53,92,.15)}
+@keyframes posPulseAlert{50%{filter:brightness(1.22);transform:scale(1.045)}}
+@media(prefers-reduced-motion:reduce){.posPageLive .posShortcuts .posShortcutAlert{animation:none}}
