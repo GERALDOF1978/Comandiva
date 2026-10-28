@@ -864,3 +864,23 @@ display:flex;flex-direction:column;padding:14px;
 .posPageLive .posProduct:hover{transform:translateY(-3px);box-shadow:0 9px 22px rgba(25,53,92,.15)}
 @keyframes posPulseAlert{50%{filter:brightness(1.22);transform:scale(1.045)}}
 @media(prefers-reduced-motion:reduce){.posPageLive .posShortcuts .posShortcutAlert{animation:none}}
+
+/* PDV: painel de pagamento acessível, categorias táteis e identidade da loja */
+.posPageLive{background:color-mix(in srgb,var(--pos-primary,#f97316) 9%,#e8eef6);border:1px solid color-mix(in srgb,var(--pos-secondary,#172b49) 22%,#d5dce7)}
+.posPageLive .posIntro{background:linear-gradient(120deg,var(--pos-secondary,#172b49),color-mix(in srgb,var(--pos-secondary,#172b49) 75%,var(--pos-primary,#f97316)))}
+.posPageLive .posCatalog,.posPageLive .posCheckout{border:2px solid color-mix(in srgb,var(--pos-secondary,#172b49) 20%,#dce5ee);box-shadow:0 9px 28px rgba(18,34,54,.12)}
+.posPageLive .posLayout{align-items:stretch}
+.posPageLive .posCheckout{box-sizing:border-box;height:calc(100dvh - 32px);max-height:calc(100dvh - 32px);min-height:440px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.posPageLive .posCartScroll{flex:1 1 auto;min-height:48px;overflow-y:auto}
+.posPageLive .posCheckoutFooter{position:sticky;bottom:0;z-index:3;flex-shrink:0;padding:12px 0 6px;border-top:2px solid color-mix(in srgb,var(--pos-primary,#f97316) 40%,#e2e8f0);box-shadow:0 -7px 16px rgba(18,34,54,.07)}
+.posPageLive .posFinish{background:var(--pos-primary,#f97316);color:#fff;border:2px solid color-mix(in srgb,var(--pos-primary,#f97316) 65%,#111827);box-shadow:0 4px 0 color-mix(in srgb,var(--pos-primary,#f97316) 55%,#111827);min-height:50px}
+.posPageLive .posCategories{gap:10px;padding:14px 3px 12px}
+.posPageLive .posCategories button{border-radius:12px;border:2px solid color-mix(in srgb,var(--pos-secondary,#172b49) 32%,#cbd5e1);background:linear-gradient(180deg,#fff,#e8edf5);color:#192c44;min-height:43px;padding:10px 16px;box-shadow:0 4px 0 #bdc8d7;font-size:13px;font-weight:850;transition:transform .15s,box-shadow .15s}
+.posPageLive .posCategories button:hover{transform:translateY(-2px);border-color:var(--pos-primary,#f97316)}
+.posPageLive .posCategories button:active{transform:translateY(2px);box-shadow:0 1px 0 #bdc8d7}
+.posPageLive .posCategories button.active{background:var(--pos-primary,#f97316);border-color:var(--pos-primary,#f97316);color:white;box-shadow:0 4px 0 color-mix(in srgb,var(--pos-primary,#f97316) 60%,#111827)}
+.posPageLive .posProduct{border:2px solid #d5dfeb;background:#fff}
+.posPageLive .posProduct:hover{border-color:var(--pos-primary,#f97316)}
+.posPageLive .posProduct>span{color:var(--pos-primary,#f97316);background:color-mix(in srgb,var(--pos-primary,#f97316) 9%,white)}
+.posPageLive .posMethodGrid button.selected{border-color:var(--pos-primary,#f97316);background:color-mix(in srgb,var(--pos-primary,#f97316) 9%,white)}
+@media(max-width:850px){.posPageLive .posCheckout{position:relative;top:auto;height:auto;max-height:none;min-height:360px;overflow:visible}.posPageLive .posCheckoutFooter{position:sticky;bottom:0}}
