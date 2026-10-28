@@ -1,7 +1,7 @@
 import QRCode from "qrcode";
 import React,{useEffect,useRef,useState}from"react";
 import{createRoot}from"react-dom/client";
-import{LayoutDashboard,ShoppingBag,ChefHat,Utensils,Package,Users,Settings,Store,Menu,Plus,WalletCards,LogOut,Mail,Lock,Building2,ShieldCheck,X,Truck,Tag,Megaphone,ChevronRight,MapPin,Phone,Clock3,Save,ImagePlus,Pencil,SlidersHorizontal,ShoppingCart,Minus,ExternalLink,Search,RefreshCw,Printer,QrCode,CreditCard,Banknote,Smartphone,Bell,Volume2}from"lucide-react";
+import{LayoutDashboard,ShoppingBag,ChefHat,Utensils,Package,Users,Settings,Store,Menu,Plus,WalletCards,LogOut,Mail,Lock,Building2,ShieldCheck,X,Truck,Tag,Megaphone,ChevronRight,MapPin,Phone,Clock3,Save,ImagePlus,Pencil,SlidersHorizontal,ShoppingCart,Minus,ExternalLink,Search,RefreshCw,Printer,QrCode,CreditCard,Banknote,Smartphone,Bell,Volume2,Maximize}from"lucide-react";
 import{onAuthStateChanged,signInWithEmailAndPassword,signInWithPopup,GoogleAuthProvider,signOut,sendEmailVerification,reload,createUserWithEmailAndPassword,sendPasswordResetEmail,signInAnonymously}from"firebase/auth";
 import{addDoc,collection,deleteDoc,doc,getDoc,getDocs,onSnapshot,orderBy,query,setDoc,serverTimestamp,updateDoc}from"firebase/firestore";
 import{auth,db,startAnalytics}from"./lib/firebase";
