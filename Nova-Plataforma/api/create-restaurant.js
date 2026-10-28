@@ -74,6 +74,32 @@ export default async function handler(req,res){
       await ref.set({logoUrl,bannerUrl,updatedBy:decoded.uid,updatedAt:FieldValue.serverTimestamp()},{merge:true});
       return res.status(200).json({ok:true});
     }
+    if((req.method==="GET"&&req.query.action==="pointTerminals")||(req.method==="POST"&&req.body?.action==="pointSelectTerminal")){
+      const rid=String(req.method==="GET"?req.query.restaurantId:req.body?.restaurantId||"");
+      if(!/^[a-zA-Z0-9_-]{5,128}$/.test(rid))return res.status(400).json({error:"invalid_restaurant"});
+      const restaurant=getFirestore().collection("restaurants").doc(rid);
+      const [rs,member]=await Promise.all([restaurant.get(),restaurant.collection("members").doc(decoded.uid).get()]);
+      if(!rs.exists)return res.status(404).json({error:"restaurant_not_found"});
+      if(rs.data().ownerUid!==decoded.uid&&!(member.exists&&member.data().active===true&&member.data().role==="owner"))return res.status(403).json({error:"owner_only"});
+      const integration=(await restaurant.collection("privateIntegrations").doc("mercadoPago").get()).data()||{};
+      if(!integration.encryptedAccessToken)return res.status(409).json({error:"mercado_pago_not_connected"});
+      const key=process.env.PAYMENT_CREDENTIALS_ENCRYPTION_KEY;
+      if(!/^[a-fA-F0-9]{64}$/.test(key||""))return res.status(503).json({error:"encryption_key_not_configured"});
+      const decipher=createDecipheriv("aes-256-gcm",Buffer.from(key,"hex"),Buffer.from(integration.iv,"base64"));decipher.setAuthTag(Buffer.from(integration.authTag,"base64"));
+      const token=Buffer.concat([decipher.update(Buffer.from(integration.encryptedAccessToken,"base64")),decipher.final()]).toString("utf8");
+      const mp=await fetch("https://api.mercadopago.com/point/integration-api/devices",{headers:{Authorization:"Bearer "+token},signal:AbortSignal.timeout(10000)});
+      const payload=await mp.json().catch(()=>({}));
+      if(!mp.ok)return res.status(502).json({error:"point_devices_unavailable",providerStatus:mp.status});
+      const terminals=(Array.isArray(payload.devices)?payload.devices:Array.isArray(payload)?payload:[]).map(d=>({id:String(d.id||""),name:String(d.name||d.id||""),status:String(d.status||"unknown")})).filter(d=>d.id);
+      if(req.method==="GET"){
+        const selected=(await restaurant.collection("privateIntegrations").doc("mercadoPagoPoint").get()).data()||{};
+        return res.status(200).json({terminals,selectedTerminalId:selected.terminalId||null,enabled:false,reason:"awaiting_terminal_validation"});
+      }
+      const id=String(req.body.terminalId||"");
+      if(!terminals.some(t=>t.id===id))return res.status(400).json({error:"terminal_not_in_account"});
+      await restaurant.collection("privateIntegrations").doc("mercadoPagoPoint").set({terminalId:id,accountId:integration.accountId||"",enabled:false,validationStatus:"PENDING_HARDWARE_TEST",updatedBy:decoded.uid,updatedAt:FieldValue.serverTimestamp()},{merge:true});
+      return res.status(200).json({ok:true,selectedTerminalId:id,enabled:false,validationStatus:"PENDING_HARDWARE_TEST"});
+    }
     if((req.method==="GET"&&req.query.action==="mpCredentials")||(req.method==="POST"&&req.body?.action==="mpCredentials")){
       const restaurantId=String(req.method==="GET"?req.query.restaurantId:req.body?.restaurantId||"");
       if(!/^[a-zA-Z0-9_-]{5,128}$/.test(restaurantId))return res.status(400).json({error:"invalid_restaurant"});
