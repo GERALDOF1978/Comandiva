@@ -918,3 +918,5 @@ display:flex;flex-direction:column;padding:14px;
 .driverEditActions{grid-column:1/-1;display:flex;gap:10px;justify-content:flex-end}
 .driverEditActions button{border:1px solid #b8c9df;border-radius:10px;padding:11px 17px;background:#fff;color:#17334f;font-weight:800;cursor:pointer}
 .driverEditActions button[type=submit]{background:#1676bb;color:#fff;border-color:#1676bb}
+
+.driverPortal .driverArrivedButton{background:#0f766e;color:#fff;border:1px solid #115e59;border-radius:10px;font-weight:850;padding:12px 15px;cursor:pointer}.driverPortal .driverArrivedButton:disabled{background:#d7eee9;color:#245f56;cursor:default}
