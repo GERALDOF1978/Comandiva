@@ -844,3 +844,5 @@ display:flex;flex-direction:column;padding:14px;
 .app:has(.posPage) .posCartScroll{flex:1 1 0;min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain}
 .app:has(.posPage) .posCheckoutFooter{flex-shrink:0;position:relative;bottom:auto;box-shadow:none;background:#fff}
 }
+
+.orderCard .orderCreatedAt{display:block;margin:3px 0 5px;font-size:12px;font-weight:700;color:#64748b;font-variant-numeric:tabular-nums}
