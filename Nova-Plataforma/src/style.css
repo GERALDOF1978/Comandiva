@@ -794,5 +794,34 @@
 
 .posPointConfig{margin:12px 0;padding:16px;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc}.posPointConfig h3{margin:0 0 6px}.posPointConfig p{font-size:13px;color:#475569}.posPointControls{display:flex;gap:8px;flex-wrap:wrap}.posPointControls button,.posPointControls select{padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;max-width:100%}.posPointControls button:disabled{opacity:.5}
 
-/* PDV compact desktop layout */
-@media(min-width:900px){.app:has(.posPage)>aside{display:none}.app:has(.posPage)>main{margin-left:0;width:100%}.app:has(.posPage) .posIntro h2{font-size:17px}.app:has(.posPage) .posIntro p,.app:has(.posPage) .posIntro small{display:none}.app:has(.posPage) .posLayout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:12px}.app:has(.posPage) .posCategories{display:flex;flex-direction:column;position:absolute;left:0;top:0;width:165px;gap:8px;max-height:calc(100vh - 130px);overflow:auto}.app:has(.posPage) .posCatalog{position:relative;padding-left:180px;min-height:600px}.app:has(.posPage) .posProducts{grid-template-columns:repeat(auto-fit,minmax(145px,1fr))}}
+/* PDV: layout estável em desktop e modo computador do navegador móvel */
+@media(min-width:900px){
+.app:has(.posPage){display:block;min-width:0}
+.app:has(.posPage)>aside{display:none!important}
+.app:has(.posPage)>main{width:100%;min-width:0;max-width:100%;margin:0;box-sizing:border-box;padding:0 18px 24px}
+.app:has(.posPage)>main>header{height:58px}
+.app:has(.posPage) .posIntro{margin-bottom:10px;align-items:center;flex-direction:row;flex-wrap:wrap}
+.app:has(.posPage) .posIntro h2{font-size:17px}
+.app:has(.posPage) .posIntro p,.app:has(.posPage) .posIntro small{display:none}
+.app:has(.posPage) .posShortcuts{display:flex;flex-direction:row;width:auto;flex-wrap:wrap}
+.app:has(.posPage) .posShortcuts button{font-size:12px;flex:none}
+.app:has(.posPage) .posLayout{display:grid;grid-template-columns:minmax(0,1fr) minmax(290px,32%);gap:12px;align-items:start;min-width:0}
+.app:has(.posPage) .posCatalog{display:grid;grid-template-columns:145px minmax(0,1fr);grid-template-rows:auto 1fr;column-gap:12px;position:static;min-width:0;min-height:0;padding:12px}
+.app:has(.posPage) .posCatalog>input{grid-column:2;grid-row:1;min-width:0}
+.app:has(.posPage) .posCategories{grid-column:1;grid-row:1 / span 2;position:static;width:auto;max-height:calc(100dvh - 145px);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;gap:7px;padding:0}
+.app:has(.posPage) .posCategories button{border-radius:9px;white-space:normal;text-align:left;width:100%;flex-shrink:0}
+.app:has(.posPage) .posProducts{grid-column:2;grid-row:2;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));min-width:0;gap:10px;margin-top:10px}
+.app:has(.posPage) .posCheckout{min-width:0;box-sizing:border-box;max-height:calc(100dvh - 78px);top:8px}
+}
+@media(min-width:900px) and (max-width:1150px){
+.app:has(.posPage) .posLayout{grid-template-columns:minmax(0,1fr) minmax(275px,35%)}
+.app:has(.posPage) .posCatalog{grid-template-columns:112px minmax(0,1fr);gap:8px}
+.app:has(.posPage) .posProducts{grid-template-columns:repeat(auto-fill,minmax(125px,1fr))}
+}
+@media(max-width:899px){
+.app:has(.posPage) .posLayout{display:flex;flex-direction:column;gap:12px}
+.app:has(.posPage) .posCatalog,.app:has(.posPage) .posCheckout{width:100%;min-width:0;box-sizing:border-box}
+.app:has(.posPage) .posCheckout{position:relative;top:auto;max-height:none}
+.app:has(.posPage) .posIntro{flex-direction:column;align-items:stretch}
+.app:has(.posPage) .posIntro p{display:none}
+}
