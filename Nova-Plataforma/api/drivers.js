@@ -19,9 +19,17 @@ export default async function handler(req,res){
    const duplicate=await drivers.where("email","==",email).limit(1).get();if(!duplicate.empty)return res.status(409).json({error:"email_already_registered"});const doc=await drivers.add({name,phone,vehicle,email,feeCents,feeMode,active:true,createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
    return res.status(201).json({ok:true,id:doc.id});
   }
-  const id=String(req.body?.driverId||""),active=req.body?.active,feeCents=req.body?.feeCents,feeMode=req.body?.feeMode;
-  if(!/^[a-zA-Z0-9_-]{10,100}$/.test(id)||(typeof active!=="boolean"&&!(Number.isInteger(feeCents)&&feeCents>=0&&feeCents<=100000)&&!["FIXED","FREIGHT"].includes(feeMode))||(feeMode!==undefined&&!["FIXED","FREIGHT"].includes(feeMode)))return res.status(400).json({error:"invalid_request"});
-  const ref=drivers.doc(id);if(!(await ref.get()).exists)return res.status(404).json({error:"not_found"});
-  const patch={updatedAt:FieldValue.serverTimestamp()};if(typeof active==="boolean")patch.active=active;if(Number.isInteger(feeCents)&&feeCents>=0&&feeCents<=100000)patch.feeCents=feeCents;if(feeMode!==undefined)patch.feeMode=feeMode;await ref.update(patch);return res.status(200).json({ok:true});
+  const id=String(req.body?.driverId||"");if(!/^[a-zA-Z0-9_-]{10,100}$/.test(id))return res.status(400).json({error:"invalid_driver_id"});
+  const ref=drivers.doc(id),existing=await ref.get();if(!existing.exists)return res.status(404).json({error:"not_found"});
+  const patch={updatedAt:FieldValue.serverTimestamp()};
+  if(req.body?.active!==undefined){if(typeof req.body.active!=="boolean")return res.status(400).json({error:"invalid_active"});patch.active=req.body.active}
+  if(req.body?.name!==undefined){const name=String(req.body.name).trim();if(name.length<2||name.length>100)return res.status(400).json({error:"invalid_name"});patch.name=name}
+  if(req.body?.phone!==undefined){const phone=String(req.body.phone).replace(/\D/g,"");if(phone.length<10||phone.length>13)return res.status(400).json({error:"invalid_phone"});patch.phone=phone}
+  if(req.body?.vehicle!==undefined){const vehicle=String(req.body.vehicle).toUpperCase();if(!["MOTO","BIKE","CARRO"].includes(vehicle))return res.status(400).json({error:"invalid_vehicle"});patch.vehicle=vehicle}
+  if(req.body?.email!==undefined){const email=String(req.body.email).trim().toLowerCase();if(!/^\S+@\S+\.\S+$/.test(email))return res.status(400).json({error:"invalid_email"});if(email!==existing.data().email){const duplicate=await drivers.where("email","==",email).limit(1).get();if(!duplicate.empty&&duplicate.docs.some(d=>d.id!==id))return res.status(409).json({error:"email_already_registered"});patch.email=email}}
+  if(req.body?.feeCents!==undefined){const feeCents=req.body.feeCents;if(!Number.isInteger(feeCents)||feeCents<0||feeCents>100000)return res.status(400).json({error:"invalid_fee"});patch.feeCents=feeCents}
+  if(req.body?.feeMode!==undefined){if(!["FIXED","FREIGHT"].includes(req.body.feeMode))return res.status(400).json({error:"invalid_fee_mode"});patch.feeMode=req.body.feeMode}
+  if(Object.keys(patch).length===1)return res.status(400).json({error:"empty_update"});
+  await ref.update(patch);return res.status(200).json({ok:true});
  }catch(e){console.error("drivers",e);return res.status(500).json({error:"internal_error"})}
 }
