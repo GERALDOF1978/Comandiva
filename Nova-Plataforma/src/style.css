@@ -825,3 +825,22 @@
 .app:has(.posPage) .posIntro{flex-direction:column;align-items:stretch}
 .app:has(.posPage) .posIntro p{display:none}
 }
+
+/* PDV: cart anchored to viewport; selected products scroll independently */
+@media(min-width:900px){
+.app:has(.posPage) .posCheckout{
+height:calc(100dvh - 80px);max-height:calc(100dvh - 80px);
+min-height:360px;overflow:hidden;position:sticky;top:8px;
+display:flex;flex-direction:column;padding:14px;
+}
+.app:has(.posPage) .posCheckout>h3{flex:0 0 auto;padding-bottom:8px}
+.app:has(.posPage) .posCartScroll{flex:1 1 0;min-height:0;max-height:none;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;overscroll-behavior:contain}
+.app:has(.posPage) .posCheckout>label{flex:0 0 auto}
+.app:has(.posPage) .posCheckoutFooter{flex:0 0 auto;position:relative;bottom:auto;z-index:2;margin-top:0;background:#fff;border-top:1px solid #e2e8f0;padding-top:10px;box-shadow:none}
+.app:has(.posPage) .posCheckoutFooter .posFinish{min-height:46px}
+}
+@media(max-width:899px){
+.app:has(.posPage) .posCheckout{display:flex;flex-direction:column;max-height:min(720px,calc(100dvh - 95px));min-height:350px;overflow:hidden}
+.app:has(.posPage) .posCartScroll{flex:1 1 0;min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain}
+.app:has(.posPage) .posCheckoutFooter{flex-shrink:0;position:relative;bottom:auto;box-shadow:none;background:#fff}
+}
