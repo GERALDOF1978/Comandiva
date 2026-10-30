@@ -1,3 +1,4 @@
+import {notifyCustomerPush} from "./_customer-notify.js";
 import {createHash,timingSafeEqual} from "node:crypto";
 import {cert,getApps,initializeApp} from "firebase-admin/app";
 import {getAuth} from "firebase-admin/auth";
@@ -41,6 +42,7 @@ export default async function handler(req,res){
     }
    }catch(notifyError){console.error("dishy_driver_arrived_whatsapp_failed",notifyError)}
   }
+  if(outcome==="arrived"){try{const order=await orders.doc(orderId).get();await notifyCustomerPush(restaurantId,orderId,order.data(),"DRIVER_ARRIVED")}catch(e){console.error("dishy_arrived_push_failed",e)}}
   if(outcome==="already_arrived")return res.status(200).json({ok:true,alreadyArrived:true});
   if(outcome==="invalid_pin")return res.status(409).json({error:"invalid_pin"});
   return res.status(200).json({ok:true});
