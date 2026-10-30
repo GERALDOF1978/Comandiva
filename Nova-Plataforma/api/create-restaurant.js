@@ -28,10 +28,10 @@ export default async function handler(req,res){
       const settings=settingsDoc.data()||{},restaurant=restaurantDoc.data()||{},brand=brandDoc.data()||{};
       const name=String(settings.name||restaurant.name||"Cardápio").trim().slice(0,80);
       const icon=String(settings.logoUrl||brand.logoUrl||"");
-      const safeIcon=/^https:\/\/[^\s"<>]+$/i.test(icon)?icon:"/dishy-icon.svg";
+      const safeIcon=/^https:\/\/[^\s"<>]+$/i.test(icon)?icon:"/dishy-icon.svg?v=20261030-d";
       const extension=(()=>{try{return new URL(safeIcon,"https://dishy.com.br").pathname.split(".").pop()?.toLowerCase()}catch{return "svg"}})();
       const mime={png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",webp:"image/webp",svg:"image/svg+xml"}[extension]||"image/webp";
-      const manifest={id:"/cardapio/"+slug,name,short_name:name.slice(0,24),description:"Cardápio digital de "+name,start_url:"/?loja="+encodeURIComponent(slug),scope:"/",display:"standalone",background_color:"#ffffff",theme_color:/^#[0-9a-f]{6}$/i.test(settings.brandPrimary||"")?settings.brandPrimary:"#ff7000",icons:safeIcon==="/dishy-icon.svg"?[{src:safeIcon,sizes:"any",type:"image/svg+xml",purpose:"any"}]:[{src:safeIcon,sizes:"any",type:mime,purpose:"any"},{src:"/dishy-icon.svg",sizes:"any",type:"image/svg+xml",purpose:"any"}]};
+      const manifest={id:"/cardapio/"+slug,name,short_name:name.slice(0,24),description:"Cardápio digital de "+name,start_url:"/?loja="+encodeURIComponent(slug),scope:"/",display:"standalone",background_color:"#ffffff",theme_color:/^#[0-9a-f]{6}$/i.test(settings.brandPrimary||"")?settings.brandPrimary:"#ff7000",icons:safeIcon==="/dishy-icon.svg?v=20261030-d"?[{src:safeIcon,sizes:"any",type:"image/svg+xml",purpose:"any"}]:[{src:safeIcon,sizes:"any",type:mime,purpose:"any"},{src:"/dishy-icon.svg?v=20261030-d",sizes:"any",type:"image/svg+xml",purpose:"any"}]};
       res.setHeader("Content-Type","application/manifest+json; charset=utf-8");
       res.setHeader("Cache-Control","public, max-age=60, s-maxage=300");
       return res.status(200).send(JSON.stringify(manifest));
