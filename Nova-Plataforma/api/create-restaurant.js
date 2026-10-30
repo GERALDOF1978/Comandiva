@@ -17,6 +17,25 @@ export default async function handler(req,res){
   try{
     getAdmin();
     if(req.method==="GET"&&req.query.action==="publicBrand"){const snap=await getFirestore().doc("platformSettings/branding").get(),d=snap.data()||{};res.setHeader("Cache-Control","public, max-age=60, s-maxage=300");return res.status(200).json({logoUrl:d.logoUrl||"",bannerUrl:d.bannerUrl||""})}
+    if(req.method==="GET"&&req.query.action==="tenantManifest"){
+      const slug=String(req.query.slug||"").trim().toLowerCase();
+      if(!/^[a-z0-9-]{1,90}$/.test(slug))return res.status(400).json({error:"invalid_slug"});
+      const db=getFirestore(),mapping=await db.collection("restaurantSlugs").doc(slug).get();
+      if(!mapping.exists)return res.status(404).json({error:"restaurant_not_found"});
+      const restaurantId=String(mapping.data()?.restaurantId||"");
+      if(!/^[\\w-]{5,128}$/.test(restaurantId))return res.status(404).json({error:"restaurant_not_found"});
+      const [settingsDoc,restaurantDoc,brandDoc]=await Promise.all([db.collection("restaurants").doc(restaurantId).collection("settings").doc("public").get(),db.collection("restaurants").doc(restaurantId).get(),db.doc("platformSettings/branding").get()]);
+      const settings=settingsDoc.data()||{},restaurant=restaurantDoc.data()||{},brand=brandDoc.data()||{};
+      const name=String(settings.name||restaurant.name||"Cardápio").trim().slice(0,80);
+      const icon=String(settings.logoUrl||brand.logoUrl||"");
+      const safeIcon=/^https:\/\/[^\\s"<>]+$/i.test(icon)?icon:"/dishy-icon.svg";
+      const extension=(()=>{try{return new URL(safeIcon,"https://dishy.com.br").pathname.split(".").pop()?.toLowerCase()}catch{return "svg"}})();
+      const mime={png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",webp:"image/webp",svg:"image/svg+xml"}[extension]||"image/webp";
+      const manifest={id:"/cardapio/"+slug,name,short_name:name.slice(0,24),description:"Cardápio digital de "+name,start_url:"/?loja="+encodeURIComponent(slug),scope:"/",display:"standalone",background_color:"#ffffff",theme_color:/^#[0-9a-f]{6}$/i.test(settings.brandPrimary||"")?settings.brandPrimary:"#ff7000",icons:safeIcon==="/dishy-icon.svg"?[{src:safeIcon,sizes:"any",type:"image/svg+xml",purpose:"any"}]:[{src:safeIcon,sizes:"any",type:mime,purpose:"any"},{src:"/dishy-icon.svg",sizes:"any",type:"image/svg+xml",purpose:"any"}]};
+      res.setHeader("Content-Type","application/manifest+json; charset=utf-8");
+      res.setHeader("Cache-Control","public, max-age=60, s-maxage=300");
+      return res.status(200).send(JSON.stringify(manifest));
+    }
     const authHeader=req.headers.authorization||"";
     if(!authHeader.startsWith("Bearer ")) return res.status(401).json({error:"unauthorized"});
     const decoded=await getAuth().verifyIdToken(authHeader.slice(7),true);
