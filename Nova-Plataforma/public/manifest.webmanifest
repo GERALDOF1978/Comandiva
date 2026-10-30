@@ -11,7 +11,7 @@
   "theme_color": "#ff7000",
   "icons": [
     {
-      "src": "/dishy-icon.svg",
+      "src": "/dishy-icon.svg?v=20261030-d",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
