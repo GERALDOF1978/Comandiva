@@ -923,3 +923,14 @@ display:flex;flex-direction:column;padding:14px;
 
 /* Keep installation unobtrusive while checkout and dialogs are open. */
 body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop) .dishyInstallFloating{display:none}
+
+/* Neighborhood route grouping for drivers and dispatchers */
+.dishyNeighborhoodGroup{margin:12px 0;border:1px solid #e2e8f0;border-radius:16px;background:#fff;overflow:hidden;box-shadow:0 2px 9px #0f172a0a}
+.dishyNeighborhoodGroup>summary{display:flex;align-items:center;gap:10px;cursor:pointer;padding:16px;list-style:none;color:#1e293b}
+.dishyNeighborhoodGroup>summary::-webkit-details-marker{display:none}
+.dishyNeighborhoodGroup>summary b{flex:1;font-size:15px}
+.dishyNeighborhoodGroup>summary span{font-size:12px;color:#475569;white-space:nowrap}
+.dishyNeighborhoodGroup>summary>svg:last-child{transition:transform .2s}
+.dishyNeighborhoodGroup[open]>summary>svg:last-child{transform:rotate(90deg)}
+.dishyNeighborhoodItems{padding:0 12px 12px}
+.dishyNeighborhoodItems>.dispatchCard{margin:10px 0}
