@@ -934,3 +934,11 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
 .dishyNeighborhoodGroup[open]>summary>svg:last-child{transform:rotate(90deg)}
 .dishyNeighborhoodItems{padding:0 12px 12px}
 .dishyNeighborhoodItems>.dispatchCard{margin:10px 0}
+
+.dishyAddressCard{border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;margin:9px 0;background:#fff}
+.dishyAddressCard>summary{display:flex;align-items:center;gap:9px;padding:14px;cursor:pointer;list-style:none}
+.dishyAddressCard>summary::-webkit-details-marker{display:none}
+.dishyAddressCard>summary b{flex:1;font-size:14px;line-height:1.4}
+.dishyAddressCard>summary>svg:last-child{transition:transform .2s}
+.dishyAddressCard[open]>summary>svg:last-child{transform:rotate(90deg)}
+.dishyAddressDetails{padding:0 12px 12px}
