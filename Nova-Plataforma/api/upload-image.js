@@ -18,8 +18,7 @@ export default async function handler(req,res){
     const {restaurantId,image}=req.body||{};
     if(typeof restaurantId!=="string"||!restaurantId)return res.status(400).json({error:"invalid_restaurant"});
     if(typeof image!=="string"||!image.startsWith("data:image/")||image.length>6_000_000)return res.status(400).json({error:"invalid_image"});
-    const member=await getFirestore().doc(`restaurants/${restaurantId}/members/${user.uid}`).get();
-    if(!member.exists||member.data().active!==true||!["owner","manager"].includes(member.data().role))return res.status(403).json({error:"forbidden"});
+    if(restaurantId==="__platform__"){const master=await getFirestore().doc("platformAdmins/"+user.uid).get();if(!master.exists||master.data().active!==true)return res.status(403).json({error:"master_only"});}else{const member=await getFirestore().doc(`restaurants/${restaurantId}/members/${user.uid}`).get();if(!member.exists||member.data().active!==true||!["owner","manager"].includes(member.data().role))return res.status(403).json({error:"forbidden"});}
     const key=process.env.IMGBB_API_KEY;
     if(!key)throw new Error("IMGBB_API_KEY ausente");
     const base64=image.split(",")[1];
