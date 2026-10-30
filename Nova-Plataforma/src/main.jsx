@@ -46,7 +46,7 @@ function PublicMenu({slug}){const[platformBrand,setPlatformBrand]=useState({logo
  const token=await getToken(getMessaging(app),{vapidKey,serviceWorkerRegistration:registration});
  if(!token)throw Error("token_unavailable");
  const u=auth.currentUser||await signInAnonymously(auth).then(v=>v.user);
- const response=await fetch("/api/customer-push",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+await u.getIdToken()},body:JSON.stringify({restaurantId:state.settings.restaurantId,orderId:orderDone?.orderId,token})});
+ const response=await fetch("/api/customer-orders",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+await u.getIdToken()},body:JSON.stringify({restaurantId:state.settings.restaurantId,orderId:orderDone?.orderId,token})});
  if(!response.ok)throw Error("save_failed");
  setPushState("enabled");
  }catch(e){console.error("dishy_push_opt_in",e);setPushState(e.message==="unsupported"?"unsupported":e.message==="not_configured"?"not_configured":"error")}}
