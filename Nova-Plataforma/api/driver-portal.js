@@ -29,6 +29,18 @@ export default async function handler(req,res){
    if(status==="COMPLETED"&&o.deliveryPinHash){if((o.deliveryPinAttempts||0)>=5)throw new Error("pin_locked");if(!/^\d{4}$/.test(pin)){tx.update(ref,{deliveryPinAttempts:FieldValue.increment(1)});return "invalid_pin"}const expected=Buffer.from(o.deliveryPinHash,"hex"),actual=Buffer.from(createHash("sha256").update(o.deliveryPinSalt+":"+pin).digest("hex"),"hex");if(expected.length!==actual.length||!timingSafeEqual(expected,actual)){tx.update(ref,{deliveryPinAttempts:FieldValue.increment(1)});return "invalid_pin"}}
    if(status==="COMPLETED"&&["CASH","CARD_ON_DELIVERY"].includes(o.paymentMethod)&&o.paymentStatus!=="PAID")throw new Error("payment_not_confirmed");
    tx.update(ref,{status,updatedAt:FieldValue.serverTimestamp(),...(status==="COMPLETED"?{deliveryConfirmedAt:FieldValue.serverTimestamp(),deliveryPinHash:FieldValue.delete(),deliveryPinSalt:FieldValue.delete()}:{}),[`statusTimestamps.${status}`]:FieldValue.serverTimestamp()})});
+  if(outcome==="arrived"&&process.env.DISHY_N8N_WEBHOOK_URL&&process.env.DISHY_N8N_WEBHOOK_SECRET){
+   try{
+    const [orderSnap,restaurantSnap]=await Promise.all([orders.doc(orderId).get(),restaurant.get()]);
+    const o=orderSnap.data()||{},settings=restaurantSnap.data()||{};
+    const customerPhone=String(o.customerSnapshot?.phone||"").replace(/\D/g,"");
+    const whatsappInstance=String(settings.whatsappInstance||process.env.DISHY_WHATSAPP_INSTANCE||"").trim();
+    if(customerPhone&&whatsappInstance){
+     const response=await fetch(process.env.DISHY_N8N_WEBHOOK_URL,{method:"POST",headers:{"Content-Type":"application/json","x-dishy-secret":process.env.DISHY_N8N_WEBHOOK_SECRET},body:JSON.stringify({event:"DRIVER_ARRIVED",restaurantName:String(settings.name||settings.displayName||"Restaurante"),customerName:String(o.customerSnapshot?.name||"Cliente"),customerPhone,orderNumber:String(o.number||orderId),whatsappInstance,text:"Seu entregador chegou ao endereço! Por favor, prepare-se para receber seu pedido e tenha em mãos o código de confirmação da entrega. Informe o código somente ao motoboy no momento do recebimento."}),signal:AbortSignal.timeout(8000)});
+     if(!response.ok)console.error("dishy_driver_arrived_whatsapp_http",response.status);
+    }
+   }catch(notifyError){console.error("dishy_driver_arrived_whatsapp_failed",notifyError)}
+  }
   if(outcome==="already_arrived")return res.status(200).json({ok:true,alreadyArrived:true});
   if(outcome==="invalid_pin")return res.status(409).json({error:"invalid_pin"});
   return res.status(200).json({ok:true});
