@@ -920,3 +920,6 @@ display:flex;flex-direction:column;padding:14px;
 .driverEditActions button[type=submit]{background:#1676bb;color:#fff;border-color:#1676bb}
 
 .driverPortal .driverArrivedButton{background:#0f766e;color:#fff;border:1px solid #115e59;border-radius:10px;font-weight:850;padding:12px 15px;cursor:pointer}.driverPortal .driverArrivedButton:disabled{background:#d7eee9;color:#245f56;cursor:default}
+
+/* Keep installation unobtrusive while checkout and dialogs are open. */
+body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop) .dishyInstallFloating{display:none}
