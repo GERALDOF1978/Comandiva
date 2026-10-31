@@ -3,6 +3,7 @@ export function resolvePizzaSelection(config,selection){
   if(!config||!selection||!Array.isArray(config.sizes)||!Array.isArray(config.flavors)||!Array.isArray(config.crusts))throw Error("Configuração inválida");
   const {sizeIndex,flavorIndices,crustIndex=null}=selection;
   const valid=i=>Number.isInteger(i)&&i>=0;
+  const isIndex=valid;
   if(!valid(sizeIndex)||sizeIndex>=config.sizes.length)throw Error("Tamanho inválido");
   if(!Array.isArray(flavorIndices)||!flavorIndices.length||flavorIndices.length>4||flavorIndices.some(i=>!valid(i)||i>=config.flavors.length)||new Set(flavorIndices).size!==flavorIndices.length)throw Error("Sabores inválidos");
   if(crustIndex!==null&&(!valid(crustIndex)||crustIndex>=config.crusts.length))throw Error("Borda inválida");
