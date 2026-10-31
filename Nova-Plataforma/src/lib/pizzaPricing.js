@@ -2,7 +2,10 @@
 const positive = n => Number.isSafeInteger(n) && n > 0;
 export function pizzaFlavorPrice(flavor, sizeIndex) {
   const value = flavor?.pricesBySize?.[sizeIndex];
-  return positive(value) ? value : null;
+  if(positive(value))return value;
+  // Preserve previously published pizzas while new drafts use per-size prices.
+  if(!Array.isArray(flavor?.pricesBySize)&&positive(flavor?.priceCents))return flavor.priceCents;
+  return null;
 }
 export function pizzaStartingPrice(config, sizeIndex) {
   const prices = (config?.flavors || []).map(f => pizzaFlavorPrice(f,sizeIndex)).filter(positive);
@@ -16,7 +19,7 @@ export function calculatePizzaPrice({size,flavors,crust,pricingRule="highest",si
   if(crust && (!Number.isSafeInteger(crust.priceCents)||crust.priceCents<0)) throw Error("Borda inválida");
   if(!["highest","average"].includes(pricingRule)) throw Error("Regra inválida");
   const base=pricingRule==="highest"?Math.max(...prices):Math.round(prices.reduce((a,b)=>a+b,0)/prices.length);
-  const total=base+(crust?.priceCents||0);
+  const total=base+(Number.isSafeInteger(size.priceCents)?size.priceCents:0)+(crust?.priceCents||0);
   if(!Number.isSafeInteger(total)) throw Error("Preço inválido");
   return total;
 }
