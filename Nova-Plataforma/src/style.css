@@ -1073,3 +1073,12 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
 .pizzaSizeCard small{font-size:11px;color:#667085;background:transparent;padding:0}
 .pizzaSizeCard strong{font-size:12px;color:#9a3412}
 @media(max-width:420px){.pizzaSizePickerGrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.pizzaSizeCard{padding:9px;min-height:88px}.pizzaSizeCard b{font-size:13px}.pizzaSizeCard strong{font-size:11px}}
+
+
+/* Marmita: premium portion controls support two of the same protein. */
+.publicOptions .marmitaOptionRow{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:11px 13px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;margin:7px 0;box-sizing:border-box}
+.marmitaOptionRow>span{font-weight:600;color:#182230;min-width:0}
+.marmitaCounter{display:flex;align-items:center;gap:10px;flex:none}
+.marmitaCounter button{display:grid;place-items:center;width:34px;height:34px;border:1px solid #fdba74;border-radius:9px;background:#fff7ed;color:#9a3412;font-size:21px;font-weight:700;cursor:pointer}
+.marmitaCounter button:disabled{opacity:.35;cursor:not-allowed}
+.marmitaCounter b{min-width:16px;text-align:center;font-size:15px}
