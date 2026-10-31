@@ -1,6 +1,7 @@
 import {randomInt,randomBytes,createHash,createDecipheriv,randomUUID} from "node:crypto";
 import {cert,getApps,initializeApp} from "firebase-admin/app";
 import {FieldValue,getFirestore} from "firebase-admin/firestore";
+import {resolvePizzaSelection} from "../src/lib/pizzaSelection.js";
 import {getAuth} from "firebase-admin/auth";
 
 function init(){
@@ -102,9 +103,17 @@ export default async function handler(req,res){
       const product=await db.collection("restaurants").doc(restaurantId).collection("products").doc(clean(raw.productId)).get();
       if(!product.exists||product.data().active===false||(channel==="TABLE"?product.data().sellAtTable===false:product.data().sellForDelivery===false))return res.status(400).json({error:"product_unavailable"});
       const p=product.data();
-      // Fail closed until the pizza checkout contract and server-side pricing are integrated.
-      // Prevent pizza products from falling through the ordinary base-price/options calculation.
-      if(p.productType==="pizza"||p.pizzaConfig)return res.status(400).json({error:"pizza_checkout_not_enabled"});
+      if(p.productType==="pizza"||p.pizzaConfig){
+        if(p.productType!=="pizza"||!p.pizzaConfig||p.active!==true)return res.status(400).json({error:"pizza_unavailable"});
+        let resolved;
+        try{resolved=resolvePizzaSelection(p.pizzaConfig,raw.pizzaSelection)}
+        catch{return res.status(400).json({error:"invalid_pizza_selection"})}
+        const lineTotalCents=resolved.unitPriceCents*qty;
+        if(!Number.isSafeInteger(lineTotalCents)||lineTotalCents>100000000)return res.status(400).json({error:"invalid_total"});
+        totalCents+=lineTotalCents;
+        items.push({productId:product.id,name:clean(p.name),qty,basePriceCents:resolved.unitPriceCents,unitPriceCents:resolved.unitPriceCents,options:resolved.options,pizzaSelection:resolved.selection,totalCents:lineTotalCents});
+        continue;
+      }
       const selected=[],groups=Array.isArray(p.optionGroups)?p.optionGroups:[];
       const incoming=Array.isArray(raw.options)?raw.options:[];
       for(const g of groups){
