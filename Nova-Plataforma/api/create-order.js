@@ -116,13 +116,22 @@ export default async function handler(req,res){
       }
       const selected=[],groups=Array.isArray(p.optionGroups)?p.optionGroups:[];
       const incoming=Array.isArray(raw.options)?raw.options:[];
-      for(const g of groups){
+      if(incoming.length>100||incoming.some(o=>!groups.some(g=>clean(g.name)===clean(o.group))))return res.status(400).json({error:"invalid_option"});
+      const isMarmita=p.productType==="marmita";
+      const sizeGroup=isMarmita?groups[0]:null;
+      const chosenSize=isMarmita?incoming.filter(o=>clean(o.group)===clean(sizeGroup?.name)):[];
+      if(isMarmita&&(clean(sizeGroup?.name)!=="Tamanho da marmita"||chosenSize.length!==1))return res.status(400).json({error:"invalid_marmita_size"});
+      const sizeIndex=isMarmita?(sizeGroup.options||[]).findIndex(o=>clean(o.name)===clean(chosenSize[0].name)):-1;
+      if(isMarmita&&(sizeIndex<0||!(Number(sizeGroup.options[sizeIndex].priceCents)>0)))return res.status(400).json({error:"invalid_marmita_price"});
+      for(const [gi,g] of groups.entries()){
         const chosen=incoming.filter(o=>clean(o.group)===clean(g.name));
-        if(g.required&&!chosen.length)return res.status(400).json({error:"required_option_missing"});
-        if(chosen.length>Number(g.max||1))return res.status(400).json({error:"too_many_options"});
+        const min=Math.max(Number(g.min||0),g.required?1:0);
+        const max=isMarmita&&gi>0?Number(g.limitsBySize?.[sizeIndex]??g.max):Number(g.max||1);
+        if(!Number.isInteger(max)||max<0||max>30||chosen.length<min||chosen.length>max)return res.status(400).json({error:"invalid_option_count"});
+        if(g.allowRepeat!==true&&new Set(chosen.map(o=>clean(o.name))).size!==chosen.length)return res.status(400).json({error:"duplicate_option"});
         for(const c of chosen){
           const valid=(g.options||[]).find(o=>clean(o.name)===clean(c.name));
-          if(!valid)return res.status(400).json({error:"invalid_option"});
+          if(!valid||!Number.isSafeInteger(Number(valid.priceCents))||Number(valid.priceCents)<0)return res.status(400).json({error:"invalid_option"});
           selected.push({group:clean(g.name),name:clean(valid.name),priceCents:Number(valid.priceCents||0)});
         }
       }
