@@ -101,7 +101,11 @@ export default async function handler(req,res){
       if(!Number.isInteger(qty)||qty<1||qty>99)return res.status(400).json({error:"invalid_quantity"});
       const product=await db.collection("restaurants").doc(restaurantId).collection("products").doc(clean(raw.productId)).get();
       if(!product.exists||product.data().active===false||(channel==="TABLE"?product.data().sellAtTable===false:product.data().sellForDelivery===false))return res.status(400).json({error:"product_unavailable"});
-      const p=product.data(),selected=[],groups=Array.isArray(p.optionGroups)?p.optionGroups:[];
+      const p=product.data();
+      // Fail closed until the pizza checkout contract and server-side pricing are integrated.
+      // Prevent pizza products from falling through the ordinary base-price/options calculation.
+      if(p.productType==="pizza"||p.pizzaConfig)return res.status(400).json({error:"pizza_checkout_not_enabled"});
+      const selected=[],groups=Array.isArray(p.optionGroups)?p.optionGroups:[];
       const incoming=Array.isArray(raw.options)?raw.options:[];
       for(const g of groups){
         const chosen=incoming.filter(o=>clean(o.group)===clean(g.name));
