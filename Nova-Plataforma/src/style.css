@@ -999,3 +999,29 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
 /* Dishy: product editor uses full width; registered products follow below on all devices. */
 .catalogProductsGrid{grid-template-columns:minmax(0,1fr)}
 .catalogProductsGrid>.catalogFormColumn,.catalogProductsGrid>.catalogList{min-width:0;width:100%}
+
+
+/* Pizza editor: clear per-item grouping, compact desktop rows and readable mobile layout. */
+.pizzaEditor .optionEditor{min-width:0}
+.pizzaEditor .pizzaLine{display:grid!important;grid-template-columns:minmax(0,2fr) minmax(0,1fr) auto;align-items:end;gap:12px;padding:14px;border:1px solid #e2e8f0;border-radius:12px;background:#f8fafc;margin:10px 0}
+.pizzaEditor .pizzaLine>input:first-child{width:100%;min-width:0}
+.pizzaEditor .pizzaLine>.miniButton{width:auto!important;min-width:82px;max-width:110px;padding:9px 12px;justify-self:end;align-self:end}
+.pizzaEditor .pizzaLine-sizes>label{min-width:0}
+.pizzaEditor .pizzaLine-sizes>label input[type=file]{width:100%;min-width:0;max-width:260px;font-size:12px}
+.pizzaEditor .pizzaLine-flavors{grid-template-columns:minmax(160px,1fr) minmax(0,3fr) auto;align-items:start}
+.pizzaEditor .pizzaFlavorFields{display:grid;grid-template-columns:minmax(150px,1fr) minmax(0,2fr);gap:12px;min-width:0}
+.pizzaEditor .pizzaFlavorFields>input{min-width:0;width:100%}
+.pizzaEditor .pizzaSizePrices{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;min-width:0}
+.pizzaEditor .pizzaSizePrices label{display:block;min-width:0;font-size:12px}
+.pizzaEditor .pizzaSizePrices input{width:100%;min-width:0}
+.pizzaEditor .pizzaLine-crusts,.pizzaEditor .pizzaLine-extras{grid-template-columns:minmax(0,2fr) minmax(100px,1fr) auto}
+@media(max-width:800px){
+ .pizzaEditor .pizzaLine,.pizzaEditor .pizzaLine-flavors,.pizzaEditor .pizzaLine-sizes,.pizzaEditor .pizzaLine-crusts,.pizzaEditor .pizzaLine-extras{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+ .pizzaEditor .pizzaLine>input:first-child{grid-column:1/-1}
+ .pizzaEditor .pizzaLine-flavors .pizzaFlavorFields{grid-column:1/-1;grid-template-columns:minmax(0,1fr)}
+ .pizzaEditor .pizzaLine-flavors>.miniButton{grid-column:1/-1;justify-self:end}
+ .pizzaEditor .pizzaLine-sizes>label{grid-column:1/-1}
+ .pizzaEditor .pizzaLine-sizes>.miniButton{grid-column:2}
+ .pizzaEditor .pizzaLine-crusts>.miniButton,.pizzaEditor .pizzaLine-extras>.miniButton{grid-column:2}
+ .pizzaEditor .pizzaSizePrices{grid-template-columns:repeat(auto-fit,minmax(90px,1fr))}
+}
