@@ -995,3 +995,7 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
 .dispatchDriverChoices>button{display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:1px solid #bed4eb;border-radius:11px;background:#f0f7ff;color:#17345d;font-weight:750;text-align:left;cursor:pointer}
 .dispatchDriverChoices>button span{margin-left:auto;font-size:12px;color:#64748b}
 .dispatchDriverChoices>button:disabled{opacity:.5}
+
+/* Dishy: product editor uses full width; registered products follow below on all devices. */
+.catalogProductsGrid{grid-template-columns:minmax(0,1fr)}
+.catalogProductsGrid>.catalogFormColumn,.catalogProductsGrid>.catalogList{min-width:0;width:100%}
