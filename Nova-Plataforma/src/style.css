@@ -968,3 +968,13 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
 .checkoutPaymentOptions button{display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;border:1px solid #d6dbe4;border-radius:12px;padding:12px 8px;font-weight:750;font-size:12px;cursor:pointer;background:#fff;color:#26394b}
 .checkoutPaymentOptions button.selected{border:2px solid #16834b;background:#e9f8ee;color:#10683a}
 .checkoutPaymentOptions button svg{flex-shrink:0}
+
+/* Filtros compactos da Central de Pedidos */
+.ordersChannelFilters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0 8px;width:100%;overflow:visible}
+.ordersChannelFilters .orderChannelButton{display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;min-height:45px;border:1px solid #d7e0eb;border-radius:13px;background:#fff;color:#253750;padding:9px 7px;font-size:13px;font-weight:750;cursor:pointer;box-shadow:0 1px 3px #102d4b0d}
+.ordersChannelFilters .orderChannelButton svg{flex:none}
+.ordersChannelFilters .orderChannelButton span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ordersChannelFilters .orderChannelButton strong{display:inline-flex;align-items:center;justify-content:center;min-width:21px;height:21px;padding:0 5px;border-radius:7px;background:#edf2f8;color:#263a55;font-size:12px}
+.ordersChannelFilters .orderChannelButton.active{background:#17345d;color:#fff;border-color:#17345d;box-shadow:0 3px 9px #17345d30}
+.ordersChannelFilters .orderChannelButton.active strong{background:#ffffff29;color:#fff}
+@media(max-width:480px){.ordersChannelFilters{gap:5px}.ordersChannelFilters .orderChannelButton{gap:4px;padding:8px 3px;font-size:11px;min-height:42px}.ordersChannelFilters .orderChannelButton svg{width:14px;height:14px}.ordersChannelFilters .orderChannelButton strong{min-width:18px;height:19px;font-size:10px;padding:0 3px}}
