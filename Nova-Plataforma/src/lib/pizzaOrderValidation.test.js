@@ -1,0 +1,10 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {verifyPizzaCartItem} from "./pizzaOrderValidation.js";
+const product={id:"pizza-1",productType:"pizza",active:true,pizzaConfig:{pricingRule:"highest",sizes:[{name:"Grande",priceCents:2000,maxFlavors:2}],flavors:[{name:"Queijo",priceCents:3000},{name:"Calabresa",priceCents:4000}],crusts:[]}};
+const item={productId:"pizza-1",qty:2,unitPriceCents:6000,pizzaSelection:{sizeIndex:0,flavorIndices:[0,1],crustIndex:null}};
+test("valida pedido com catálogo confiável",()=>assert.equal(verifyPizzaCartItem(product,item).lineTotalCents,12000));
+test("rejeita preço manipulado",()=>assert.throws(()=>verifyPizzaCartItem(product,{...item,unitPriceCents:1}),/divergente/));
+test("rejeita produto desativado",()=>assert.throws(()=>verifyPizzaCartItem({...product,active:false},item),/indisponível/));
+test("rejeita quantidade inválida",()=>assert.throws(()=>verifyPizzaCartItem(product,{...item,qty:0}),/Quantidade/));
+test("rejeita sabores fora do catálogo",()=>assert.throws(()=>verifyPizzaCartItem(product,{...item,pizzaSelection:{sizeIndex:0,flavorIndices:[8]}}),/Sabores/));
