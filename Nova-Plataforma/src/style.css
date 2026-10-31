@@ -1061,3 +1061,15 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
 .publicOptions .pizzaChoiceSection > label.pizzaChoiceRow > input{position:static;flex:none!important;max-width:20px}
 .publicCategory > .publicProducts{margin-top:12px}
 @media(max-width:600px){.publicOptions > .pizzaChoiceSection{padding:12px}.publicOptions .pizzaChoiceSection > label.pizzaChoiceRow{padding:12px 10px!important}}
+
+
+/* Pizza size cards remain visible in the same builder screen. */
+.publicOptions > .pizzaSizePicker{display:block!important;width:100%;margin:4px 0 16px;min-width:0}
+.pizzaSizePicker h3{margin:0 0 10px;font-size:16px;color:#182230}
+.pizzaSizePickerGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:9px}
+.pizzaSizeCard{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:5px;min-width:0;min-height:95px;padding:12px;border:1px solid #e2e8f0;border-radius:13px;background:#fff;color:#182230;text-align:left;cursor:pointer}
+.pizzaSizeCard.selected{border:2px solid #f97316;background:#fff7ed;box-shadow:0 2px 8px #f9731620}
+.pizzaSizeCard b{font-size:15px}
+.pizzaSizeCard small{font-size:11px;color:#667085;background:transparent;padding:0}
+.pizzaSizeCard strong{font-size:12px;color:#9a3412}
+@media(max-width:420px){.pizzaSizePickerGrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.pizzaSizeCard{padding:9px;min-height:88px}.pizzaSizeCard b{font-size:13px}.pizzaSizeCard strong{font-size:11px}}
