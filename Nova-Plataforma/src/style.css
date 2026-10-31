@@ -1025,3 +1025,10 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
  .pizzaEditor .pizzaLine-crusts>.miniButton,.pizzaEditor .pizzaLine-extras>.miniButton{grid-column:2}
  .pizzaEditor .pizzaSizePrices{grid-template-columns:repeat(auto-fit,minmax(90px,1fr))}
 }
+
+
+/* Customer pizza builder: one premium flavor per row with readable ingredients. */
+.pizzaFlavorChoice{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;width:100%;padding:13px 15px;border-radius:13px;color:#182230;text-align:left;box-shadow:0 1px 3px #10182812;cursor:pointer}
+.pizzaFlavorChoice b{font-size:15px}
+.pizzaFlavorChoice small{grid-column:1;grid-row:2;color:#667085;font-size:12px;line-height:1.4}
+.pizzaFlavorChoice strong{grid-column:2;grid-row:1 / span 2;color:#b45309;white-space:nowrap;font-size:14px}
