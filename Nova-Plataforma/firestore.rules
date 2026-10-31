@@ -67,6 +67,13 @@ service cloud.firestore {
         allow delete: if isOwner(restaurantId);
       }
 
+      // Rascunhos privados de pizzas: nunca expor ao cardápio público.
+      match /pizzaDrafts/{id} {
+        allow read: if isManager(restaurantId) || isPlatformAdmin();
+        allow create, update: if isManager(restaurantId);
+        allow delete: if isOwner(restaurantId);
+      }
+
       match /products/{id} {
         allow read: if isMember(restaurantId) || isPlatformAdmin() ||
           (resource.data.active == true && restaurantActive(restaurantId));
