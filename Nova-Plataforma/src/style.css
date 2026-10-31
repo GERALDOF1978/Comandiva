@@ -956,3 +956,15 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
 .dishyMapDestinations button{flex:0 0 auto;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid #d1d5db;border-radius:20px;padding:8px 12px;background:#f8fafc;color:#334155;font-size:12px}
 .dishyMapDestinations button.selected{border-color:#ea580c;background:#fff7ed;color:#9a3412}
 .dishyInlineMapPanel iframe{display:block;width:100%;height:300px;border:0;border-radius:12px}
+
+/* Pedidos: filtros de canal, impressão discreta e pagamento por botões */
+.ordersChannelFilters{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.ordersChannelFilters .orderFilter{padding:9px 14px;min-width:0;font-size:13px}
+.ordersDateFilters>button{border:1px solid #cbd5e1;border-radius:10px;background:#eef5ff;color:#173c79;padding:9px 14px;font-weight:800;cursor:pointer}
+.ordersDateFilters>button:hover{background:#dceaff}
+.orderActions button:has(svg.lucide-printer){background:#e9f1fb!important;color:#1e4779!important;border:1px solid #b9d1eb!important}
+.orderActions button:has(svg.lucide-printer):hover{background:#d5e6f8!important}
+.checkoutPaymentOptions{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.checkoutPaymentOptions button{display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;border:1px solid #d6dbe4;border-radius:12px;padding:12px 8px;font-weight:750;font-size:12px;cursor:pointer;background:#fff;color:#26394b}
+.checkoutPaymentOptions button.selected{border:2px solid #16834b;background:#e9f8ee;color:#10683a}
+.checkoutPaymentOptions button svg{flex-shrink:0}
