@@ -24,7 +24,7 @@ export default async function handler(req,res){
     if(!snap.exists)throw new Error("not_found");
     const o=snap.data();
     if(o.status!=="PENDING_PAYMENT"||o.paymentMethod!=="PIX"||o.paymentStatus==="PAID"||o.paymentStatus==="CANCELLED"||o.paymentStatus==="EXPIRED")throw new Error("payment_not_pending");
-    const created=o.createdAt?.toMillis?.()??(typeof o.createdAt==="string"?Date.parse(o.createdAt):NaN);
+    const raw=o.createdAt;const timestamp=typeof raw?.toMillis==="function"?raw.toMillis():typeof raw?.seconds==="number"?raw.seconds*1000:raw instanceof Date?raw.getTime():typeof raw==="string"?Date.parse(raw):typeof raw==="number"?raw:NaN;const number=Number(o.number);const created=Number.isFinite(timestamp)?timestamp:Number.isSafeInteger(number)&&number>1000000000000&&number<=now?number:NaN;
     if(!Number.isFinite(created)||now-created<5*60*1000)throw new Error("too_early");
     if(o.pixReminderSentAt||o.pixReminderClaimedAt)throw new Error("already_reminded");
     tx.update(ref,{pixReminderClaimedAt:FieldValue.serverTimestamp()});
