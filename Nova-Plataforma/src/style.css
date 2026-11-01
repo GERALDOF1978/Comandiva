@@ -1179,3 +1179,11 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
 .posPizzaFlavor span{display:flex;flex-direction:column;gap:4px}
 .posPizzaFlavor small{font-size:12px;color:#75818b}
 .posPizzaFlavor strong{white-space:nowrap;color:#a54e16}
+
+.posOptionCounter{display:inline-flex;align-items:center;gap:12px;margin-left:auto;white-space:nowrap}
+.posOptionCounter>span{display:grid;place-items:center;width:38px;height:38px;border:1px solid #e5c79d;border-radius:10px;background:#fff6ea;color:#a54e16;font-size:24px;font-weight:800;cursor:pointer}
+.posOptionCounter>b{min-width:18px;text-align:center;color:#162d36}
+.posPizzaBuilder section{padding:16px;border:1px solid #e7d8c6;border-left:4px solid #df852d;border-radius:15px;background:#fffdf9}
+.posPizzaBuilder section>h3{margin:0 0 5px}
+.posPizzaBuilder section>small{display:block;margin-bottom:12px;color:#8a5a30}
+.posPizzaBuilder section .posPizzaFlavor{width:100%}
