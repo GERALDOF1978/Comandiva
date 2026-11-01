@@ -135,7 +135,7 @@ export default async function handler(req,res){
           selected.push({group:clean(g.name),name:clean(valid.name),priceCents:Number(valid.priceCents||0)});
         }
       }
-      const sizePriceCents=isMarmita?Number(sizeGroup.options[sizeIndex]?.priceCents||0):0;const basePriceCents=isMarmita&&sizePriceCents>0?sizePriceCents:Number(p.priceCents||0);const unitPriceCents=basePriceCents+selected.reduce((n,o)=>n+o.priceCents,0)-(isMarmita?sizePriceCents:0);
+      const sizePriceCents=isMarmita?Number(sizeGroup.options[sizeIndex]?.priceCents||0):0;const basePriceCents=isMarmita&&sizePriceCents>0?sizePriceCents:Number(p.priceCents||0);const unitPriceCents=basePriceCents+selected.reduce((n,o)=>n+o.priceCents,0)-(isMarmita&&sizePriceCents>0?sizePriceCents:0);
       totalCents+=unitPriceCents*qty;
       items.push({productId:product.id,name:clean(p.name),qty,basePriceCents,unitPriceCents,options:selected,totalCents:unitPriceCents*qty});
     }
