@@ -1168,3 +1168,14 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
 .posPizzaBuilder>div:last-child button:last-child{background:#087c48;color:white;border-color:#087c48}
 .posCartScroll .posLine small{display:block;overflow-wrap:anywhere}
 @media(max-width:700px){.posPizzaBuilder{padding:14px}.posPizzaBuilder>div:last-child button{flex:1 1 150px}}
+
+.posPizzaBuilder .pizzaSizePickerGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:10px}
+.posPizzaBuilder .pizzaSizeCard{display:flex;flex-direction:column;gap:9px;text-align:left;padding:14px;border:1px solid #d8e1e5;border-radius:15px;background:white;color:#20313a;cursor:pointer}
+.posPizzaBuilder .pizzaSizeCard.selected,.posPizzaFlavor.selected{border:2px solid #e88c2c;background:#fff6ec}
+.posPizzaBuilder .pizzaSizeCard small{font-size:12px;color:#687780}
+.posPizzaBuilder .pizzaSizeCard strong{color:#a54e16}
+.posPizzaFlavorList{display:grid;gap:9px}
+.posPizzaFlavor{display:flex;justify-content:space-between;align-items:center;gap:12px;text-align:left;padding:14px;border:1px solid #d9e2e7;border-radius:14px;background:#fff;color:#26343b;cursor:pointer;min-height:54px}
+.posPizzaFlavor span{display:flex;flex-direction:column;gap:4px}
+.posPizzaFlavor small{font-size:12px;color:#75818b}
+.posPizzaFlavor strong{white-space:nowrap;color:#a54e16}
