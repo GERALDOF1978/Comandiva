@@ -1209,3 +1209,13 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
 .posBuilderModal .posBuilderActions button{flex:1;padding:12px;border-radius:10px;border:1px solid #a9b9c1;background:white;font-weight:700}
 .posBuilderModal .posBuilderActions button:last-child{background:#087c48;color:white;border-color:#087c48}
 @media(max-width:700px){.posPizzaBuildColumns{display:block}.posPizzaStickySide{display:none}.posPizzaStickyPreview{display:flex;position:sticky;top:0;z-index:3;flex-direction:column;align-items:center;padding:8px;background:#fff;border-bottom:1px solid #e5e9eb}.posPizzaStickyPreview svg{max-height:155px;width:auto}.posPizzaStickyPreview small{font-weight:700}.posBuilderModal .posBuilderActions{bottom:0}}
+
+/* Compact single-row quantity selectors in configurable products */
+.posBuilderModal .posOptionCounter{display:inline-flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-end;gap:8px;flex-shrink:0;margin-left:auto;white-space:nowrap}
+.posBuilderModal .posOptionCounter>span{display:inline-grid!important;place-items:center;width:34px;height:34px;flex:0 0 34px}
+.posBuilderModal .posOptionCounter>b{display:inline-block;min-width:18px;text-align:center}
+.posBuilderModal .posPizzaFlavor:has(.posOptionCounter){display:flex;flex-direction:row;align-items:center;gap:10px;min-width:0}
+.posBuilderModal .posPizzaFlavor:has(.posOptionCounter)>span:first-child{flex:1;min-width:0;text-align:left}
+.posBuilderModal .posPizzaFlavor:has(.posOptionCounter)>strong{flex-shrink:0}
+.posPizzaLivePrice{display:block;margin-top:5px;color:#087c48;font-size:1.2rem;font-weight:800}
+@media(max-width:520px){.posBuilderModal .posPizzaFlavor:has(.posOptionCounter){flex-wrap:wrap}.posBuilderModal .posOptionCounter{margin-left:auto}}
