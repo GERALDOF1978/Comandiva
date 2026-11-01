@@ -1187,3 +1187,12 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
 .posPizzaBuilder section>h3{margin:0 0 5px}
 .posPizzaBuilder section>small{display:block;margin-bottom:12px;color:#8a5a30}
 .posPizzaBuilder section .posPizzaFlavor{width:100%}
+
+/* PDV product configuration is a portal modal, never constrained by product grid columns */
+.posBuilderOverlay{position:fixed!important;inset:0!important;z-index:2147483000!important;display:flex!important;align-items:center;justify-content:center;padding:clamp(8px,3vw,28px);background:rgba(12,22,30,.68);box-sizing:border-box}
+.posBuilderModal{position:relative;width:min(100%,980px);max-height:min(92dvh,1000px);overflow-y:auto;overscroll-behavior:contain;border-radius:22px;background:#fff;box-shadow:0 24px 75px #0005;padding:clamp(14px,3vw,30px);box-sizing:border-box}
+.posBuilderModal>.posPizzaBuilder{display:grid!important;width:100%!important;max-width:none!important;min-width:0!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;overflow:visible!important}
+.posBuilderClose{position:sticky;top:0;float:right;z-index:5;display:grid;place-items:center;width:44px;height:44px;border:1px solid #e2e7eb;border-radius:50%;background:#fff;color:#1b2933;font-size:30px;cursor:pointer;box-shadow:0 3px 12px #0002}
+.posBuilderModal .posPizzaFlavorList{grid-template-columns:1fr}
+.posBuilderModal .posPizzaBuilder section{min-width:0}
+@media(max-width:700px){.posBuilderOverlay{padding:0;align-items:flex-end}.posBuilderModal{width:100%;max-height:94dvh;border-radius:22px 22px 0 0;padding:18px}.posBuilderModal .posPizzaBuilder{padding:0!important}}
