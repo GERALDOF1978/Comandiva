@@ -1136,3 +1136,21 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
 .menuTopCompact .menuRegistrationTabs button{display:flex;align-items:center;justify-content:center;gap:7px;min-width:0;min-height:54px;border-radius:12px}
 .menuTopCompact .menuRegistrationTabs svg{width:18px;height:18px}
 @media(max-width:600px){.menuTopCompact{padding:15px!important}.menuTopCompact .menuTopHeading{flex-wrap:nowrap;align-items:flex-start}.menuTopCompact .menuTopHeading p{font-size:12px}.menuTopCompact .menuHeaderLink{font-size:11px;padding:9px!important}.menuTopCompact .menuQuickActions{gap:7px}.menuTopCompact .menuQuickCard,.menuTopCompact .menuQuickHelp>summary{font-size:11px;line-height:1.25;padding:9px 5px;min-height:69px;flex-direction:column}.menuTopCompact .menuRegistrationTabs button{font-size:12px;padding:8px 4px}}
+
+
+/* Menu dashboard: visually distinct action cards */
+.menuTopCompact .menuSectionLabel{font-size:14px;font-weight:800;color:#253244;margin:20px 0 9px}
+.menuTopCompact .menuQuickActions{margin:0 0 17px}
+.menuTopCompact .menuQuickCard,.menuTopCompact .menuQuickHelp>summary{min-height:92px;display:flex;flex-direction:column;gap:10px;border:1.5px solid #d9dee6;border-radius:17px;background:#fff;box-shadow:0 2px 6px #17212f0a;transition:background .15s,border-color .15s,transform .15s;text-decoration:none!important;color:#182434}
+.menuTopCompact .menuQuickCard:hover,.menuTopCompact .menuQuickHelp>summary:hover{border-color:#ff850e;background:#fff7ee;transform:translateY(-1px)}
+.menuTopCompact .menuQuickCard svg,.menuTopCompact .menuQuickHelp>summary svg{width:25px;height:25px;color:#d46a0a}
+.menuTopCompact .menuQuickHelp>summary{list-style:none}
+.menuTopCompact .menuQuickHelpBody{position:absolute;top:100%;left:0;width:min(570px,calc(100vw - 75px));max-height:65vh;overflow:auto;z-index:12;text-align:left}
+.menuTopCompact .menuRegistrationTabs{margin-top:0}
+.menuTopCompact .menuRegistrationTabs button{min-height:85px;display:flex;flex-direction:column;gap:8px;border:1.5px solid #d9dee6;border-radius:16px;background:#fff;color:#243246;font-weight:800;box-shadow:0 2px 5px #17212f0a}
+.menuTopCompact .menuRegistrationTabs button.active{background:#fff0e1;border-color:#ffbd7b;color:#a95000}
+.menuTopCompact .menuRegistrationTabs button svg{width:24px;height:24px}
+.menuTopCompact .menuHeaderLink{background:#f2f3f5!important;color:#243246!important;border-radius:14px!important}
+.menuPage .catalogList{min-height:0!important}
+.menuPage .catalogProductsGrid{align-items:start}
+@media(max-width:600px){.menuTopCompact .menuQuickCard,.menuTopCompact .menuQuickHelp>summary{min-height:90px;font-size:12px;padding:11px 4px;gap:8px}.menuTopCompact .menuRegistrationTabs button{min-height:78px;font-size:13px}.menuTopCompact .menuSectionLabel{margin-top:17px}.menuTopCompact .menuHeaderLink{min-width:88px!important;max-width:108px;white-space:normal;text-align:center}.menuTopCompact .menuQuickHelpBody{left:-100%;width:calc(100vw - 70px)}}
