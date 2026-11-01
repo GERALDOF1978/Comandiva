@@ -33,6 +33,40 @@ async function providerPayment(token,id){
   if(!response.ok)throw Error("payment_lookup_failed");
   return response.json();
 }
+async function notifyPixPaymentConfirmed(db,restaurantId,orderId){
+ if(!process.env.DISHY_N8N_WEBHOOK_URL||!process.env.DISHY_N8N_WEBHOOK_SECRET)return;
+ const ref=db.collection("restaurants").doc(restaurantId).collection("orders").doc(orderId);
+ const claimed=await db.runTransaction(async tx=>{
+  const snap=await tx.get(ref);
+  if(!snap.exists)return false;
+  const o=snap.data();
+  if(o.paymentMethod!=="PIX"||o.paymentStatus!=="PAID"||o.paymentConfirmedWhatsappSentAt)return false;
+  const claim=o.paymentConfirmedWhatsappClaimedAt?.toMillis?.()||0;
+  if(claim&&Date.now()-claim<120000)return false;
+  tx.update(ref,{paymentConfirmedWhatsappClaimedAt:FieldValue.serverTimestamp()});
+  return true;
+ });
+ if(!claimed)return;
+ try{
+  const [orderSnap,restaurantSnap]=await Promise.all([ref.get(),db.collection("restaurants").doc(restaurantId).get()]);
+  const o=orderSnap.data()||{},restaurant=restaurantSnap.data()||{};
+  const phone=String(o.customerSnapshot?.phone||"").replace(/\D/g,"");
+  const instance=String(restaurant.whatsappInstance||process.env.DISHY_WHATSAPP_INSTANCE||"").trim();
+  if(!phone||!instance)throw Error("missing_whatsapp_data");
+  const response=await fetch(process.env.DISHY_N8N_WEBHOOK_URL,{
+   method:"POST",
+   headers:{"Content-Type":"application/json","x-dishy-secret":process.env.DISHY_N8N_WEBHOOK_SECRET},
+   body:JSON.stringify({event:"PAYMENT_CONFIRMED",restaurantName:String(restaurant.name||restaurant.displayName||"Restaurante"),customerName:String(o.customerSnapshot?.name||"Cliente"),orderNumber:String(o.number||orderId),customerPhone:phone,whatsappInstance:instance,totalCents:Number(o.totalCents||0)}),
+   signal:AbortSignal.timeout(8000)
+  });
+  if(!response.ok)throw Error("n8n_http_"+response.status);
+  await ref.update({paymentConfirmedWhatsappSentAt:FieldValue.serverTimestamp(),paymentConfirmedWhatsappClaimedAt:FieldValue.delete()});
+ }catch(e){
+  console.error("dishy_payment_confirmed_whatsapp_failed",{orderId,message:e.message});
+  await ref.update({paymentConfirmedWhatsappClaimedAt:FieldValue.delete()}).catch(()=>{});
+ }
+}
+
 async function reconcile(db,restaurantId,orderId,payment){
   const ref=db.collection("restaurants").doc(restaurantId).collection("orders").doc(orderId);
   await db.runTransaction(async tx=>{
@@ -47,6 +81,7 @@ async function reconcile(db,restaurantId,orderId,payment){
     if(approved&&order.tabId){const tabRef=db.collection("restaurants").doc(restaurantId).collection("tabs").doc(order.tabId);const tab=await tx.get(tabRef);if(tab.exists&&tab.data().pixPayment?.paymentId===String(payment.id)&&tab.data().status==="BILL_REQUESTED"){tx.update(tabRef,{status:"CLOSED",paymentMethod:"PIX",financeOrderId:orderId,closedAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()})}}
     tx.update(ref,{providerPaymentId:String(payment.id),providerPaymentStatus:String(payment.status),paymentStatus:approved?"PAID":payment.status==="rejected"||payment.status==="cancelled"?"FAILED":"PENDING",...(approved?{status:order.source==="POS"&&order.requiresPreparation===false?"READY":"RECEIVED",paidAt:FieldValue.serverTimestamp()}:{}),updatedAt:FieldValue.serverTimestamp()});
   });
+  if(payment.status==="approved")await notifyPixPaymentConfirmed(db,restaurantId,orderId).catch(e=>console.error("dishy_payment_notification_error",e.message));
 }
 
 async function paymentStatusHandler(req,res){
@@ -60,6 +95,7 @@ async function paymentStatusHandler(req,res){
       const snap=await db.collection("restaurants").doc(restaurantId).collection("orders").doc(orderId).get();
       if(!snap.exists)return res.status(404).json({error:"order_not_found"});
       const order=snap.data();
+      if(order.paymentStatus==="PAID"&&order.paymentMethod==="PIX"&&!order.paymentConfirmedWhatsappSentAt){await notifyPixPaymentConfirmed(db,restaurantId,orderId).catch(e=>console.error("dishy_payment_notification_error",e.message))}
       if(order.paymentStatus!=="PAID"&&order.providerPaymentId){
         try{await reconcile(db,restaurantId,orderId,await providerPayment(await tokenFor(db,restaurantId),order.providerPaymentId))}catch(e){console.error("payment-status-reconcile",e.message)}
       }
