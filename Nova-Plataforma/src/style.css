@@ -1106,3 +1106,13 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
 .productModal .pizzaSizeCard{display:flex;flex-direction:column;justify-content:center;gap:9px;min-height:96px;padding:14px 10px;text-align:center;border-radius:15px}
 .productModal .pizzaSizeCard strong{font-size:17px;color:#9a3412}
 @media(max-width:520px){.productModal .mountGroup{padding:14px 12px}.productModal .mountGroupHeading{display:block}.productModal .mountGroupHeading>small{display:inline-block;margin-top:7px}.productModal .pizzaSizeCard strong{font-size:15px}}
+
+
+/* Montagem: grupos sempre abertos, contorno destacado e títulos legíveis */
+.productModal .publicOptions.mountGroup{border:2px solid #e7c6a4;border-left:5px solid #ea780e;border-radius:17px;background:linear-gradient(180deg,#fffaf4 0,#fff 88px);padding:16px;margin:16px 0;box-shadow:0 3px 12px rgba(120,65,18,.06)}
+.productModal .mountGroup .mountGroupHeading{border-bottom:1px solid #edd9c4;padding-bottom:12px;margin-bottom:12px;align-items:center}
+.productModal .mountGroup .mountGroupHeading>b{font-size:19px;font-weight:800;color:#78350f;letter-spacing:-.3px}
+.productModal .mountGroup .mountGroupHeading>small{background:#fff1df;color:#92400e;font-weight:700;border:1px solid #f5d6b0}
+.productModal .mountGroup>label{background:#fff;border-color:#eadfd3}
+.productModal .mountGroup .marmitaOptionRow{border-color:#eadfd3}
+@media(max-width:520px){.productModal .publicOptions.mountGroup{padding:13px 11px;margin:13px 0}.productModal .mountGroup .mountGroupHeading>b{font-size:17px}}
