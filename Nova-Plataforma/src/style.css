@@ -1154,3 +1154,17 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
 .menuPage .catalogList{min-height:0!important}
 .menuPage .catalogProductsGrid{align-items:start}
 @media(max-width:600px){.menuTopCompact .menuQuickCard,.menuTopCompact .menuQuickHelp>summary{min-height:90px;font-size:12px;padding:11px 4px;gap:8px}.menuTopCompact .menuRegistrationTabs button{min-height:78px;font-size:13px}.menuTopCompact .menuSectionLabel{margin-top:17px}.menuTopCompact .menuHeaderLink{min-width:88px!important;max-width:108px;white-space:normal;text-align:center}.menuTopCompact .menuQuickHelpBody{left:-100%;width:calc(100vw - 70px)}}
+
+/* PDV pizza configurator: mobile-first, clear touch controls */
+.posPizzaBuilder{display:grid;gap:12px;margin:18px 0;padding:20px;border:1px solid #d7e0e5;border-radius:18px;background:#f8fafc;box-shadow:0 8px 24px #132c3514}
+.posPizzaBuilder h3{margin:0;font-size:1.2rem;color:#163b34}
+.posPizzaBuilder p{margin:0;color:#53646d;line-height:1.45}
+.posPizzaBuilder label{display:flex;flex-direction:column;gap:6px;font-weight:650;min-width:0}
+.posPizzaBuilder label:has(input[type="checkbox"]){flex-direction:row;align-items:center;padding:8px 4px;font-weight:500}
+.posPizzaBuilder select{width:100%;min-width:0;max-width:100%;padding:12px;border:1px solid #aabdc7;border-radius:10px;background:white;color:#172c35;font:inherit}
+.posPizzaBuilder input[type="checkbox"]{width:20px;height:20px;accent-color:#087c48;flex:none}
+.posPizzaBuilder>div:last-child{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.posPizzaBuilder>div:last-child button{padding:12px 16px;border-radius:10px;border:1px solid #a9b9c1;background:white;font-weight:700;cursor:pointer}
+.posPizzaBuilder>div:last-child button:last-child{background:#087c48;color:white;border-color:#087c48}
+.posCartScroll .posLine small{display:block;overflow-wrap:anywhere}
+@media(max-width:700px){.posPizzaBuilder{padding:14px}.posPizzaBuilder>div:last-child button{flex:1 1 150px}}
