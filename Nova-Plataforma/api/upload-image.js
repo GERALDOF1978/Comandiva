@@ -27,5 +27,5 @@ export default async function handler(req,res){
     const data=await r.json();
     if(!r.ok||!data?.success||!data?.data?.url)throw new Error("Falha ImgBB");
     return res.status(200).json({ok:true,url:data.data.url,thumbUrl:data.data.thumb?.url||data.data.url});
-  }catch(e){console.error("upload-image",e);return res.status(500).json({error:"upload_failed"})}
+  }catch(e){console.error("upload-image",e);return res.status(500).json({error:e.message==="IMGBB_API_KEY ausente"?"image_service_not_configured":e.message==="Falha ImgBB"?"image_provider_failed":"upload_failed"})}
 }
