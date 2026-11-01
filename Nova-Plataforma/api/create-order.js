@@ -122,7 +122,7 @@ export default async function handler(req,res){
       const chosenSize=isMarmita?incoming.filter(o=>clean(o.group)===clean(sizeGroup?.name)):[];
       if(isMarmita&&(clean(sizeGroup?.name)!=="Tamanho da marmita"||chosenSize.length!==1))return res.status(400).json({error:"invalid_marmita_size"});
       const sizeIndex=isMarmita?(sizeGroup.options||[]).findIndex(o=>clean(o.name)===clean(chosenSize[0].name)):-1;
-      if(isMarmita&&(sizeIndex<0||!(Number(sizeGroup.options[sizeIndex].priceCents)>0)))return res.status(400).json({error:"invalid_marmita_price"});
+      if(isMarmita&&(sizeIndex<0||!Number.isSafeInteger(Number(sizeGroup.options[sizeIndex].priceCents||0))||Number(sizeGroup.options[sizeIndex].priceCents||0)<0))return res.status(400).json({error:"invalid_marmita_price"});
       for(const [gi,g] of groups.entries()){
         const chosen=incoming.filter(o=>clean(o.group)===clean(g.name));
         const min=Math.max(Number(g.min||0),g.required?1:0);
@@ -135,9 +135,9 @@ export default async function handler(req,res){
           selected.push({group:clean(g.name),name:clean(valid.name),priceCents:Number(valid.priceCents||0)});
         }
       }
-      const unitPriceCents=Number(p.priceCents||0)+selected.reduce((n,o)=>n+o.priceCents,0);
+      const sizePriceCents=isMarmita?Number(sizeGroup.options[sizeIndex]?.priceCents||0):0;const basePriceCents=isMarmita&&sizePriceCents>0?sizePriceCents:Number(p.priceCents||0);const unitPriceCents=basePriceCents+selected.reduce((n,o)=>n+o.priceCents,0)-(isMarmita?sizePriceCents:0);
       totalCents+=unitPriceCents*qty;
-      items.push({productId:product.id,name:clean(p.name),qty,basePriceCents:Number(p.priceCents||0),unitPriceCents,options:selected,totalCents:unitPriceCents*qty});
+      items.push({productId:product.id,name:clean(p.name),qty,basePriceCents,unitPriceCents,options:selected,totalCents:unitPriceCents*qty});
     }
     if(totalCents<0||totalCents>100000000)return res.status(400).json({error:"invalid_total"});
     let deliveryFeeCents=0,originalDeliveryFeeCents=0,deliveryMeta=null;
