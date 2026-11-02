@@ -1,10 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {toPizzaCents,validatePizzaDraft} from "./pizzaDraftValidation.js";
-const draft=()=>({name:"Pizza personalizada",categoryId:"pizzas",pricingRule:"highest",sizes:[{name:"Grande",price:"20,00",maxFlavors:4}],flavors:[{name:"Calabresa",price:"35,50"}],crusts:[{name:"Catupiry",price:"5"}]});
+const draft=()=>({categoryId:"pizzas",pricingRule:"highest",sizes:[{name:"Grande",maxFlavors:4}],flavors:[{name:"Calabresa",ingredients:"Queijo, calabresa",prices:["35,50"]}],crusts:[{name:"Catupiry",price:"5"}],extras:[]});
 test("preços em reais convertidos para centavos",()=>{assert.equal(toPizzaCents("35,50"),3550);assert.equal(toPizzaCents("0"),0)});
 test("rejeita valores com mais de duas casas",()=>{assert.equal(toPizzaCents("10,999"),null);assert.equal(toPizzaCents("-1"),null);assert.equal(toPizzaCents(""),null)});
-test("aceita rascunho válido",()=>assert.equal(validatePizzaDraft(draft()),null));
-test("rejeita sabores duplicados",()=>{const d=draft();d.flavors.push({name:"calabresa",price:"30"});assert.match(validatePizzaDraft(d),/repetidos/)});
-test("rejeita limite maior que quatro",()=>{const d=draft();d.sizes[0].maxFlavors=5;assert.match(validatePizzaDraft(d),/1 a 4/)});
-test("rejeita regra inválida",()=>{const d=draft();d.pricingRule="sum";assert.match(validatePizzaDraft(d),/regra/)});
+test("aceita cadastro de pizza válido",()=>assert.equal(validatePizzaDraft(draft()),null));
+test("rejeita sabores duplicados",()=>{const d=draft();d.flavors.push({name:"calabresa",ingredients:"",prices:["30"]});assert.match(validatePizzaDraft(d),/nomes de sabor/)});
+test("rejeita limite maior que quatro",()=>{const d=draft();d.sizes[0].maxFlavors=5;assert.match(validatePizzaDraft(d),/Limite de sabores/)});
+test("rejeita regra inválida",()=>{const d=draft();d.pricingRule="sum";assert.match(validatePizzaDraft(d),/Regra de preço/)});
