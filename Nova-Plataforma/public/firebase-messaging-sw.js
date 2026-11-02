@@ -1,6 +1,2 @@
-importScripts("https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js");
-importScripts("https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js");
-firebase.initializeApp({apiKey:"AIzaSyDRz-z-eYe1WKQxjuC60EUbrSXEeACBiGA",authDomain:"saas-delivery-551a4.firebaseapp.com",projectId:"saas-delivery-551a4",messagingSenderId:"636977701177",appId:"1:636977701177:web:661d9d4ea96e6fe371c8e8"});
-const messaging=firebase.messaging();
-messaging.onBackgroundMessage(payload=>{const data=payload.data||{};const title=String(data.title||"Atualização do pedido");const body=String(data.body||"Confira o andamento do seu pedido.");const icon=/^https:\/\//i.test(data.icon||"")?data.icon:"/dishy-icon.svg?v=20261030-d";const image=/^https:\/\//i.test(data.image||"")?data.image:null;return self.registration.showNotification(title,{body,icon,...(image?{image}:{}),badge:"/dishy-icon.svg?v=20261030-d",tag:"dishy-order-"+String(data.orderId||"pedido"),renotify:true,data:{orderId:String(data.orderId||"")},requireInteraction:data.event==="DRIVER_ARRIVED"});});
-self.addEventListener("notificationclick",event=>{event.notification.close();});
+// Compatibilidade com inscrições FCM antigas: mesma lógica do service worker principal.
+importScripts("/sw.js");
