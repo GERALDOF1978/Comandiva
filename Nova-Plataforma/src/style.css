@@ -1513,3 +1513,6 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
  .dishyMobileStickyCTA{position:fixed;display:flex;align-items:center;justify-content:center;gap:13px;bottom:0;left:0;right:0;z-index:75;padding:12px 18px max(13px,env(safe-area-inset-bottom));background:#ff8437;color:#14202f;font-size:14px;font-weight:900;box-shadow:0 -10px 25px #0005}
  .dishyMobileStickyCTA span{font-size:12px;font-weight:750;border-right:1px solid #c95412;padding-right:12px}
 }
+
+/* Neutraliza o padding global do painel dentro da página comercial. */
+.dishySite .dishyShell>main{padding:0;min-width:0;max-width:none}
