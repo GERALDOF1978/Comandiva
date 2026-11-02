@@ -1,5 +1,6 @@
 import {startTabPix} from "../server/tab-pix.js";
 import {buildTableOrderLine} from "../src/lib/tableItemPricing.js";
+import {enabledPaymentMethods} from "../src/lib/paymentMethods.js";
 import publicTabHandler from "../server/public-tab.js";
 import {randomBytes} from "node:crypto";
 import {cert,getApps,initializeApp} from "firebase-admin/app";
@@ -33,7 +34,7 @@ export default async function handler(req,res){
  }
  if(!/^[\w-]{3,130}$/.test(id))return res.status(400).json({error:"invalid_tab"});
  const ref=tabs.doc(id);
- if(action==="CREATE_PIX"){try{return res.status(200).json({ok:true,payment:await startTabPix(base,ref,restaurantId)})}catch(e){return res.status(409).json({error:e.message})}}
+ if(action==="CREATE_PIX"){const cfg=await base.collection("settings").doc("public").get();if(!enabledPaymentMethods(cfg.data()?.paymentMethods).includes("PIX"))return res.status(400).json({error:"payment_method_disabled"});try{return res.status(200).json({ok:true,payment:await startTabPix(base,ref,restaurantId)})}catch(e){return res.status(409).json({error:e.message})}}
  if(action==="QR_TOKEN"){const snap=await ref.get();if(!snap.exists)return res.status(404).json({error:"not_found"});if(snap.data().status==="CLOSED")return res.status(409).json({error:"not_open"});let token=snap.data().customerAccessToken;if(!token){token=randomBytes(24).toString("hex");await ref.update({customerAccessToken:token})}return res.status(200).json({ok:true,token})}
  if(action==="ADD_BATCH"||action==="ADD"){
  const incoming=action==="ADD"?[{productId:body.productId,qty:body.qty||1,pizzaSelection:body.pizzaSelection,optionSelection:body.optionSelection}]:Array.isArray(body.items)?body.items:[];
@@ -58,6 +59,7 @@ export default async function handler(req,res){
  }
  if(action==="REQUEST_BILL"||action==="REOPEN"||action==="CLOSE"){
  if(action==="CLOSE"&&!["CASH","CARD_ON_DELIVERY"].includes(body.paymentMethod))return res.status(400).json({error:"invalid_payment"});
+ if(action==="CLOSE"){const cfg=await base.collection("settings").doc("public").get();if(!enabledPaymentMethods(cfg.data()?.paymentMethods).includes(body.paymentMethod))return res.status(400).json({error:"payment_method_disabled"})}
  await db.runTransaction(async tx=>{const snap=await tx.get(ref);if(!snap.exists)throw new Error("not_found");const d=snap.data();if(action==="REQUEST_BILL"&&(!(d.items||[]).length||Number(d.totalCents||0)<=0))throw new Error("empty_tab");if(action==="REQUEST_BILL"&&d.status!=="OPEN"||action==="REOPEN"&&d.status!=="BILL_REQUESTED"||action==="CLOSE"&&d.status!=="BILL_REQUESTED")throw new Error("invalid_status");const patch={status:action==="REQUEST_BILL"?"BILL_REQUESTED":action==="REOPEN"?"OPEN":"CLOSED",updatedAt:FieldValue.serverTimestamp()};if(action==="CLOSE"){patch.paymentMethod=body.paymentMethod;patch.closedAt=FieldValue.serverTimestamp();patch.closedBy=user.uid;const orderRef=base.collection("orders").doc("tabpayment_"+id+"_"+Date.now());tx.set(orderRef,{channel:"TABLE",table:(d.type==="TABLE"?"Mesa ":"Comanda ")+d.label,tabId:id,number:"C"+orderRef.id.slice(-8).toUpperCase(),customerSnapshot:{name:(d.type==="TABLE"?"Mesa ":"Comanda ")+d.label},items:d.items||[],totalCents:Number(d.totalCents||0),status:"COMPLETED",paymentStatus:"PAID",paymentMethod:body.paymentMethod,createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});patch.financeOrderId=orderRef.id}tx.update(ref,patch)});
  return res.status(200).json({ok:true});
  }
