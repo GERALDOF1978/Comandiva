@@ -1219,3 +1219,172 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
 .posBuilderModal .posPizzaFlavor:has(.posOptionCounter)>strong{flex-shrink:0}
 .posPizzaLivePrice{display:block;margin-top:5px;color:#087c48;font-size:1.2rem;font-weight:800}
 @media(max-width:520px){.posBuilderModal .posPizzaFlavor:has(.posOptionCounter){flex-wrap:wrap}.posBuilderModal .posOptionCounter{margin-left:auto}}
+
+
+/* DISHY — consolidated professional PDV, table management, brand theme (2026-11) */
+.app{--ui-primary:#f97316;--ui-primary-ink:#fff;--ui-secondary:#172b49;--ui-secondary-ink:#fff;--ui-line:#e3e9f1;--ui-muted:#64748b;accent-color:var(--ui-primary)}
+.app>aside{background:var(--ui-secondary);color:var(--ui-secondary-ink)}
+.app .brand>span{background:var(--ui-primary);color:var(--ui-primary-ink)}
+.app .hero{background:linear-gradient(115deg,var(--ui-secondary),color-mix(in srgb,var(--ui-secondary) 70%,#344054))}
+.app .hero button,.app .saveButton{background:var(--ui-primary);color:var(--ui-primary-ink)}
+.app .restaurantQuickNav button.active{color:var(--ui-secondary);background:color-mix(in srgb,var(--ui-primary) 15%,white)}
+.app .financePeriod button.active,.app .financeTabs button.active,.app .settingsTabBar button.active{background:var(--ui-secondary);color:var(--ui-secondary-ink);border-color:var(--ui-secondary)}
+.app .menuTabs button.active{color:var(--ui-secondary);box-shadow:inset 0 -3px 0 var(--ui-primary)}
+.app .menuTop .publicMenuButton,.app .menuPage .saveButton{background:var(--ui-primary);color:var(--ui-primary-ink)}
+.app .modeCards button.active{border-color:var(--ui-primary);background:color-mix(in srgb,var(--ui-primary) 9%,#fff)}
+.app .deliveryPage .saveDelivery{background:var(--ui-primary);color:var(--ui-primary-ink)}
+.app .deliverySourceTabs button.active{border-color:var(--ui-primary);background:color-mix(in srgb,var(--ui-primary) 11%,#fff);color:var(--ui-secondary)}
+.app .customerItem.selected{background:color-mix(in srgb,var(--ui-primary) 9%,#fff);box-shadow:inset 4px 0 0 var(--ui-primary)}
+.app .dispatchFilters button.active{border-color:var(--ui-secondary);background:color-mix(in srgb,var(--ui-primary) 10%,white);color:var(--ui-secondary)}
+.app .dispatchManageToggle{border-color:color-mix(in srgb,var(--ui-secondary) 28%,#fff);color:var(--ui-secondary)}
+.app .moduleIcon{background:color-mix(in srgb,var(--ui-primary) 12%,white);color:var(--ui-secondary)}
+.app main .loginButton{background:var(--ui-primary);color:var(--ui-primary-ink)}
+.app .settingsHead small,.app .moduleIntro small{color:var(--ui-secondary)}
+.app button:focus-visible,.app input:focus-visible,.app select:focus-visible,.app textarea:focus-visible{outline:3px solid var(--ui-primary);outline-offset:2px}
+.app .financeTableWrap{max-width:100%;overflow-x:auto}
+.app .growthForm input,.app .deliveryForm input,.app .deliveryForm select{max-width:100%;box-sizing:border-box}
+@media(max-width:650px){.app .financeStats{grid-template-columns:repeat(2,minmax(0,1fr))}.app .customerTools{flex-wrap:wrap}.app .customerTools input{flex:1 1 200px}.app .customerTools select{max-width:none;flex:1 1 150px}.app .settingsTabBar{flex-wrap:nowrap;overflow-x:auto}}
+
+/* PDV */
+.posPageLive{--pos-stroke:#dce4ec;background:#eff3f8!important;border:1px solid var(--pos-stroke);border-radius:18px;color:#18314a}
+.posPageLive .posIntro{border-radius:16px;background:linear-gradient(110deg,var(--pos-secondary),color-mix(in srgb,var(--pos-secondary) 72%,var(--pos-primary)))}
+.posPageLive .posShortcuts button{border-radius:10px;box-shadow:0 2px 5px #14263e12;min-height:43px}
+.posPageLive .posCatalog,.posPageLive .posCheckout{background:white;border:1px solid var(--pos-stroke);border-radius:16px;min-width:0;box-shadow:0 5px 18px #14263e0d}
+.posPageLive .posSearchField{grid-column:2;grid-row:1;display:flex;align-items:center;gap:9px;min-width:0;min-height:46px;padding:0 12px;background:#f7f9fc;border:1px solid #dbe4ed;border-radius:11px}
+.posPageLive .posSearchField:focus-within{border-color:var(--pos-primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--pos-primary) 15%,transparent)}
+.posPageLive .posSearchField input{width:100%;min-width:0;min-height:42px;background:transparent;border:0!important;outline:none!important;padding:9px 0;color:#23364d;font:inherit}
+.posPageLive .posSearchHint{display:grid;place-items:center;width:26px;height:25px;border:1px solid #cbd5e1;border-radius:7px;background:white;color:#64748b;font-weight:800}
+.posPageLive .posCategories button{border-radius:10px;min-height:42px;color:#344861;font-weight:750}
+.posPageLive .posCategories button.active{background:var(--pos-secondary);border-color:var(--pos-secondary);color:white;box-shadow:inset 4px 0 0 var(--pos-primary)}
+.posPageLive .posProducts{align-content:start;gap:12px}
+.posPageLive .posProduct{position:relative;min-width:0;border:1px solid #dce4ec;border-radius:13px;padding:11px;gap:7px;box-shadow:0 2px 7px #14263e08}
+.posPageLive .posProduct:hover{border-color:var(--pos-primary);box-shadow:0 7px 16px #14263e15}
+.posPageLive .posProduct>span:first-child{height:105px;background:#f5f7fa}
+.posPageLive .posProduct strong{font-size:13px;min-height:34px;line-height:1.3;overflow-wrap:anywhere}
+.posPageLive .posProduct b{color:#203951;font-size:15px;margin-top:auto}
+.posPageLive .posProductAction{color:var(--pos-primary);font-weight:800;font-size:11px}
+.posPageLive .posProductCount{position:absolute;right:6px;top:6px;display:grid;place-items:center;width:25px;height:25px;border-radius:50%;background:var(--pos-secondary);color:white;font-size:12px;font-weight:850}
+.posPageLive .posNoResults{grid-column:1/-1;display:grid;justify-items:center;gap:10px;padding:32px;border:1px dashed #bbc9d9;border-radius:12px;background:#f8fafc;color:#617087}
+.posPageLive .posCheckoutHead{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-bottom:12px;border-bottom:1px solid #e1e8ef}
+.posPageLive .posCheckoutHead small{font-size:10px;letter-spacing:.1em;color:#64748b;font-weight:850}
+.posPageLive .posCheckoutHead h3{font-size:19px;margin:4px 0}
+.posPageLive .posCheckoutHead p{font-size:12px;color:#64748b;margin:4px 0}
+.posPageLive .posCheckoutHead button{padding:9px 12px;border-radius:9px;border:1px solid #e0e6ec;background:#f8fafc;color:#566779;cursor:pointer}
+.posPageLive .posCheckoutHead button:disabled{opacity:.45}
+.posPageLive .posEmpty{min-height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:18px;text-align:center;color:#7e8d9c}
+.posPageLive .posEmpty strong{color:#2f455e}
+.posPageLive .posEmpty p{max-width:250px;margin:0;font-size:12px}
+.posPageLive .posLine{padding:12px 0;border-bottom:1px solid #edf1f5}
+.posPageLive .posTotal span{color:var(--pos-secondary);font-weight:900;font-variant-numeric:tabular-nums}
+.posPageLive .posFinish{min-height:49px;background:var(--pos-primary);color:var(--ui-primary-ink,#fff)}
+.posBuilderOverlay{z-index:2147483000!important}
+.posBuilderModal{box-sizing:border-box;max-height:94dvh;overflow:auto;min-width:0}
+.posBuilderModal .posPizzaBuilder{min-width:0}
+.posBuilderModal .posPizzaFlavor{min-width:0;overflow-wrap:anywhere}
+.posBuilderModal .posOptionCounter{flex-shrink:0}
+@media(min-width:900px){.app:has(.posPage) .posCatalog{grid-template-rows:auto minmax(0,1fr)}.posPageLive .posCheckout{min-width:310px}}
+@media(max-width:899px){.posPageLive .posSearchField{grid-column:1/-1}.posPageLive .posNoResults{padding:20px}.posPageLive .posCheckoutHead{align-items:flex-start}}
+
+/* Tables and tabs */
+.tabsPage.tabsProfessional{--tabs-accent:var(--ui-primary);--tabs-accent-text:var(--ui-primary-ink);--tabs-dark:var(--ui-secondary);--tabs-dark-text:var(--ui-secondary-ink);gap:14px;min-width:0}
+.tabsProfessional>.ordersTop{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:4px}
+.tabsProfessional .tabsRefreshButton{display:inline-flex;align-items:center;gap:8px;padding:11px 14px;border:1px solid #dde5ed;border-radius:11px;background:white;color:#334155;font-weight:750;cursor:pointer}
+.tabsProfessional .tabsOverview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.tabsProfessional .tabsOverview>div{display:flex;flex-direction:column;gap:7px;min-width:0;background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:16px}
+.tabsProfessional .tabsOverview small{color:#617085;font-weight:750;font-size:12px}
+.tabsProfessional .tabsOverview strong{color:var(--tabs-dark);font-size:clamp(24px,3vw,34px);line-height:1.1;font-variant-numeric:tabular-nums}
+.tabsProfessional .tabsOverview span{color:#657388;font-size:12px}
+.tabsProfessional>.tabsAction,.tabsProfessional .tabsOpen button{background:var(--tabs-accent);color:var(--tabs-accent-text);min-height:44px;border-radius:11px}
+.tabsProfessional .tabsFilters{display:flex;align-items:center;gap:8px;overflow-x:auto;padding:6px 0 10px}
+.tabsProfessional .tabsFilterButton{flex:0 0 auto;min-height:42px;padding:9px 13px;border:1px solid #e0e6ed;border-radius:11px;background:#fff;color:#344054;font-weight:700;cursor:pointer}
+.tabsProfessional .tabsFilterButton.active{background:var(--tabs-dark);color:var(--tabs-dark-text);border-color:var(--tabs-dark)}
+.tabsProfessional .tabsTools{display:flex;flex-wrap:wrap;gap:9px;min-width:0}
+.tabsProfessional .tabsSearchField{display:flex;align-items:center;gap:8px;min-width:0;flex:2 1 240px;background:white;border:1px solid #dfe6ef;border-radius:11px;padding:0 11px}
+.tabsProfessional .tabsSearchField input{flex:1;min-width:0;min-height:44px;border:0;outline:none;background:transparent;font:inherit}
+.tabsProfessional .tabsSearchField button{background:#f1f5f9;border:0;width:28px;height:28px;border-radius:8px;cursor:pointer}
+.tabsProfessional .tabsTools>select{flex:1 1 150px;min-height:45px;border:1px solid #dfe6ef;border-radius:11px;padding:10px;font:inherit}
+.tabsProfessional .tabsGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:11px}
+.tabsProfessional .tabsTile{min-width:0;min-height:122px;gap:9px;padding:15px;border:1px solid #dce5ed;border-left:5px solid #9ca3af;border-radius:14px;background:white;box-shadow:0 4px 12px #14263e0a;color:#1b2f46}
+.tabsProfessional .tabsTile-open{border-left-color:#279a64}
+.tabsProfessional .tabsTile-bill_requested{border-left-color:#e9a13a}
+.tabsProfessional .tabsTile-closed{border-left-color:#9faab5}
+.tabsProfessional .tabsTile.selected{border-color:var(--tabs-accent);border-left-color:var(--tabs-accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--tabs-accent) 18%,transparent)}
+.tabsProfessional .tabsTile b{font-size:15px}
+.tabsProfessional .tabsTile strong{font-size:21px;color:var(--tabs-dark);font-variant-numeric:tabular-nums;margin-top:auto}
+.tabsProfessional .tabsTile span{font-size:12px}
+.tabsProfessional .tabsLoadMore{justify-self:center;padding:12px 18px;border:1px solid #dce4ec;border-radius:11px;background:white;color:var(--tabs-dark);font-weight:700;cursor:pointer}
+.tabsProfessional .tabsEmpty{padding:25px;grid-column:1/-1;border:1px dashed #cbd5e1;border-radius:12px;color:#617085;background:white}
+.tabsProfessional .tabsDetail{min-width:0;border:1px solid #e0e7ef;border-radius:16px;box-shadow:0 6px 18px #14263e08}
+.tabsProfessional .tabsQr button{display:inline-flex;align-items:center;gap:8px;padding:11px 15px;background:var(--tabs-dark);color:var(--tabs-dark-text);border:0;border-radius:11px;font-weight:750;cursor:pointer}
+.tabsProfessional .tabsQr img{display:block;max-width:min(240px,100%);padding:9px;border:1px solid #dce5ed;border-radius:12px;background:white}
+.tabsProfessional .tabsCatalog{border:1px solid #e0e7ef;border-radius:14px;padding:13px;margin-top:14px}
+.tabsProfessional .tabsCatalogToggle,.tabsProfessional .tabsDraftAdd{background:var(--tabs-dark);color:var(--tabs-dark-text);padding:11px 13px;border:0;border-radius:10px;cursor:pointer;font-weight:750}
+.tabsProfessional .tabsCatalogToggle{width:100%;min-height:46px}
+.tabsProfessional .tabsSubmitKitchen{width:100%;min-height:48px;margin-top:12px;background:#137645;color:white;border:0;border-radius:11px;font-weight:800;cursor:pointer}
+.tabsProfessional .tabsBillNotice{flex-basis:100%;padding:11px;background:#fff8eb;border:1px solid #efd7aa;border-radius:11px;color:#805311}
+.tabsProfessional .tabsActions button{min-height:43px;background:var(--tabs-dark);color:var(--tabs-dark-text)}
+.tabsProfessional .tabsTotal{padding:13px;background:color-mix(in srgb,var(--tabs-accent) 8%,white);border:1px solid #e4e7ec;border-radius:11px}
+.tabsProfessional .tabsNoItems{padding:11px;background:#f7f9fc;color:#6d7988;border-radius:9px}
+@media(max-width:760px){.tabsProfessional .tabsOverview{grid-template-columns:repeat(3,minmax(0,1fr))}.tabsProfessional .tabsTools{flex-direction:column}.tabsProfessional .tabsGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.tabsProfessional>.ordersTop{align-items:flex-start}}
+@media(max-width:460px){.tabsProfessional .tabsOverview{grid-template-columns:repeat(2,minmax(0,1fr))}.tabsProfessional .tabsOverview>div:last-child{grid-column:1/-1}.tabsProfessional>.ordersTop{flex-direction:column}.tabsProfessional>.tabsAction{width:100%}.tabsProfessional .tabsTools>select{flex:auto}}
+
+
+/* Shared composer for pizzas, lunchboxes and add-ons in table orders */
+.tableComposerOpen{overflow:hidden!important}
+.tableComposerOverlay{position:fixed!important;inset:0!important;z-index:2147483100!important;display:flex;align-items:center;justify-content:center;padding:clamp(8px,2vw,24px);box-sizing:border-box;background:rgba(13,25,42,.72);backdrop-filter:blur(4px)}
+.tableComposer{--tc-accent:var(--table-composer-primary,#f97316);--tc-dark:var(--table-composer-secondary,#172b49);box-sizing:border-box;width:min(100%,890px);max-height:min(94dvh,1000px);display:flex;flex-direction:column;overflow:hidden;border-radius:20px;background:white;box-shadow:0 25px 75px #09142350;color:#203047}
+.tableComposer *{box-sizing:border-box}
+.tableComposerHeader{display:flex;gap:17px;justify-content:space-between;padding:22px 23px 15px;border-bottom:1px solid #e5eaf0}
+.tableComposerHeader small{color:var(--tc-dark);font-size:11px;font-weight:850;letter-spacing:.09em}
+.tableComposerHeader h2{font-size:clamp(21px,3vw,27px);margin:6px 0}
+.tableComposerHeader p{margin:0;color:#657487;font-size:13px;line-height:1.45}
+.tableComposerClose{flex:0 0 44px;width:44px;height:44px;display:grid;place-items:center;border-radius:50%;background:#f8fafc;border:1px solid #dde5ed;color:#334155;font-size:28px;cursor:pointer}
+.tableComposerContent{min-height:0;overflow-y:auto;overscroll-behavior:contain;display:grid;gap:13px;padding:19px 22px;background:#f6f8fb}
+.tableComposerSection{min-width:0;padding:17px;background:white;border:1px solid #e1e8f0;border-radius:15px}
+.tableComposerSection h3{font-size:16px;color:#1e3048;margin:0 0 10px}
+.tableComposerHint{font-size:12px;color:#66758a;margin:0 0 12px}
+.tableComposerSizeGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.tableComposerSizeGrid button{display:grid;gap:6px;text-align:left;min-height:72px;padding:12px;border:1.5px solid #dce5ee;border-radius:12px;background:white;color:#243951;cursor:pointer}
+.tableComposerSizeGrid button small{font-size:11px;color:#61748a}
+.tableComposerSizeGrid button.selected,.tableComposerOptions button.selected{border:2px solid var(--tc-accent);background:color-mix(in srgb,var(--tc-accent) 9%,white)}
+.tableComposerFlavors{display:grid;gap:8px}
+.tableComposerChoice{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #edf0f4;padding:11px 0;min-width:0}
+.tableComposerChoice>div:first-child{display:grid;gap:4px;min-width:0}
+.tableComposerChoice b{font-size:14px;overflow-wrap:anywhere}
+.tableComposerChoice small{font-size:12px;color:#66778a;line-height:1.4}
+.tableComposerCounter{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.tableComposerCounter button{display:grid;place-items:center;width:38px;height:38px;border:1px solid #dce5ed;border-radius:10px;background:#fff;color:#263d52;font-size:21px;cursor:pointer}
+.tableComposerCounter button:last-child{background:var(--tc-accent);border-color:var(--tc-accent);color:var(--table-composer-on-primary,#fff)}
+.tableComposerCounter button:disabled{opacity:.42;cursor:not-allowed}
+.tableComposerCounter strong{min-width:20px;text-align:center;font-size:15px}
+.tableComposerOptions{display:flex;gap:8px;flex-wrap:wrap}
+.tableComposerOptions button{padding:11px 13px;min-height:44px;border:1.5px solid #dce5ee;border-radius:11px;background:white;color:#243950;cursor:pointer;text-align:left;font-weight:750}
+.tableComposerOptions button small{font-size:11px;color:#64748b;margin-left:6px}
+.tableComposerGroupNav{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px}
+.tableComposerGroupNav button{flex:0 0 auto;padding:11px 13px;border:1px solid #dce5ed;border-radius:10px;background:white;color:#233951;font-weight:750;cursor:pointer}
+.tableComposerGroupNav button.selected{background:var(--tc-dark);border-color:var(--tc-dark);color:var(--table-composer-on-secondary,#fff)}
+.tableComposerSteps{display:flex;align-items:center;justify-content:space-between;gap:10px;color:#6b7788;font-size:12px}
+.tableComposerSteps button{border:1px solid #dce5ed;background:white;padding:10px 17px;border-radius:10px;cursor:pointer;font-weight:750}
+.tableComposerSteps button:disabled{opacity:.4;cursor:not-allowed}
+.tableComposerFooter{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px;padding:15px 22px;border-top:1px solid #e1e7ef;background:white;box-shadow:0 -5px 15px #14263e0d}
+.tableComposerFooter>div{display:grid;gap:4px}
+.tableComposerFooter small{font-size:11px;color:#65778a;font-weight:700}
+.tableComposerFooter strong{font-size:19px;color:#1a3049;overflow-wrap:anywhere}
+.tableComposerFooter>p{grid-column:1/-1;margin:0;color:#b42318;font-size:12px;font-weight:700}
+.tableComposerSubmit{padding:13px 20px;min-height:49px;border-radius:11px;border:0;background:var(--tc-accent);color:var(--table-composer-on-primary,#fff);font-size:14px;font-weight:800;cursor:pointer}
+.tableComposerPizzaPreview{width:min(250px,100%);aspect-ratio:1/1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin:15px auto 0;padding:7px;gap:3px;border:5px solid #b77a32;border-radius:50%;overflow:hidden;background:#b77a32;box-shadow:0 8px 24px #5a3b261f}
+.tableComposerPizzaPreview span{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:9px;text-align:center;overflow-wrap:anywhere;background:linear-gradient(135deg,#ffdea0,#eac17a);font-size:11px;color:#44321e}
+.tableComposerPizzaPreview span:nth-child(1){border-radius:110px 4px 4px 4px}
+.tableComposerPizzaPreview span:nth-child(2){border-radius:4px 110px 4px 4px}
+.tableComposerPizzaPreview span:nth-child(3){border-radius:4px 4px 4px 110px}
+.tableComposerPizzaPreview span:nth-child(4){border-radius:4px 4px 110px 4px}
+.tableCustomizeButton{display:inline-flex;align-items:center;justify-content:center;min-height:43px;margin-top:9px;padding:11px 14px;border:0;border-radius:11px;background:var(--table-accent,var(--ui-primary,#f97316));color:white;font-size:12px;font-weight:800;cursor:pointer}
+.tableCartConfigured,.tabsDraftConfigured{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid #e1e7ed;flex-wrap:wrap}
+.tableCartConfigured>div,.tabsDraftConfigured>span{display:grid;gap:4px;min-width:0;flex:1}
+.tableCartConfigured small,.tabsDraftConfigured small,.tableOrderOptions{display:block;color:#627386;font-size:11px!important;line-height:1.45;font-weight:500;overflow-wrap:anywhere}
+.tableCartConfigured button,.tabsDraftConfigured button{border:1px solid #e4c0b8;padding:8px 11px;border-radius:9px;background:#fff7f5;color:#9a3412;cursor:pointer}
+.tableSelfOrderItem:has(.tableOrderOptions){display:grid;grid-template-columns:1fr auto;align-items:start}
+.tableSelfOrderItem .tableOrderOptions{grid-column:1/-1}
+@media(max-width:650px){.tableComposerOverlay{padding:0;align-items:flex-end}.tableComposer{width:100%;max-height:96dvh;border-radius:18px 18px 0 0}.tableComposerHeader{padding:16px}.tableComposerContent{padding:12px}.tableComposerSection{padding:13px}.tableComposerFooter{padding:12px}.tableComposerSubmit{font-size:12px;padding:10px 13px}}
+@media(prefers-reduced-motion:reduce){.tableComposerOverlay{backdrop-filter:none}}
+

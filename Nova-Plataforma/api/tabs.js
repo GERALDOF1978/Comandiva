@@ -1,4 +1,5 @@
 import {startTabPix} from "../server/tab-pix.js";
+import {buildTableOrderLine} from "../src/lib/tableItemPricing.js";
 import publicTabHandler from "../server/public-tab.js";
 import {randomBytes} from "node:crypto";
 import {cert,getApps,initializeApp} from "firebase-admin/app";
@@ -33,27 +34,27 @@ export default async function handler(req,res){
  if(!/^[\w-]{3,130}$/.test(id))return res.status(400).json({error:"invalid_tab"});
  const ref=tabs.doc(id);
  if(action==="CREATE_PIX"){try{return res.status(200).json({ok:true,payment:await startTabPix(base,ref,restaurantId)})}catch(e){return res.status(409).json({error:e.message})}}
- if(action==="QR_TOKEN"){const snap=await ref.get();if(!snap.exists)return res.status(404).json({error:"not_found"});if(!snap.data().customerAccessToken)await ref.update({customerAccessToken:randomBytes(24).toString("hex")});return res.status(200).json({ok:true})}
- if(action==="ADD_BATCH"){
- const incoming=Array.isArray(body.items)?body.items:[];
+ if(action==="QR_TOKEN"){const snap=await ref.get();if(!snap.exists)return res.status(404).json({error:"not_found"});if(snap.data().status==="CLOSED")return res.status(409).json({error:"not_open"});let token=snap.data().customerAccessToken;if(!token){token=randomBytes(24).toString("hex");await ref.update({customerAccessToken:token})}return res.status(200).json({ok:true,token})}
+ if(action==="ADD_BATCH"||action==="ADD"){
+ const incoming=action==="ADD"?[{productId:body.productId,qty:body.qty||1,pizzaSelection:body.pizzaSelection,optionSelection:body.optionSelection}]:Array.isArray(body.items)?body.items:[];
  if(!incoming.length||incoming.length>100)return res.status(400).json({error:"invalid_items"});
- const merged=new Map();
- for(const item of incoming){const pid=String(item.productId||""),qty=Number(item.qty);if(!/^[\w-]{5,128}$/.test(pid)||!Number.isInteger(qty)||qty<1||qty>50)return res.status(400).json({error:"invalid_item"});merged.set(pid,(merged.get(pid)||0)+qty)}
- if(merged.size>60||[...merged.values()].some(q=>q>50))return res.status(400).json({error:"invalid_items"});
- const entries=await Promise.all([...merged].map(async([pid,qty])=>{const doc=await base.collection("products").doc(pid).get();if(!doc.exists||doc.data().active===false||doc.data().sellAtTable===false)throw new Error("product_unavailable");const p=doc.data(),price=Number(p.priceCents);if(!Number.isInteger(price)||price<0)throw new Error("invalid_price");return{productId:pid,name:String(p.name||"Produto"),qty,priceCents:price}}));
+ if(new Set(incoming.map(x=>String(x.productId||""))).size>60)return res.status(400).json({error:"invalid_items"});
+ const entries=await Promise.all(incoming.map(async entry=>{
+  const pid=String(entry.productId||"");if(!/^[A-Za-z0-9_-]{5,128}$/.test(pid))throw Error("invalid_item");
+  const product=await base.collection("products").doc(pid).get();
+  if(!product.exists)throw Error("product_unavailable");
+  return buildTableOrderLine({id:pid,...product.data()},entry);
+ }));
+ const total=entries.reduce((n,x)=>n+x.totalCents,0);
+ if(!Number.isSafeInteger(total)||total<0||total>100000000)return res.status(400).json({error:"invalid_total"});
  const orderRef=base.collection("orders").doc();
- await db.runTransaction(async tx=>{const snap=await tx.get(ref);if(!snap.exists||snap.data().status!=="OPEN")throw new Error("not_open");const d=snap.data(),total=entries.reduce((sum,x)=>sum+x.qty*x.priceCents,0);tx.set(orderRef,{channel:"TABLE",table:(d.type==="TABLE"?"Mesa ":"Comanda ")+d.label,tabId:id,number:"M"+orderRef.id.slice(0,6).toUpperCase(),customerSnapshot:{name:(d.type==="TABLE"?"Mesa ":"Comanda ")+d.label},items:entries.map(x=>({...x,unitPriceCents:x.priceCents,totalCents:x.qty*x.priceCents})),totalCents:0,status:"RECEIVED",paymentStatus:"PENDING",paymentMethod:"CASH",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});tx.update(ref,{items:[...(d.items||[]),...entries.map(x=>({...x,addedAt:new Date().toISOString()}))],totalCents:Number(d.totalCents||0)+total,updatedAt:FieldValue.serverTimestamp()})});
+ await db.runTransaction(async tx=>{
+  const snap=await tx.get(ref);if(!snap.exists||snap.data().status!=="OPEN")throw Error("not_open");
+  const d=snap.data();
+  tx.set(orderRef,{channel:"TABLE",table:(d.type==="TABLE"?"Mesa ":"Comanda ")+d.label,tabId:id,number:"M"+orderRef.id.slice(0,6).toUpperCase(),customerSnapshot:{name:(d.type==="TABLE"?"Mesa ":"Comanda ")+d.label},items:entries,totalCents:0,status:"RECEIVED",paymentStatus:"PENDING",paymentMethod:"CASH",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
+  tx.update(ref,{items:[...(d.items||[]),...entries.map(x=>({...x,addedAt:new Date().toISOString()}))],totalCents:Number(d.totalCents||0)+total,updatedAt:FieldValue.serverTimestamp()});
+ });
  return res.status(200).json({ok:true,orderId:orderRef.id});
- }
- if(action==="ADD"){
- const productId=String(body.productId||""),qty=Number(body.qty||1);
- if(!/^[\w-]{5,128}$/.test(productId)||!Number.isInteger(qty)||qty<1||qty>50)return res.status(400).json({error:"invalid_item"});
- const product=await base.collection("products").doc(productId).get();
- if(!product.exists||product.data().active===false||product.data().sellAtTable===false)return res.status(404).json({error:"product_unavailable"});
- const p=product.data(),price=Number(p.priceCents);
- if(!Number.isInteger(price)||price<0)return res.status(400).json({error:"invalid_price"});
- await db.runTransaction(async tx=>{const snap=await tx.get(ref);if(!snap.exists||snap.data().status!=="OPEN")throw new Error("not_open");const data=snap.data();const kitchenRef=base.collection("orders").doc();tx.set(kitchenRef,{channel:"TABLE",table:(data.type==="TABLE"?"Mesa ":"Comanda ")+data.label,tabId:id,number:"M"+kitchenRef.id.slice(0,6).toUpperCase(),customerSnapshot:{name:(data.type==="TABLE"?"Mesa ":"Comanda ")+data.label},items:[{productId,name:String(p.name||"Produto"),qty,unitPriceCents:price,priceCents:price,totalCents:qty*price}],totalCents:0,status:"RECEIVED",paymentStatus:"PENDING",paymentMethod:"CASH",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});tx.update(ref,{items:[...(data.items||[]),{productId,name:String(p.name||"Produto"),qty,priceCents:price,addedAt:new Date().toISOString()}],totalCents:Number(data.totalCents||0)+qty*price,updatedAt:FieldValue.serverTimestamp()})});
- return res.status(200).json({ok:true});
  }
  if(action==="REQUEST_BILL"||action==="REOPEN"||action==="CLOSE"){
  if(action==="CLOSE"&&!["CASH","CARD_ON_DELIVERY"].includes(body.paymentMethod))return res.status(400).json({error:"invalid_payment"});
@@ -61,5 +62,5 @@ export default async function handler(req,res){
  return res.status(200).json({ok:true});
  }
  return res.status(400).json({error:"invalid_action"});
- }catch(e){if(["already_open","not_open","not_found","invalid_status","empty_tab","product_unavailable","invalid_price"].includes(e.message))return res.status(409).json({error:e.message});console.error("tabs",e);return res.status(500).json({error:"internal_error"})}
+ }catch(e){if(["already_open","not_open","not_found","invalid_status","empty_tab","product_unavailable","invalid_price"].includes(e.message))return res.status(409).json({error:e.message});if(["invalid_items","invalid_item","invalid_product","invalid_quantity","invalid_pizza_selection","invalid_pizza_crust","invalid_pizza_price","invalid_option_selection","invalid_option_price","invalid_option_product","invalid_pizza_product","assembly_required","invalid_total"].includes(e.message))return res.status(400).json({error:e.message});console.error("tabs",e);return res.status(500).json({error:"internal_error"})}
 }

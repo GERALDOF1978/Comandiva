@@ -1,0 +1,16 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {buildTableOrderLine,tableProductNeedsAssembly,tableProductStartingPrice} from "./tableItemPricing.js";
+const pid="produto-123";
+const pizza={id:pid,name:"Pizza",active:true,productType:"pizza",priceCents:0,pizzaConfig:{pricingRule:"highest",sizes:[{name:"Grande",maxFlavors:2,priceCents:500}],flavors:[{name:"Queijo",pricesBySize:[3000]},{name:"Calabresa",pricesBySize:[4000]}],crusts:[{name:"Catupiry",priceCents:700}],extras:[{name:"Azeitona",priceCents:200}]}};
+const selection={sizeIndex:0,quarterIndices:[0,0,1,1],crustIndex:0,extrasIndices:[0]};
+test("simples usa o preco do cadastro",()=>{const line=buildTableOrderLine({id:pid,name:"Refrigerante",priceCents:600,active:true},{qty:2});assert.equal(line.totalCents,1200)});
+test("pizza com borda e adicional soma corretamente",()=>{const line=buildTableOrderLine(pizza,{qty:2,pizzaSelection:selection});assert.equal(line.unitPriceCents,5400);assert.equal(line.totalCents,10800);assert.equal(line.options.length,7)});
+test("pizza rejeita mais sabores do que permite",()=>assert.throws(()=>buildTableOrderLine({...pizza,pizzaConfig:{...pizza.pizzaConfig,sizes:[{name:"Grande",maxFlavors:1,priceCents:500}]}},{qty:1,pizzaSelection:selection}),/invalid_pizza_selection/));
+test("pizza rejeita preco nao cadastrado",()=>assert.throws(()=>buildTableOrderLine({...pizza,pizzaConfig:{...pizza.pizzaConfig,flavors:[{name:"Queijo",pricesBySize:[0]},pizza.pizzaConfig.flavors[1]]}},{qty:1,pizzaSelection:selection}),/invalid_pizza_price/));
+const marmita={id:pid,active:true,productType:"marmita",name:"Marmita",priceCents:0,optionGroups:[{name:"Tamanho",required:true,min:1,max:1,options:[{name:"Grande",priceCents:3000}]},{name:"Proteinas",required:true,min:2,max:2,allowRepeat:true,options:[{name:"Frango",priceCents:0},{name:"Carne",priceCents:0}]}]};
+test("marmita permite repetir proteina",()=>{const line=buildTableOrderLine(marmita,{qty:1,optionSelection:[[0],[0,0]]});assert.equal(line.unitPriceCents,3000);assert.equal(line.options.length,3)});
+test("marmita exige quantidade correta",()=>assert.throws(()=>buildTableOrderLine(marmita,{qty:1,optionSelection:[[0],[0]]}),/invalid_option_selection/));
+test("preco do cliente nao sobrescreve o servidor",()=>{const line=buildTableOrderLine({id:pid,name:"Agua",priceCents:500},{qty:1,priceCents:1,totalCents:1});assert.equal(line.totalCents,500)});
+test("produto desativado nao pode ser vendido",()=>assert.throws(()=>buildTableOrderLine({id:pid,active:false,priceCents:100},{qty:1}),/product_unavailable/));
+test("montagem e identificada",()=>{assert.ok(tableProductNeedsAssembly(pizza));assert.equal(tableProductStartingPrice(pizza),3500)});
