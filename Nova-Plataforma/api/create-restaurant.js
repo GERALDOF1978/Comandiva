@@ -252,7 +252,7 @@ export default async function handler(req,res){
       const restaurantSnap=await restaurant.get();if(!restaurantSnap.exists)return res.status(404).json({error:"restaurant_not_found"});
       const batch=db.batch(),now=FieldValue.serverTimestamp();
       batch.create(restaurant.collection("members").doc(target.uid),{uid:target.uid,email:target.email,name:typeof name==="string"?name.trim().slice(0,100):"",role,permissions:[...new Set(permissions)],active:true,createdAt:now});
-      batch.set(db.collection("userRestaurantAccess").doc(target.uid).collection("restaurants").doc(restaurantId),{restaurantId,restaurantName:restaurantSnap.data().name||"",role,active:true,createdAt:now});
+      batch.set(db.collection("userRestaurantAccess").doc(target.uid).collection("restaurants").doc(restaurantId),{restaurantId,restaurantName:restaurantSnap.data().name||"",role,permissions:[...new Set(permissions)],active:true,createdAt:now});
       batch.create(restaurant.collection("audit").doc(),{action:"OWNER_ADD_EMPLOYEE",actorUid:decoded.uid,targetUid:target.uid,createdAt:now});
       await batch.commit();return res.status(201).json({ok:true});
     }
@@ -269,7 +269,7 @@ export default async function handler(req,res){
       if(target.data().role==="owner"||uid===decoded.uid)return res.status(403).json({error:"owner_cannot_be_changed"});
       const batch=db.batch();
       batch.update(target.ref,{permissions:[...new Set(permissions)],active,updatedAt:FieldValue.serverTimestamp()});
-      batch.set(db.collection("userRestaurantAccess").doc(uid).collection("restaurants").doc(restaurantId),{active,role:target.data().role||"employee"},{merge:true});
+      batch.set(db.collection("userRestaurantAccess").doc(uid).collection("restaurants").doc(restaurantId),{active,role:target.data().role||"employee",permissions:[...new Set(permissions)]},{merge:true});
       batch.create(db.collection("restaurants").doc(restaurantId).collection("audit").doc(),{action:"OWNER_UPDATE_EMPLOYEE_PERMISSIONS",actorUid:decoded.uid,targetUid:uid,createdAt:FieldValue.serverTimestamp()});
       await batch.commit();return res.status(200).json({ok:true});
     }
