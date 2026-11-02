@@ -1,4 +1,5 @@
 import React,{useEffect,useState} from "react";
+import {Phone} from "lucide-react";
 import QRCode from "qrcode";
 import {auth} from "../lib/firebase.js";
 const errors={
