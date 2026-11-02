@@ -1516,3 +1516,44 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
 
 /* Neutraliza o padding global do painel dentro da página comercial. */
 .dishySite .dishyShell>main{padding:0;min-width:0;max-width:none}
+
+
+/* Dishy integration controls: Mercado Pago, WhatsApp, payment choices */
+.dishyIntegrationPanel{margin-top:14px;max-width:100%;overflow-wrap:anywhere}
+.integrationStatus{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin:12px 0 18px;font-size:14px;color:#344054}
+.integrationStatus small{color:#667085;font-size:12px}
+.integrationCredentialForm{display:grid;gap:14px;max-width:640px}
+.integrationCredentialForm label,.integrationConnect label{display:grid;gap:7px;font-size:13px;font-weight:700;color:#344054}
+.integrationCredentialForm input,.integrationConnect input{display:block;min-height:44px;width:100%;max-width:100%;padding:10px 12px;border:1px solid #d0d5dd;border-radius:10px;background:#fff;color:#1d2939;font-size:14px;box-sizing:border-box}
+.integrationCredentialForm input:disabled{background:#f4f6f9;color:#667085;cursor:not-allowed}
+.integrationActionRow{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0}
+.integrationPrimaryButton,.integrationSecondaryButton{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 15px;border-radius:10px;border:1px solid var(--ui-primary,#f97316);font:inherit;font-size:13px;font-weight:800;cursor:pointer;line-height:1.35}
+.integrationPrimaryButton{background:var(--ui-primary,#f97316);color:var(--ui-primary-ink,#fff)}
+.integrationSecondaryButton{background:#fff;color:#334155;border-color:#cbd5e1}
+.integrationPrimaryButton:disabled,.integrationSecondaryButton:disabled{opacity:.55;cursor:not-allowed}
+.integrationTutorial{max-width:760px;margin-top:18px;padding:0 16px;border:1px solid #dde5ee;border-radius:12px;background:#f8fafc}
+.integrationTutorial summary{padding:15px 0;font-size:14px;font-weight:800;color:#24374b;cursor:pointer}
+.integrationTutorial ol{padding-left:24px;margin:4px 0 16px;display:grid;gap:9px;font-size:13px;line-height:1.65;color:#475467}
+.integrationTutorial p{font-size:13px;line-height:1.65;margin:10px 0 14px;color:#475467}
+.integrationTutorial a{display:inline-block;color:#a64a16;font-weight:750;font-size:13px;margin-bottom:16px;text-decoration:underline}
+.integrationError,.integrationSuccess{font-size:13px;margin:12px 0;padding:11px 13px;border-radius:10px;line-height:1.5}
+.integrationError{color:#9f1d14;background:#fff2f0;border:1px solid #fecaca}
+.integrationSuccess{color:#12623d;background:#edfdf3;border:1px solid #b5e8cc}
+.paymentMethodsGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;max-width:860px;margin:18px 0}
+.paymentMethodSetting{display:flex;align-items:flex-start;gap:10px;min-height:76px;box-sizing:border-box;padding:16px 13px;border:1.5px solid #d7e0eb;border-radius:12px;background:#f9fbfd;cursor:pointer}
+.paymentMethodSetting.isActive{border-color:var(--ui-primary,#f97316);background:color-mix(in srgb,var(--ui-primary,#f97316) 8%,white)}
+.paymentMethodSetting input{accent-color:var(--ui-primary,#f97316);width:19px;height:19px;flex:0 0 19px;margin:1px 0}
+.paymentMethodSetting>span{display:grid;gap:6px;min-width:0}
+.paymentMethodSetting b{font-size:14px;color:#25384a}
+.paymentMethodSetting small{font-size:12px;color:#667085;line-height:1.45}
+.integrationModeTabs{display:flex;flex-wrap:wrap;gap:9px;margin:18px 0}
+.integrationModeTabs button{min-height:44px;padding:9px 14px;border:1px solid #d4dce6;border-radius:10px;background:white;color:#334155;cursor:pointer;font-weight:700}
+.integrationModeTabs button.active{border-color:var(--ui-primary,#f97316);background:color-mix(in srgb,var(--ui-primary,#f97316) 10%,white)}
+.integrationConnect{max-width:620px;display:grid;gap:15px;padding:17px;border:1px solid #e1e7ee;background:#f8fafc;border-radius:14px}
+.integrationConnect p{font-size:13px;line-height:1.65;color:#344054;margin:0}
+.integrationQrImage{width:min(310px,100%);max-width:100%;height:auto;object-fit:contain;display:block;justify-self:center;border:8px solid white;border-radius:12px}
+.integrationPairCode{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:white;border:1px solid #d0d5dd;border-radius:12px;padding:15px}
+.integrationPairCode>small{font-size:12px;color:#475467}
+.integrationPairCode>strong{font-size:25px;letter-spacing:3px;color:#182539;font-variant-numeric:tabular-nums}
+.integrationPairCode>button{margin-left:auto;border:1px solid #d0d5dd;border-radius:9px;padding:9px 12px;background:#fff;color:#344054;cursor:pointer}
+@media(max-width:700px){.paymentMethodsGrid{grid-template-columns:1fr}.integrationActionRow>*{flex:1 1 100%}.integrationModeTabs{display:grid;grid-template-columns:1fr 1fr}.integrationModeTabs button{padding:10px 8px;font-size:12px}.integrationConnect{padding:13px}.integrationPairCode>strong{font-size:21px}}
