@@ -4,6 +4,7 @@ import {FieldValue,getFirestore} from "firebase-admin/firestore";
 import {resolvePizzaSelection} from "../src/lib/pizzaSelection.js";
 import {enabledPaymentMethods} from "../src/lib/paymentMethods.js";
 import {enabledServiceModes} from "../src/lib/serviceModes.js";
+import {createInfiniteCheckout,confirmInfinitePayment} from "./_infinitepay.js";
 import {getAuth} from "firebase-admin/auth";
 
 function init(){
@@ -86,6 +87,18 @@ async function reconcile(db,restaurantId,orderId,payment){
   if(payment.status==="approved")await notifyPixPaymentConfirmed(db,restaurantId,orderId).catch(e=>console.error("dishy_payment_notification_error",e.message));
 }
 
+async function infinitepayWebhookHandler(req,res){
+ if(req.method!=="POST")return res.status(405).json({error:"method_not_allowed"});
+ try{
+  init();const db=getFirestore(),rid=String(req.query.restaurantId||""),id=String(req.query.orderId||"");
+  const body=req.body||{};
+  const nsu=String(body.order_nsu||""),transactionNsu=String(body.transaction_nsu||""),slug=String(body.invoice_slug||body.slug||"");
+  const confirmed=await confirmInfinitePayment({db,restaurantId:rid,orderId:id,orderNsu:nsu,transactionNsu,slug});
+  if(confirmed)await notifyPixPaymentConfirmed(db,rid,id).catch(e=>console.error("infinitepay-notification",e.message));
+  return res.status(200).json({ok:true,confirmed});
+ }catch(e){console.error("infinitepay-webhook",e.message);return res.status(500).json({error:"confirmation_failed"})}
+}
+
 async function paymentStatusHandler(req,res){
   res.setHeader("Cache-Control","no-store");
   if(!["GET","POST"].includes(req.method))return res.status(405).json({error:"method_not_allowed"});
@@ -98,7 +111,10 @@ async function paymentStatusHandler(req,res){
       if(!snap.exists)return res.status(404).json({error:"order_not_found"});
       const order=snap.data();
       if(order.paymentStatus==="PAID"&&order.paymentMethod==="PIX"&&!order.paymentConfirmedWhatsappSentAt){await notifyPixPaymentConfirmed(db,restaurantId,orderId).catch(e=>console.error("dishy_payment_notification_error",e.message))}
-      if(order.paymentStatus!=="PAID"&&order.providerPaymentId){
+      if(order.paymentStatus!=="PAID"&&order.provider==="infinitepay"&&req.query.transaction_nsu&&req.query.slug){
+        try{await confirmInfinitePayment({db,restaurantId,orderId,orderNsu:restaurantId+":"+orderId,transactionNsu:String(req.query.transaction_nsu),slug:String(req.query.slug)})}catch(e){console.error("infinitepay-return-reconcile",e.message)}
+      }
+      if(order.paymentStatus!=="PAID"&&order.provider!=="infinitepay"&&order.providerPaymentId){
         try{await reconcile(db,restaurantId,orderId,await providerPayment(await tokenFor(db,restaurantId),order.providerPaymentId))}catch(e){console.error("payment-status-reconcile",e.message)}
       }
       const fresh=(await snap.ref.get()).data();
@@ -119,6 +135,7 @@ async function paymentStatusHandler(req,res){
 
 export default async function handler(req,res){
   if(req.query?.action==="payment-status")return paymentStatusHandler(req,res);
+  if(req.query?.action==="infinitepay-webhook")return infinitepayWebhookHandler(req,res);
   if(req.method!=="POST")return res.status(405).json({error:"method_not_allowed"});
   try{
     init(); const db=getFirestore(); const body=req.body||{};
@@ -264,6 +281,11 @@ export default async function handler(req,res){
     let payment=null;
     if(["PIX","CARD_ONLINE"].includes(paymentMethod)){
       try{
+        const gateway=settings.data()?.paymentProviders?.[paymentMethod]==="infinitepay"?"infinitepay":"mercado_pago";
+        if(gateway==="infinitepay"){
+          payment=await createInfiniteCheckout({db,restaurantId,orderId:orderRef.id,slug,number,totalCents:totalCents+deliveryFeeCents,name});
+          await orderRef.update({provider:"infinitepay",providerPaymentId:null,providerOrderNsu:payment.orderNsu,updatedAt:FieldValue.serverTimestamp()});
+        }else{
         const config=(await db.collection("restaurants").doc(restaurantId).collection("privateIntegrations").doc("mercadoPago").get()).data();
         const key=process.env.PAYMENT_CREDENTIALS_ENCRYPTION_KEY;
         if(!config?.encryptedAccessToken||!config?.iv||!config?.authTag||!/^[a-fA-F0-9]{64}$/.test(key||""))throw new Error("payment_not_configured");
@@ -300,6 +322,7 @@ export default async function handler(req,res){
           payment={type:"CARD_ONLINE",checkoutUrl:mp.init_point,preferenceId:String(mp.id)};
         }
         await orderRef.update({provider:"mercado_pago",providerPaymentId:payment.paymentId||null,providerPreferenceId:payment.preferenceId||null,updatedAt:FieldValue.serverTimestamp()});
+        }
       }catch(paymentError){
         console.error("payment-creation",{orderId:orderRef.id,message:paymentError.message});
         await orderRef.update({paymentStatus:"ERROR",paymentError:String(paymentError.message).slice(0,120),updatedAt:FieldValue.serverTimestamp()}).catch(()=>{});

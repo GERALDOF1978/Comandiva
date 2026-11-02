@@ -130,6 +130,51 @@ export default async function handler(req,res){
       await restaurant.collection("privateIntegrations").doc("mercadoPagoPoint").set({terminalId:id,accountId:integration.accountId||"",enabled:false,validationStatus:"PENDING_HARDWARE_TEST",updatedBy:decoded.uid,updatedAt:FieldValue.serverTimestamp()},{merge:true});
       return res.status(200).json({ok:true,selectedTerminalId:id,enabled:false,validationStatus:"PENDING_HARDWARE_TEST"});
     }
+    // InfinitePay (Checkout Integrado): chaves por estabelecimento, protegidas no servidor.
+    if((req.method==="GET"&&req.query.action==="infinitepayCredentials")||(req.method==="POST"&&req.body?.action==="infinitepayCredentials")){
+      const rid=String(req.method==="GET"?req.query.restaurantId:req.body.restaurantId||"");
+      if(!/^[a-zA-Z0-9_-]{5,128}$/.test(rid))return res.status(400).json({error:"invalid_restaurant"});
+      const restaurant=getFirestore().collection("restaurants").doc(rid);
+      const [restSnap,member]=await Promise.all([restaurant.get(),restaurant.collection("members").doc(decoded.uid).get()]);
+      if(!restSnap.exists)return res.status(404).json({error:"restaurant_not_found"});
+      if(restSnap.data().ownerUid!==decoded.uid&&!(member.exists&&member.data().active===true&&member.data().role==="owner"))return res.status(403).json({error:"owner_only"});
+      const ref=restaurant.collection("privateIntegrations").doc("infinitepay");
+      const current=(await ref.get()).data()||{};
+      if(req.method==="GET")return res.status(200).json({configured:!!current.encryptedApiKey,handle:current.handle||"",lastConfiguredAt:current.updatedAt?.toDate?.()?.toISOString?.()||null});
+      if(current.encryptedApiKey&&req.body.confirmReplace!==true)return res.status(409).json({error:"credentials_locked"});
+      const handle=String(req.body.handle||"").replace(/^\$/,"").trim();
+      const apiKey=String(req.body.apiKey||"").trim();
+      if(!/^[A-Za-z0-9_.-]{2,80}$/.test(handle)||!/^inchk_[A-Za-z0-9_-]{10,}$/.test(apiKey))return res.status(400).json({error:"invalid_infinitepay_credentials"});
+      const key=process.env.PAYMENT_CREDENTIALS_ENCRYPTION_KEY;
+      if(!/^[a-f0-9]{64}$/i.test(key||""))return res.status(503).json({error:"encryption_key_not_configured"});
+      const iv=randomBytes(12),cipher=createCipheriv("aes-256-gcm",Buffer.from(key,"hex"),iv);
+      const encrypted=Buffer.concat([cipher.update(apiKey,"utf8"),cipher.final()]);
+      await ref.set({provider:"infinitepay",handle,encryptedApiKey:encrypted.toString("base64"),iv:iv.toString("base64"),authTag:cipher.getAuthTag().toString("base64"),updatedAt:FieldValue.serverTimestamp(),updatedBy:decoded.uid});
+      return res.status(200).json({ok:true,configured:true,handle,validation:"pending_real_payment"});
+    }
+    // Escolha independente de gateway para PIX e cartão; Mercado Pago continua padrão.
+    if((req.method==="GET"&&req.query.action==="gatewaySelection")||(req.method==="POST"&&req.body?.action==="gatewaySelection")){
+      const rid=String(req.method==="GET"?req.query.restaurantId:req.body.restaurantId||"");
+      if(!/^[a-zA-Z0-9_-]{5,128}$/.test(rid))return res.status(400).json({error:"invalid_restaurant"});
+      const restaurant=getFirestore().collection("restaurants").doc(rid);
+      const [restSnap,member,settings]=await Promise.all([restaurant.get(),restaurant.collection("members").doc(decoded.uid).get(),restaurant.collection("settings").doc("public").get()]);
+      if(!restSnap.exists)return res.status(404).json({error:"restaurant_not_found"});
+      if(restSnap.data().ownerUid!==decoded.uid&&!(member.exists&&member.data().active===true&&member.data().role==="owner"))return res.status(403).json({error:"owner_only"});
+      const defaults={PIX:"mercado_pago",CARD_ONLINE:"mercado_pago"};
+      if(req.method==="GET")return res.status(200).json({providers:{...defaults,...settings.data()?.paymentProviders}});
+      const providers=req.body.providers;
+      if(!providers||Object.keys(providers).sort().join(",")!=="CARD_ONLINE,PIX"||!Object.values(providers).every(v=>["mercado_pago","infinitepay"].includes(v)))return res.status(400).json({error:"invalid_payment_providers"});
+      if(Object.values(providers).includes("infinitepay")){
+       const cfg=(await restaurant.collection("privateIntegrations").doc("infinitepay").get()).data();
+       if(!cfg?.encryptedApiKey)return res.status(409).json({error:"infinitepay_not_configured"});
+      }
+      if(Object.values(providers).includes("mercado_pago")){
+       const cfg=(await restaurant.collection("privateIntegrations").doc("mercadoPago").get()).data();
+       if(!cfg?.encryptedAccessToken)return res.status(409).json({error:"mercado_pago_not_configured"});
+      }
+      await restaurant.collection("settings").doc("public").set({paymentProviders:providers,paymentProvidersUpdatedBy:decoded.uid,paymentProvidersUpdatedAt:FieldValue.serverTimestamp()},{merge:true});
+      return res.status(200).json({ok:true,providers});
+    }
     // Formas de pagamento por estabelecimento: somente o proprietário pode alterar.
     if((req.method==="GET"&&req.query.action==="paymentOptions")||(req.method==="POST"&&req.body?.action==="paymentOptions")){
       const rid=String(req.method==="GET"?req.query.restaurantId:req.body?.restaurantId||"");
