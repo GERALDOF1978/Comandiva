@@ -1569,3 +1569,12 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
 .masterAssignPanel small{font-size:12px;color:#b9c7d8;line-height:1.5}
 .masterSubscriptionActions{display:block;margin-top:10px;padding:12px 0 0;border-top:1px solid #3b4759}
 @media(max-width:680px){.masterPlanEditorGrid{grid-template-columns:1fr}.masterAssignPanel{max-width:100%}}
+
+/* Master shortcut and multi-establishment staff picker */
+.restaurantSwitcher:not(:has(label)){display:none}
+.restaurantSwitcher:has(label){display:flex;justify-content:flex-end;align-items:center;padding:10px 18px;background:#101828;color:#e2e8f0;position:relative;z-index:6}
+.restaurantSwitcher label{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:750;max-width:100%}
+.restaurantSwitcher select{min-height:36px;max-width:min(300px,60vw);border:1px solid #53627a;border-radius:9px;background:#fff;color:#182638;padding:7px 10px;font:inherit}
+.masterShortcut{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;padding:9px 12px;margin-right:10px;min-height:36px;border-radius:9px;border:1px solid #b65c22;background:#fff0df;color:#6f300a;font-size:12px;font-weight:850;text-decoration:none;white-space:nowrap}
+.masterShortcut:hover{background:#ffdbb8}
+@media(max-width:650px){.restaurantSwitcher label{width:100%;justify-content:space-between}.restaurantSwitcher select{max-width:58vw}.masterShortcut{margin:0 4px 0 0;padding:8px 9px}}
