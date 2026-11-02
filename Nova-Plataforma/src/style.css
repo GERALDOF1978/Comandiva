@@ -1397,3 +1397,17 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
 .tableComposerFlavorButton:focus-visible{outline:3px solid var(--tc-accent);outline-offset:2px}
 .tableComposerSizeGrid button strong{font-size:12px;color:#243951}
 @media(max-width:650px){.tableComposerFlavorButton{min-height:64px;padding:11px 12px}.tableComposerFlavorButton>strong{font-size:12px}.tableComposerSizeGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.tableComposerSection h3{font-size:15px}}
+
+/* Mobile tables: don't inherit desktop flex-basis as vertical height. */
+@media(max-width:760px){
+ .tabsProfessional .tabsTools{display:flex;flex-direction:column;align-items:stretch;gap:8px;width:100%}
+ .tabsProfessional .tabsSearchField{box-sizing:border-box;flex:0 0 48px;width:100%;height:48px;min-height:48px;max-height:48px;padding:0 12px}
+ .tabsProfessional .tabsSearchField input{width:100%;min-height:44px;height:44px;padding:0;border:0;box-shadow:none;font-size:14px}
+ .tabsProfessional .tabsSearchField button{flex:0 0 28px}
+ .tabsProfessional .tabsTools>select{box-sizing:border-box;flex:0 0 48px;width:100%;height:48px;min-height:48px;max-height:48px;padding:0 12px;font-size:14px;background:#fff}
+ .tabsProfessional .tabsFilters{padding:0 0 8px}
+ .tabsProfessional .tabsFilterButton{min-height:42px;padding:8px 12px}
+ .tabsProfessional .tabsGrid{gap:9px}
+ .tabsProfessional .tabsEmpty{margin:0;padding:17px}
+ .tabsProfessional .tabsDetail{margin-top:0}
+}
