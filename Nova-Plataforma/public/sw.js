@@ -26,13 +26,27 @@ try{
   const body=String(data.body||"Confira o andamento do seu pedido.");
   const icon=/^https:\/\//i.test(data.icon||"")?data.icon:"/dishy-icon.svg?v=20261030-d";
   const image=/^https:\/\//i.test(data.image||"")?data.image:null;
+  const driverNotice=data.kind==="driver"&&data.event==="DRIVER_ASSIGNED";
   return self.registration.showNotification(title,{
    body,icon,...(image?{image}:{}),
    badge:"/dishy-icon.svg?v=20261030-d",
-   tag:"dishy-order-"+String(data.orderId||"pedido"),
-   renotify:true,data:{orderId:String(data.orderId||"")},
+   tag:(driverNotice?"dishy-driver-":"dishy-order-")+String(data.orderId||"pedido"),
+   renotify:true,silent:false,
+   ...(driverNotice?{vibrate:[180,100,180]}:{}),
+   data:{kind:driverNotice?"driver":"customer",orderId:String(data.orderId||""),restaurantId:driverNotice?String(data.restaurantId||""):""},
    requireInteraction:data.event==="DRIVER_ARRIVED"
   });
  });
 }catch(error){console.error("dishy_push_worker_setup_failed",error?.message||String(error));}
-self.addEventListener("notificationclick",event=>{event.notification.close();});
+self.addEventListener("notificationclick",event=>{
+ event.notification.close();
+ const data=event.notification.data||{};
+ if(data.kind!=="driver"||!/^[\\w-]{5,128}$/.test(String(data.restaurantId||"")))return;
+ const path="/?entregador="+encodeURIComponent(data.restaurantId);
+ event.waitUntil((async()=>{
+  const clients=await self.clients.matchAll({type:"window",includeUncontrolled:true});
+  const existing=clients.find(client=>{try{const url=new URL(client.url);return url.origin===self.location.origin&&url.searchParams.get("entregador")===data.restaurantId}catch{return false}});
+  if(existing){await existing.focus();return}
+  if(self.clients.openWindow)await self.clients.openWindow(path);
+ })());
+});
