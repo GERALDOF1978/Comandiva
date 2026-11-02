@@ -1557,3 +1557,15 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
 .integrationPairCode>strong{font-size:25px;letter-spacing:3px;color:#182539;font-variant-numeric:tabular-nums}
 .integrationPairCode>button{margin-left:auto;border:1px solid #d0d5dd;border-radius:9px;padding:9px 12px;background:#fff;color:#344054;cursor:pointer}
 @media(max-width:700px){.paymentMethodsGrid{grid-template-columns:1fr}.integrationActionRow>*{flex:1 1 100%}.integrationModeTabs{display:grid;grid-template-columns:1fr 1fr}.integrationModeTabs button{padding:10px 8px;font-size:12px}.integrationConnect{padding:13px}.integrationPairCode>strong{font-size:21px}}
+
+/* Master: controles de planos e assinaturas responsivos */
+.masterKpiNote{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:15px 0;color:#b8c4d7;font-size:12px;line-height:1.7}
+.masterKpiNote b{color:#f9fafb;margin-right:6px}
+.masterPlanEditorGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.masterPlanEditorGrid label,.masterAssignPanel label{display:flex;flex-direction:column;gap:8px;font-size:12px;font-weight:750;color:#e1e9f4}
+.masterPlanEditorGrid input,.masterAssignPanel select{width:100%;box-sizing:border-box;min-height:44px;padding:9px 12px;border:1px solid #55657d;border-radius:9px;background:#111820;color:#fff;font:inherit}
+.masterPlanEditorGrid input:disabled{color:#94a3b8;background:#29303c}
+.masterAssignPanel{display:grid;gap:12px;max-width:440px;margin-top:13px;padding:16px;border:1px solid #3e5773;background:#122334;border-radius:12px}
+.masterAssignPanel small{font-size:12px;color:#b9c7d8;line-height:1.5}
+.masterSubscriptionActions{display:block;margin-top:10px;padding:12px 0 0;border-top:1px solid #3b4759}
+@media(max-width:680px){.masterPlanEditorGrid{grid-template-columns:1fr}.masterAssignPanel{max-width:100%}}
