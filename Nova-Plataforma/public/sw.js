@@ -41,7 +41,7 @@ try{
 self.addEventListener("notificationclick",event=>{
  event.notification.close();
  const data=event.notification.data||{};
- if(data.kind!=="driver"||!/^[\\w-]{5,128}$/.test(String(data.restaurantId||"")))return;
+ if(data.kind!=="driver"||!/^[A-Za-z0-9_-]{5,128}$/.test(String(data.restaurantId||"")))return;
  const path="/?entregador="+encodeURIComponent(data.restaurantId);
  event.waitUntil((async()=>{
   const clients=await self.clients.matchAll({type:"window",includeUncontrolled:true});
