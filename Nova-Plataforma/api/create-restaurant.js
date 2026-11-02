@@ -3,6 +3,9 @@ import {cert,getApps,initializeApp} from "firebase-admin/app";
 import {getAuth} from "firebase-admin/auth";
 import {FieldValue,getFirestore} from "firebase-admin/firestore";
 
+// Oferta vigente para novos cadastros e novas concessões; não reduz testes já concedidos.
+const TRIAL_DURATION_DAYS=100;
+
 function getAdmin(){
   if(getApps().length) return getApps()[0];
   const projectId=process.env.FIREBASE_PROJECT_ID;
@@ -197,13 +200,13 @@ export default async function handler(req,res){
   const [subscription,restaurant]=await Promise.all([db.collection("subscriptions").doc(restaurantId).get(),db.collection("restaurants").doc(restaurantId).get()]);
   if(!restaurant.exists)return res.status(404).json({error:"restaurant_not_found"});
   let raw=subscription.exists?subscription.data():null;
-  // Upgrade legacy 30-day trials once, preserving their original start date.
+  // Upgrade legacy 30-day trials once to the current offer, preserving their original start date. Existing 180-day grants remain intact.
   if(raw?.planId==="trial"&&raw?.status==="trial"&&!raw.trialDurationDays&&raw.trialEndsAt?.toDate){
     const legacyEnd=raw.trialEndsAt.toDate();
     const start=raw.createdAt?.toDate?.()||raw.updatedAt?.toDate?.();
     if(start&&Math.abs((legacyEnd-start)/86400000-30)<2){
       const ref=db.collection("subscriptions").doc(restaurantId);
-      await db.runTransaction(async tx=>{const fresh=await tx.get(ref);const current=fresh.data();if(current?.planId!=="trial"||current?.status!=="trial"||current?.trialDurationDays)return;const oldEnd=current.trialEndsAt?.toDate?.(),begin=current.createdAt?.toDate?.()||current.updatedAt?.toDate?.();if(!oldEnd||!begin||Math.abs((oldEnd-begin)/86400000-30)>=2)return;tx.update(ref,{trialEndsAt:new Date(begin.getTime()+180*86400000),trialDurationDays:180,updatedAt:FieldValue.serverTimestamp()})});
+      await db.runTransaction(async tx=>{const fresh=await tx.get(ref);const current=fresh.data();if(current?.planId!=="trial"||current?.status!=="trial"||current?.trialDurationDays)return;const oldEnd=current.trialEndsAt?.toDate?.(),begin=current.createdAt?.toDate?.()||current.updatedAt?.toDate?.();if(!oldEnd||!begin||Math.abs((oldEnd-begin)/86400000-30)>=2)return;tx.update(ref,{trialEndsAt:new Date(begin.getTime()+TRIAL_DURATION_DAYS*86400000),trialDurationDays:TRIAL_DURATION_DAYS,updatedAt:FieldValue.serverTimestamp()})});
       const updated=await ref.get();raw=updated.data();
     }
   }
@@ -278,7 +281,7 @@ export default async function handler(req,res){
         if(!plan.exists||plan.data().active!==true)return res.status(400).json({error:"plan_unavailable"});
       }
       const batch=db.batch();
-      batch.set(db.collection("subscriptions").doc(restaurantId),{restaurantId,planId,status:planId==="trial"?"trial":"pending_payment",updatedAt:now,...(planId==="trial"?{trialDurationDays:180}:{}),...(planId==="trial"?{trialEndsAt:new Date(Date.now()+180*86400000)}:{})},{merge:true});
+      batch.set(db.collection("subscriptions").doc(restaurantId),{restaurantId,planId,status:planId==="trial"?"trial":"pending_payment",updatedAt:now,...(planId==="trial"?{trialDurationDays:TRIAL_DURATION_DAYS}:{}),...(planId==="trial"?{trialEndsAt:new Date(Date.now()+TRIAL_DURATION_DAYS*86400000)}:{})},{merge:true});
       batch.update(restaurantRef,{planId,updatedAt:now});
       batch.create(restaurantRef.collection("audit").doc(),{action:"MASTER_ASSIGN_PLAN",planId,actorUid:decoded.uid,createdAt:now});
       await batch.commit();
@@ -323,7 +326,7 @@ export default async function handler(req,res){
     batch.create(db.collection("userRestaurantAccess").doc(decoded.uid).collection("restaurants").doc(restaurantRef.id),{restaurantId:restaurantRef.id,restaurantName:name.trim(),role:"owner",active:true,createdAt:now});
     batch.create(db.collection("restaurantSlugs").doc(slug),{restaurantId:restaurantRef.id,active:true,createdAt:now});
     batch.create(restaurantRef.collection("settings").doc("public"),{name:name.trim(),type,phone:phone.trim(),slug,published:false,createdAt:now,updatedAt:now});
-    batch.create(db.collection("subscriptions").doc(restaurantRef.id),{restaurantId:restaurantRef.id,planId:"trial",status:"trial",trialEndsAt:new Date(Date.now()+180*86400000),trialDurationDays:180,createdAt:now});
+    batch.create(db.collection("subscriptions").doc(restaurantRef.id),{restaurantId:restaurantRef.id,planId:"trial",status:"trial",trialEndsAt:new Date(Date.now()+TRIAL_DURATION_DAYS*86400000),trialDurationDays:TRIAL_DURATION_DAYS,createdAt:now});
     batch.create(restaurantRef.collection("audit").doc(),{action:"RESTAURANT_CREATED",actorUid:decoded.uid,actorEmail:decoded.email,createdAt:now});
     await batch.commit();
     return res.status(201).json({ok:true,restaurantId:restaurantRef.id,slug});
