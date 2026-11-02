@@ -25,14 +25,14 @@ export default async function handler(req,res){
     const o=snap.data();
     if(o.status!=="PENDING_PAYMENT"||o.paymentMethod!=="PIX"||o.paymentStatus==="PAID"||o.paymentStatus==="CANCELLED"||o.paymentStatus==="EXPIRED")throw new Error("payment_not_pending");
     const raw=o.createdAt;const timestamp=typeof raw?.toMillis==="function"?raw.toMillis():typeof raw?.seconds==="number"?raw.seconds*1000:raw instanceof Date?raw.getTime():typeof raw==="string"?Date.parse(raw):typeof raw==="number"?raw:NaN;const number=Number(o.number);const created=Number.isSafeInteger(number)&&number>1000000000000&&number<=now&&now-number<86400000?number:timestamp;
-    if(!Number.isFinite(created)||now-created<5*60*1000)throw new Error("too_early");
+    const remainingMs=Number.isFinite(created)?Math.max(0,5*60*1000-(now-created)):5*60*1000;if(remainingMs>0){const e=new Error("too_early");e.retryAfterSeconds=Math.ceil(remainingMs/1000);throw e;}
     if(o.pixReminderSentAt||o.pixReminderClaimedAt)throw new Error("already_reminded");
     tx.update(ref,{pixReminderClaimedAt:FieldValue.serverTimestamp()});
     return o;
    });
   }catch(e){
    const codes={not_found:404,payment_not_pending:409,too_early:409,already_reminded:409};
-   if(codes[e.message])return res.status(codes[e.message]).json({error:e.message});
+   if(codes[e.message])return res.status(codes[e.message]).json({error:e.message,...(e.message==="too_early"?{retryAfterSeconds:e.retryAfterSeconds||300,serverTimeMs:Date.now()}:{})});
    throw e;
   }
   const release=async()=>{try{await ref.update({pixReminderClaimedAt:FieldValue.delete()})}catch(e){console.error("dishy_pix_reminder_release_failed",e)}};
