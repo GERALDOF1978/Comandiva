@@ -1,6 +1,7 @@
 import {startTabPix} from "../server/tab-pix.js";
 import {buildTableOrderLine} from "../src/lib/tableItemPricing.js";
 import {enabledPaymentMethods} from "../src/lib/paymentMethods.js";
+import {canAccessModule} from "../src/lib/staffPermissions.js";
 import publicTabHandler from "../server/public-tab.js";
 import {randomBytes} from "node:crypto";
 import {cert,getApps,initializeApp} from "firebase-admin/app";
@@ -15,7 +16,7 @@ export default async function handler(req,res){
  const user=await getAuth().verifyIdToken(header.slice(7),true),body=req.body||{},restaurantId=String(req.method==="GET"?req.query.restaurantId:body.restaurantId||"");
  if(!/^[\w-]{5,128}$/.test(restaurantId))return res.status(400).json({error:"invalid_restaurant"});
  const db=getFirestore(),base=db.collection("restaurants").doc(restaurantId),member=await base.collection("members").doc(user.uid).get();
- if(!member.exists||member.data().active!==true||!["owner","manager"].includes(member.data().role))return res.status(403).json({error:"forbidden"});
+ if(!member.exists||!canAccessModule(member.data(),"Mesas e comandas"))return res.status(403).json({error:"forbidden"});
  const tabs=base.collection("tabs");
  if(req.method==="GET"){const [snap,calls]=await Promise.all([tabs.limit(300).get(),base.collection("serviceCalls").where("status","==","PENDING").limit(100).get()]);return res.status(200).json({tabs:snap.docs.map(d=>({id:d.id,...d.data(),createdAt:d.data().createdAt?.toDate?.()?.toISOString()||null,updatedAt:d.data().updatedAt?.toDate?.()?.toISOString()||null})),serviceCalls:calls.docs.map(d=>({id:d.id,...d.data(),createdAt:d.data().createdAt?.toDate?.()?.toISOString()||null}))})}
  const action=String(body.action||""),id=String(body.tabId||"");
