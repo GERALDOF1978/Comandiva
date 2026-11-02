@@ -29,7 +29,7 @@ const normalizeQr=data=>{
  return {
   image:value&&value.length<1500000&&(value.startsWith("data:image/png;base64,")||/^[A-Za-z0-9+/=\r\n]+$/.test(value))?(value.startsWith("data:")?value:"data:image/png;base64,"+value):null,
   code:code.length<2000?code:null,
-  pairingCode:String(data?.pairingCode||q?.pairingCode||data?.codePairing||"").slice(0,32)||null
+  pairingCode:String(data?.pairingCode||q?.pairingCode||data?.codePairing||(/^[A-Za-z0-9]{4}-?[A-Za-z0-9]{4}$/.test(String(data?.code||""))?data.code:"")||"").slice(0,32)||null
  };
 };
 const getState=x=>String(x?.instance?.state||x?.state||x?.instance?.status||"close").toLowerCase();
