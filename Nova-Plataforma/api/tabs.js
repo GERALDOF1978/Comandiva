@@ -1,6 +1,7 @@
 import {startTabPix} from "../server/tab-pix.js";
 import {buildTableOrderLine} from "../src/lib/tableItemPricing.js";
 import {enabledPaymentMethods} from "../src/lib/paymentMethods.js";
+import {enabledServiceModes} from "../src/lib/serviceModes.js";
 import {canAccessModule} from "../src/lib/staffPermissions.js";
 import publicTabHandler from "../server/public-tab.js";
 import {randomBytes} from "node:crypto";
@@ -29,6 +30,8 @@ export default async function handler(req,res){
  if(action==="OPEN"){
  const type=body.type==="TABLE"?"TABLE":body.type==="INDIVIDUAL"?"INDIVIDUAL":null,label=String(body.label||"").trim().slice(0,70);
  if(!type||!label)return res.status(400).json({error:"invalid_tab"});
+ const serviceSettings=await base.collection("settings").doc("public").get();
+ if(!enabledServiceModes(serviceSettings.data()?.serviceModes).includes(type==="TABLE"?"TABLE":"TAB"))return res.status(403).json({error:"service_disabled"});
  const ref=tabs.doc(type+"_"+label.toLowerCase().replace(/[^a-z0-9]/g,"_"));
  await db.runTransaction(async tx=>{const snap=await tx.get(ref);if(snap.exists&&snap.data().status!=="CLOSED")throw new Error("already_open");tx.set(ref,{type,label,status:"OPEN",items:[],totalCents:0,customerPhones:[],createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp(),createdBy:user.uid,customerAccessToken:snap.exists&&snap.data().customerAccessToken||randomBytes(24).toString("hex")})});
  return res.status(200).json({ok:true,id:ref.id});
