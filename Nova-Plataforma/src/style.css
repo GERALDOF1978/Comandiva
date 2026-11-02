@@ -1411,3 +1411,105 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
  .tabsProfessional .tabsEmpty{margin:0;padding:17px}
  .tabsProfessional .tabsDetail{margin-top:0}
 }
+
+
+/* Dishy conversion landing 100-day trial: mobile-first and self-explanatory */
+.dishyTopActions{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.dishyTopCta{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:43px;padding:10px 16px;background:#ff873d;color:#15191f;border-radius:11px;font-size:13px;font-weight:850;white-space:nowrap}
+.dishyTopCta:hover,.dishyPrimary:hover,.dishyPlan>a:hover{background:#ffa466}
+.dishyTop nav{gap:19px}
+.dishyTop nav a{white-space:nowrap;font-size:13px}
+.dishySite .dishyHero{padding-top:72px;padding-bottom:78px}
+.dishyHeroBenefits{display:flex;flex-wrap:wrap;gap:9px;margin:23px 0 5px}
+.dishyHeroBenefits>span{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:750;color:#e5effb;background:#1c2b3f;border:1px solid #3e5369;border-radius:999px;padding:9px 12px}
+.dishyHeroBenefits svg{color:#83e2bc}
+.dishyHeroWithBanner .dishyHeroBenefits>span{background:rgba(10,20,35,.76)}
+.dishyHeroNote{line-height:1.5;max-width:540px}
+.dishyOfferStrip{max-width:1170px;margin:0 auto;padding:17px 22px;border:1px solid #2e4055;background:#152235;border-radius:17px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.dishyOfferStrip>span{display:flex;align-items:center;justify-content:center;gap:8px;min-width:0;font-size:13px;font-weight:750;line-height:1.4;color:#edf4ff;text-align:center}
+.dishyOfferStrip svg{color:#ff974f;flex:0 0 18px}
+.dishyGrowth{padding-bottom:80px}
+.dishyGrowthGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.dishyGrowthCard{padding:26px 23px;border:1px solid #3c4859;border-radius:17px;background:linear-gradient(165deg,#1c2939,#131c29);min-width:0}
+.dishyGrowthCard>span{display:block;color:#ff9756;font-size:31px;font-weight:900;line-height:1}
+.dishyGrowthCard h3{font-size:19px;margin:24px 0 11px;line-height:1.2}
+.dishyGrowthCard p{font-size:14px;line-height:1.65;color:#b4c1d2;margin:0}
+.dishyGrowthFootnote{max-width:700px;margin:24px auto 16px;text-align:center;font-size:12px;color:#91a4b9;line-height:1.6}
+.dishyTextCTA{display:flex;align-items:center;justify-content:center;gap:7px;width:fit-content;margin:18px auto 0;color:#ffaf7b;font-size:14px;font-weight:850;text-decoration:underline!important;text-underline-offset:5px}
+.dishyCapabilities{padding-top:58px}
+.dishyCapabilities .dishyFeatureGrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.dishyCapabilities .dishyFeature{padding:23px 22px}
+.dishyCapabilities .dishyFeatureIcon{height:43px;width:43px;margin-bottom:15px}
+.dishyCapabilities .dishyFeature h3{font-size:16px;margin:0 0 8px}
+.dishyCapabilities .dishyFeature p{font-size:13px;line-height:1.55;margin:0}
+.dishyJourney{background:linear-gradient(100deg,#101b2d,#15273b);border-block:1px solid #2e4055}
+.dishyJourneyInner{max-width:1200px;margin:auto;padding:75px 28px}
+.dishyJourneySteps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px}
+.dishyJourneySteps>div{display:flex;flex-direction:column;gap:10px;min-width:0;padding:21px;background:#1d3046;border:1px solid #3b5168;border-radius:17px}
+.dishyJourneySteps b{display:grid;place-items:center;width:33px;height:33px;border-radius:50%;background:#ff8c48;color:#1c1c24;font-size:16px}
+.dishyJourneySteps strong{font-size:18px;color:#fff}
+.dishyJourneySteps small{font-size:13px;color:#bfd1e4;line-height:1.55}
+.dishySteps .dishyTextCTA{margin:20px 0 0}
+.dishyPricing{padding-bottom:70px}
+.dishySinglePlan .dishyPlan{width:min(100%,680px);flex:0 1 680px;padding:31px 34px;gap:15px}
+.dishyPlanOffer{display:flex;align-items:center;gap:17px;padding:14px 0;border-bottom:1px solid #544339}
+.dishyPlanOffer>strong{font-size:clamp(62px,8vw,105px);letter-spacing:-6px;line-height:1;font-variant-numeric:tabular-nums;color:#ff985b}
+.dishyPlanOffer>div{display:flex;flex-direction:column;gap:5px}
+.dishyPlanOffer b{font-size:27px;line-height:1.1}
+.dishyPlanOffer small{color:#b8c5d6;font-size:13px}
+.dishySinglePlan .dishyPlan>p{min-height:0;margin:0}
+.dishyMaintenance{display:flex;align-items:flex-start;gap:12px;background:#153129;border:1px solid #396d54;border-radius:13px;padding:15px}
+.dishyMaintenance>svg{color:#9fe0b7;flex-shrink:0}
+.dishyMaintenance>div{display:grid;gap:7px;min-width:0}
+.dishyMaintenance b{color:#f2fff7;font-size:14px}
+.dishyMaintenance small{font-size:12px;line-height:1.55;color:#b4d5c7}
+.dishyPlanMicro{color:#a7b9cb;font-size:12px;text-align:center;line-height:1.5}
+.dishyPricingNote{line-height:1.6;max-width:720px;margin:20px auto 0}
+.dishyFaq{padding-top:40px}
+.dishyFaqList{max-width:820px;margin:auto;display:grid;gap:12px}
+.dishyFaqList details{padding:0 20px;border:1px solid #38485c;background:#172334;border-radius:14px;color:#fff}
+.dishyFaqList summary{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:20px 0;font-weight:780;cursor:pointer;list-style:none;line-height:1.4}
+.dishyFaqList summary::-webkit-details-marker{display:none}
+.dishyFaqList summary svg{flex-shrink:0;transition:transform .2s;color:#ff9b62}
+.dishyFaqList details[open] summary svg{transform:rotate(90deg)}
+.dishyFaqList details p{font-size:14px;line-height:1.7;margin:0 0 19px;color:#c1ccdb}
+.dishyFinal small{display:block;margin:20px auto 0;font-size:12px;color:#bdd0df;line-height:1.6}
+.dishyMobileStickyCTA{display:none}
+@media(max-width:1100px){.dishyTop nav{display:none}}
+@media(max-width:850px){
+ .dishyOfferStrip{margin:0 22px;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+ .dishyGrowthGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .dishyCapabilities .dishyFeatureGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .dishyJourneySteps{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:550px){
+ .dishyTop{padding:0 14px;gap:9px}
+ .dishyTopActions{gap:7px}
+ .dishyLogin{padding:10px 11px;font-size:12px;min-height:40px}
+ .dishyTopCta{padding:10px 11px;font-size:12px;min-height:40px}
+ .dishyCommercialLogoImage{max-width:104px}
+ .dishySite .dishyHero{padding:42px 20px 45px;gap:35px}
+ .dishyHero h1{font-size:clamp(35px,9.5vw,45px);line-height:1.09}
+ .dishyHeroBenefits{gap:7px}
+ .dishyHeroBenefits>span{font-size:11px;padding:8px 10px}
+ .dishyOfferStrip{margin:0 14px;gap:9px;padding:15px 12px}
+ .dishyOfferStrip>span{font-size:11px;justify-content:flex-start;text-align:left}
+ .dishyGrowthGrid{grid-template-columns:1fr;gap:11px}
+ .dishyGrowthCard{padding:18px 20px}
+ .dishyGrowthCard h3{font-size:18px;margin:14px 0 8px}
+ .dishyCapabilities .dishyFeatureGrid{grid-template-columns:1fr;gap:10px}
+ .dishyCapabilities .dishyFeature{padding:18px 17px}
+ .dishyJourneyInner{padding:55px 19px}
+ .dishyJourneySteps{gap:9px}
+ .dishyJourneySteps>div{padding:14px 12px}
+ .dishyJourneySteps strong{font-size:15px}
+ .dishyJourneySteps small{font-size:11px}
+ .dishySinglePlan .dishyPlan{padding:25px 20px}
+ .dishyPlanOffer>strong{font-size:71px}
+ .dishyPlanOffer b{font-size:23px}
+ .dishyFaqList details{padding:0 16px}
+ .dishyFaqList summary{font-size:14px;padding:17px 0}
+ .dishySite{padding-bottom:70px}
+ .dishyMobileStickyCTA{position:fixed;display:flex;align-items:center;justify-content:center;gap:13px;bottom:0;left:0;right:0;z-index:75;padding:12px 18px max(13px,env(safe-area-inset-bottom));background:#ff8437;color:#14202f;font-size:14px;font-weight:900;box-shadow:0 -10px 25px #0005}
+ .dishyMobileStickyCTA span{font-size:12px;font-weight:750;border-right:1px solid #c95412;padding-right:12px}
+}
