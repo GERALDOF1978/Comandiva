@@ -1388,3 +1388,12 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
 @media(max-width:650px){.tableComposerOverlay{padding:0;align-items:flex-end}.tableComposer{width:100%;max-height:96dvh;border-radius:18px 18px 0 0}.tableComposerHeader{padding:16px}.tableComposerContent{padding:12px}.tableComposerSection{padding:13px}.tableComposerFooter{padding:12px}.tableComposerSubmit{font-size:12px;padding:10px 13px}}
 @media(prefers-reduced-motion:reduce){.tableComposerOverlay{backdrop-filter:none}}
 
+
+/* Seleção de sabores compartilhada com a experiência do PDV */
+.tableComposerFlavorButton{width:100%;min-height:69px;display:flex;justify-content:space-between;align-items:center;gap:12px;text-align:left;padding:12px 14px;border:1.5px solid #dce5ee;border-radius:12px;background:#fff;color:#243951;cursor:pointer}
+.tableComposerFlavorButton>span{display:grid;gap:5px;min-width:0;flex:1}
+.tableComposerFlavorButton>strong{flex:0 0 auto;font-size:13px}
+.tableComposerFlavorButton.selected{border:2px solid var(--tc-accent);background:color-mix(in srgb,var(--tc-accent) 9%,white)}
+.tableComposerFlavorButton:focus-visible{outline:3px solid var(--tc-accent);outline-offset:2px}
+.tableComposerSizeGrid button strong{font-size:12px;color:#243951}
+@media(max-width:650px){.tableComposerFlavorButton{min-height:64px;padding:11px 12px}.tableComposerFlavorButton>strong{font-size:12px}.tableComposerSizeGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.tableComposerSection h3{font-size:15px}}
