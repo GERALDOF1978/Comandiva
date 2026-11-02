@@ -207,7 +207,7 @@ export default async function handler(req,res){
       const db=getFirestore(),access=await db.collection("restaurants").doc(id).collection("members").doc(decoded.uid).get();
       if(!access.exists||access.data().active!==true)return res.status(403).json({error:"access_denied"});
       const role=access.data().role||"employee";
-      const permissionKeys=["Início","Pedidos","Cardápio","Clientes","Financeiro","Cozinha","Mesas e comandas","Delivery","Entregadores","Promoções","Marketing","Configurações","Meu plano","Funcionários e permissões","Equipe em serviço"];
+      const permissionKeys=["Início","Pedidos","Cardápio","Clientes","Financeiro","Cozinha","PDV","Mesas e comandas","Delivery","Entregadores","Promoções","Marketing","Configurações","Meu plano","Funcionários e permissões","Equipe em serviço"];
       const permissions=role==="owner"?permissionKeys:(Array.isArray(access.data().permissions)?access.data().permissions:[]);
       if(role!=="owner")return res.status(200).json({role,permissions,employees:[]});
       const members=await db.collection("restaurants").doc(id).collection("members").get();
@@ -241,7 +241,7 @@ export default async function handler(req,res){
       const {restaurantId,email,name,role,permissions}=req.body||{};
       const valid=v=>typeof v==="string"&&/^[a-zA-Z0-9_-]{5,128}$/.test(v);
       const roles=["manager","attendant","kitchen","driver","finance","employee"];
-      const modules=["Início","Pedidos","Cardápio","Clientes","Financeiro","Cozinha","Mesas e comandas","Delivery","Entregadores","Promoções","Marketing","Configurações","Meu plano","Funcionários e permissões"];
+      const modules=["Equipe em serviço","Início","Pedidos","Cardápio","Clientes","Financeiro","Cozinha","PDV","Mesas e comandas","Delivery","Entregadores","Promoções","Marketing","Configurações","Meu plano","Funcionários e permissões"];
       if(!valid(restaurantId)||typeof email!=="string"||email.length>254||!email.includes("@")||!roles.includes(role)||!Array.isArray(permissions)||permissions.some(p=>!modules.includes(p)))return res.status(400).json({error:"invalid_employee"});
       const db=getFirestore(),restaurant=db.collection("restaurants").doc(restaurantId),owner=await restaurant.collection("members").doc(decoded.uid).get();
       if(!owner.exists||owner.data().role!=="owner"||owner.data().active!==true)return res.status(403).json({error:"owner_only"});
@@ -259,7 +259,7 @@ export default async function handler(req,res){
     if(req.method==="POST"&&req.body?.action==="setEmployeePermissions"){
       const {restaurantId,uid,permissions,active}=req.body||{};
       const valid=v=>typeof v==="string"&&/^[a-zA-Z0-9_-]{5,128}$/.test(v);
-      const allowed=["Início","Pedidos","Cardápio","Clientes","Financeiro","Cozinha","Mesas e comandas","Delivery","Entregadores","Promoções","Marketing","Configurações","Meu plano","Funcionários e permissões"];
+      const allowed=["Equipe em serviço","Início","Pedidos","Cardápio","Clientes","Financeiro","Cozinha","PDV","Mesas e comandas","Delivery","Entregadores","Promoções","Marketing","Configurações","Meu plano","Funcionários e permissões"];
       if(!valid(restaurantId)||!valid(uid)||!Array.isArray(permissions)||permissions.length>allowed.length||permissions.some(p=>!allowed.includes(p))||typeof active!=="boolean")return res.status(400).json({error:"invalid_permissions"});
       const db=getFirestore(),members=db.collection("restaurants").doc(restaurantId).collection("members");
       const owner=await members.doc(decoded.uid).get();
@@ -273,7 +273,7 @@ export default async function handler(req,res){
       batch.create(db.collection("restaurants").doc(restaurantId).collection("audit").doc(),{action:"OWNER_UPDATE_EMPLOYEE_PERMISSIONS",actorUid:decoded.uid,targetUid:uid,createdAt:FieldValue.serverTimestamp()});
       await batch.commit();return res.status(200).json({ok:true});
     }
-    if(["createPlan","setPlanActive","assignSubscription"].includes(req.body?.action)){
+    if(["createPlan","updatePlan","setPlanActive","assignSubscription","setSubscriptionStatus"].includes(req.body?.action)){
       const db=getFirestore(),master=await db.collection("platformAdmins").doc(decoded.uid).get();
       if(master.data()?.active!==true)return res.status(403).json({error:"master_access_denied"});
       const {action,planId,restaurantId,name,priceCents,active}=req.body;
@@ -286,8 +286,28 @@ export default async function handler(req,res){
         await ref.create({name:name.trim(),priceCents,active:true,createdAt:now,updatedAt:now});
         return res.status(201).json({ok:true});
       }
+      if(action==="updatePlan"){
+        if(!validId(planId)||planId==="trial"||typeof name!=="string"||name.trim().length<3||name.length>80||!Number.isSafeInteger(priceCents)||priceCents<0||priceCents>100000000)return res.status(400).json({error:"invalid_plan"});
+        const ref=db.collection("plans").doc(planId);
+        if(!(await ref.get()).exists)return res.status(404).json({error:"plan_not_found"});
+        const batch=db.batch();
+        batch.update(ref,{name:name.trim(),priceCents,updatedAt:now});
+        batch.create(db.collection("platformAudit").doc(),{action:"MASTER_UPDATE_PLAN",planId,actorUid:decoded.uid,createdAt:now});
+        await batch.commit();
+        return res.status(200).json({ok:true});
+      }
+      if(action==="setSubscriptionStatus"){
+        if(!validId(restaurantId)||!["active","pending_payment","canceled"].includes(req.body.status))return res.status(400).json({error:"invalid_subscription_status"});
+        const ref=db.collection("subscriptions").doc(restaurantId),current=await ref.get();
+        if(!current.exists||!current.data().planId||current.data().planId==="trial")return res.status(409).json({error:"paid_plan_required"});
+        const batch=db.batch();
+        batch.update(ref,{status:req.body.status,statusUpdatedBy:decoded.uid,updatedAt:now});
+        batch.create(db.collection("restaurants").doc(restaurantId).collection("audit").doc(),{action:"MASTER_SUBSCRIPTION_STATUS",status:req.body.status,actorUid:decoded.uid,createdAt:now});
+        await batch.commit();
+        return res.status(200).json({ok:true});
+      }
       if(action==="setPlanActive"){
-        if(!validId(planId)||typeof active!=="boolean")return res.status(400).json({error:"invalid_plan"});
+        if(!validId(planId)||planId==="trial"||typeof active!=="boolean")return res.status(400).json({error:"invalid_plan"});
         const ref=db.collection("plans").doc(planId);
         if(!(await ref.get()).exists)return res.status(404).json({error:"plan_not_found"});
         await ref.update({active,updatedAt:now});
