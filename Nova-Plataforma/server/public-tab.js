@@ -1,5 +1,6 @@
 import {startTabPix} from "./tab-pix.js";
 import {buildTableOrderLine} from "../src/lib/tableItemPricing.js";
+import {enabledPaymentMethods} from "../src/lib/paymentMethods.js";
 import {cert,getApps,initializeApp} from "firebase-admin/app";
 import {getFirestore,FieldValue} from "firebase-admin/firestore";
 function init(){if(!getApps().length)initializeApp({credential:cert({projectId:process.env.FIREBASE_PROJECT_ID,clientEmail:process.env.FIREBASE_CLIENT_EMAIL,privateKey:process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g,"\n")})})}
@@ -35,8 +36,9 @@ export default async function handler(req,res){
  await db.runTransaction(async tx=>{const current=await tx.get(ref);if(!current.exists||current.data().customerAccessToken!==access||current.data().status!=="OPEN")throw new Error("not_open");const d=current.data();tx.set(callRef,{tabId,table:(d.type==="TABLE"?"Mesa ":"Comanda ")+d.label,reason,status:"PENDING",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()})});
  return res.status(200).json({ok:true});
  }
- if(action==="CREATE_PIX"){const phone=clean(input.phone).replace(/\D/g,"");if(phone.length<10||!(tab.data().customerPhones||[]).includes(phone))return res.status(403).json({error:"phone_not_found"});try{return res.status(200).json({ok:true,payment:await startTabPix(base,ref,mapping.data().restaurantId)})}catch(e){return res.status(409).json({error:e.message})}}
+ if(action==="CREATE_PIX"){const settings=await base.collection("settings").doc("public").get();if(!enabledPaymentMethods(settings.data()?.paymentMethods).includes("PIX"))return res.status(400).json({error:"payment_method_disabled"});const phone=clean(input.phone).replace(/\D/g,"");if(phone.length<10||!(tab.data().customerPhones||[]).includes(phone))return res.status(403).json({error:"phone_not_found"});try{return res.status(200).json({ok:true,payment:await startTabPix(base,ref,mapping.data().restaurantId)})}catch(e){return res.status(409).json({error:e.message})}}
  if(action==="REQUEST_BILL"){
+ const settings=await base.collection("settings").doc("public").get();if(!["CASH","CARD_ON_DELIVERY"].includes(input.paymentMethod)||!enabledPaymentMethods(settings.data()?.paymentMethods).includes(input.paymentMethod))return res.status(400).json({error:"payment_method_disabled"});
  const phone=clean(input.phone).replace(/\D/g,"");if(phone.length<10)return res.status(400).json({error:"invalid_phone"});
  await db.runTransaction(async tx=>{const current=await tx.get(ref);if(!current.exists||current.data().customerAccessToken!==access||current.data().status!=="OPEN")throw new Error("not_open");if(!(current.data().customerPhones||[]).includes(phone))throw new Error("phone_not_found");tx.update(ref,{status:"BILL_REQUESTED",requestedPaymentMethod:["CASH","CARD_ON_DELIVERY"].includes(input.paymentMethod)?input.paymentMethod:null,updatedAt:FieldValue.serverTimestamp()})});
  return res.status(200).json({ok:true});
