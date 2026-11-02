@@ -5,6 +5,6 @@ const config={pricingRule:"highest",sizes:[{name:"Grande",priceCents:2000,maxFla
 test("monta pizza e preço apenas do catálogo",()=>{const x=resolvePizzaSelection(config,{sizeIndex:0,flavorIndices:[0,1],crustIndex:0,unitPriceCents:1});assert.equal(x.unitPriceCents,6500);assert.equal(x.options.length,4);assert.match(x.description,/Calabresa/)});
 test("não aceita sabor repetido",()=>assert.throws(()=>resolvePizzaSelection(config,{sizeIndex:0,flavorIndices:[1,1]}),/Sabores/));
 test("não aceita índice fora do catálogo",()=>assert.throws(()=>resolvePizzaSelection(config,{sizeIndex:0,flavorIndices:[9]}),/Sabores/));
-test("não aceita sabores acima do limite do tamanho",()=>assert.throws(()=>resolvePizzaSelection(config,{sizeIndex:0,flavorIndices:[0,1,2]}),/Limite/));
+test("não aceita sabores acima do limite do tamanho",()=>assert.throws(()=>resolvePizzaSelection(config,{sizeIndex:0,flavorIndices:[0,1,2]}),/Sabores inválidos/));
 test("não aceita borda desconhecida",()=>assert.throws(()=>resolvePizzaSelection(config,{sizeIndex:0,flavorIndices:[0],crustIndex:3}),/Borda/));
 test("aplica média proporcional",()=>{const x=resolvePizzaSelection({...config,pricingRule:"average"},{sizeIndex:0,flavorIndices:[0,1]});assert.equal(x.unitPriceCents,5500)});
