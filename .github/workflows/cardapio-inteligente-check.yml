@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - feat/cardapio-inteligente
-      - feat/montagem-cliente-igual-pdv
   workflow_dispatch:
 jobs:
   check:
