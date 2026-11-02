@@ -2,6 +2,7 @@ import {createCipheriv,createDecipheriv,randomBytes} from "node:crypto";
 import {cert,getApps,initializeApp} from "firebase-admin/app";
 import {getAuth} from "firebase-admin/auth";
 import {FieldValue,getFirestore} from "firebase-admin/firestore";
+import {enabledPaymentMethods,validPaymentMethods} from "../src/lib/paymentMethods.js";
 
 // Oferta vigente para novos cadastros e novas concessões; não reduz testes já concedidos.
 const TRIAL_DURATION_DAYS=100;
@@ -54,6 +55,8 @@ export default async function handler(req,res){
       if(!isOwner){const perms=member.data()?.permissions||access.data()?.permissions||[];if(!Array.isArray(perms)||!perms.includes("PDV"))return res.status(403).json({error:"pos_permission_required"})}
       const method=String(body.paymentMethod||"");
       if(!["CASH","CARD_ON_DELIVERY","PIX"].includes(method))return res.status(400).json({error:"pos_payment_not_supported"});
+      const payCfg=await restaurant.collection("settings").doc("public").get();
+      if(!enabledPaymentMethods(payCfg.data()?.paymentMethods).includes(method))return res.status(400).json({error:"payment_method_disabled"});
       const raw=Array.isArray(body.items)?body.items:[];
       if(!raw.length||raw.length>40)return res.status(400).json({error:"invalid_items"});
       const requests=[];
@@ -126,6 +129,21 @@ export default async function handler(req,res){
       await restaurant.collection("privateIntegrations").doc("mercadoPagoPoint").set({terminalId:id,accountId:integration.accountId||"",enabled:false,validationStatus:"PENDING_HARDWARE_TEST",updatedBy:decoded.uid,updatedAt:FieldValue.serverTimestamp()},{merge:true});
       return res.status(200).json({ok:true,selectedTerminalId:id,enabled:false,validationStatus:"PENDING_HARDWARE_TEST"});
     }
+    // Formas de pagamento por estabelecimento: somente o proprietário pode alterar.
+    if((req.method==="GET"&&req.query.action==="paymentOptions")||(req.method==="POST"&&req.body?.action==="paymentOptions")){
+      const rid=String(req.method==="GET"?req.query.restaurantId:req.body?.restaurantId||"");
+      if(!/^[a-zA-Z0-9_-]{5,128}$/.test(rid))return res.status(400).json({error:"invalid_restaurant"});
+      const base=getFirestore().collection("restaurants").doc(rid);
+      const [restaurant,member]=await Promise.all([base.get(),base.collection("members").doc(decoded.uid).get()]);
+      if(!restaurant.exists)return res.status(404).json({error:"restaurant_not_found"});
+      if(restaurant.data().ownerUid!==decoded.uid&&!(member.exists&&member.data().active===true&&member.data().role==="owner"))return res.status(403).json({error:"owner_only"});
+      const settings=base.collection("settings").doc("public");
+      if(req.method==="GET"){const snap=await settings.get();return res.status(200).json({paymentMethods:enabledPaymentMethods(snap.data()?.paymentMethods)})}
+      const methods=req.body.paymentMethods;
+      if(!validPaymentMethods(methods))return res.status(400).json({error:"invalid_payment_methods"});
+      await settings.set({paymentMethods:[...methods],paymentMethodsUpdatedBy:decoded.uid,paymentMethodsUpdatedAt:FieldValue.serverTimestamp()},{merge:true});
+      return res.status(200).json({ok:true,paymentMethods:[...methods]});
+    }
     if((req.method==="GET"&&req.query.action==="mpCredentials")||(req.method==="POST"&&req.body?.action==="mpCredentials")){
       const restaurantId=String(req.method==="GET"?req.query.restaurantId:req.body?.restaurantId||"");
       if(!/^[a-zA-Z0-9_-]{5,128}$/.test(restaurantId))return res.status(400).json({error:"invalid_restaurant"});
@@ -138,6 +156,8 @@ export default async function handler(req,res){
         const snap=await ref.get(),data=snap.data()||{};
         return res.status(200).json({configured:!!data.encryptedAccessToken,publicKey:data.publicKey||"",lastVerifiedAt:data.lastVerifiedAt?.toDate?.()?.toISOString?.()||null});
       }
+      const current=await ref.get();
+      if(current.exists&&current.data()?.encryptedAccessToken&&req.body.confirmReplace!==true)return res.status(409).json({error:"credentials_locked"});
       const accessToken=String(req.body.accessToken||"").trim(),publicKey=String(req.body.publicKey||"").trim();
       if(!/^APP_USR-[A-Za-z0-9-]{20,}$/.test(accessToken)||!/^APP_USR-[A-Za-z0-9-]{10,}$/.test(publicKey))return res.status(400).json({error:"invalid_production_credentials"});
       const keyHex=process.env.PAYMENT_CREDENTIALS_ENCRYPTION_KEY;
