@@ -5,6 +5,7 @@ on:
       - feat/cardapio-inteligente
       - feat/montagem-cliente-igual-pdv
       - feat/modalidades-pagamentos-comercial
+      - feat/whatsapp-duas-mensagens
   workflow_dispatch:
 jobs:
   check:
