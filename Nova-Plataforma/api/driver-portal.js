@@ -20,6 +20,14 @@ export default async function handler(req,res){
    const snap=await orders.where("driverId","==",driver.id).limit(100).get();
    return res.status(200).json({driver:{id:driver.id,name:driver.data().name,vehicle:driver.data().vehicle,photoUrl:driver.data().photoUrl||null},orders:snap.docs.map(d=>{const o=d.data();return {id:d.id,number:o.number||d.id,status:o.status,customerName:o.customerSnapshot?.name||"",customerPhone:o.customerSnapshot?.phone||"",address:o.deliverySnapshot?.address||"",numberAddress:o.deliverySnapshot?.number||"",complement:o.deliverySnapshot?.complement||"",neighborhood:o.deliverySnapshot?.neighborhood||"",city:o.deliverySnapshot?.city||"",state:o.deliverySnapshot?.state||"",cep:o.deliverySnapshot?.cep||"",totalCents:o.totalCents||0,paymentMethod:o.paymentMethod||"",paymentStatus:o.paymentStatus||"PENDING",changeForCents:o.changeForCents??null,deliveryPinRequired:!!o.deliveryPinHash,driverFeeCents:o.driverFeeCents||0,driverPaidAt:o.driverPaidAt?.toDate?.()?.toISOString()||null,deliveryFeeCents:o.deliveryFeeCents||0,arrivedAt:o.driverArrivedAt?.toDate?.()?.toISOString()||null,completedAt:o.statusTimestamps?.COMPLETED?.toDate?.()?.toISOString()||null}})});
   }
+  // O token FCM pertence sempre ao entregador autenticado e ao restaurante validado acima.
+  if(req.body?.action==="SUBSCRIBE_PUSH"){
+   const token=req.body?.token;
+   if(typeof token!=="string"||token.length<50||token.length>4096)return res.status(400).json({error:"invalid_push_token"});
+   const id=createHash("sha256").update(token).digest("hex");
+   await driver.ref.collection("pushSubscriptions").doc(id).set({token,uid:user.uid,updatedAt:FieldValue.serverTimestamp()},{merge:true});
+   return res.status(200).json({ok:true});
+  }
   if(req.body?.action==="UPDATE_PHOTO"){const image=req.body?.image;if(typeof image!=="string"||!image.startsWith("data:image/")||image.length>1500000)return res.status(400).json({error:"invalid_image"});const key=process.env.IMGBB_API_KEY;if(!key)return res.status(503).json({error:"image_service_unavailable"});const response=await fetch("https://api.imgbb.com/1/upload",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams({key,image:image.split(",")[1]})});const result=await response.json();if(!response.ok||!result?.success||!result?.data?.url)return res.status(502).json({error:"image_upload_failed"});await driver.ref.update({photoUrl:result.data.url,updatedAt:FieldValue.serverTimestamp()});return res.status(200).json({ok:true,photoUrl:result.data.url})}
   const orderId=String(req.body?.orderId||""),status=String(req.body?.status||""),action=String(req.body?.action||""),pin=String(req.body?.pin||"");
   if(!/^[\w-]{5,128}$/.test(orderId)||!(["OUT_FOR_DELIVERY","COMPLETED"].includes(status)||["CONFIRM_PAYMENT","ARRIVED"].includes(action)))return res.status(400).json({error:"invalid_request"});
