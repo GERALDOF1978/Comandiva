@@ -14,10 +14,10 @@ test("arredonda média em centavos", () => {
   assert.equal(calculatePizzaPrice({size:{priceCents:0,maxFlavors:2},flavors:[{priceCents:100},{priceCents:101}],pricingRule:"average"}),101);
 });
 test("impede sabores além do limite", () => {
-  assert.throws(()=>calculatePizzaPrice({size:{priceCents:0,maxFlavors:1},flavors}),/inválida/);
+  assert.throws(()=>calculatePizzaPrice({size:{priceCents:0,maxFlavors:1},flavors}),/Sabores inválidos/);
 });
 test("impede preço negativo", () => {
-  assert.throws(()=>calculatePizzaPrice({size,flavors:[{priceCents:-1}]}),/inválida/);
+  assert.throws(()=>calculatePizzaPrice({size,flavors:[{priceCents:-1}]}),/Sabor indisponível/);
 });
 test("impede regra desconhecida", () => {
   assert.throws(()=>calculatePizzaPrice({size,flavors,pricingRule:"sum"}),/inválida/);
