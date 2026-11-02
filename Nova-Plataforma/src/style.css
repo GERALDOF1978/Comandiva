@@ -1578,3 +1578,10 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
 .masterShortcut{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;padding:9px 12px;margin-right:10px;min-height:36px;border-radius:9px;border:1px solid #b65c22;background:#fff0df;color:#6f300a;font-size:12px;font-weight:850;text-decoration:none;white-space:nowrap}
 .masterShortcut:hover{background:#ffdbb8}
 @media(max-width:650px){.restaurantSwitcher label{width:100%;justify-content:space-between}.restaurantSwitcher select{max-width:58vw}.masterShortcut{margin:0 4px 0 0;padding:8px 9px}}
+
+/* Modalidades configuráveis sem afetar o restante do painel */
+.serviceModeSettings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0 22px}
+.serviceModeSetting{display:flex;gap:12px;align-items:flex-start;border:1px solid #d9dee9;border-radius:12px;padding:14px;background:#fff;cursor:pointer}
+.serviceModeSetting input{width:19px;height:19px;flex-shrink:0;accent-color:var(--ui-primary,#f97316);margin-top:2px}
+.serviceModeSetting span{display:grid;gap:5px}.serviceModeSetting b{color:#243148;font-size:14px}.serviceModeSetting small{color:#64748b;font-size:12px;line-height:1.4}
+@media(max-width:650px){.serviceModeSettings{grid-template-columns:1fr}}

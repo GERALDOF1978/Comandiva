@@ -1,7 +1,7 @@
 import React,{useEffect,useState} from "react";
 import {auth} from "../lib/firebase.js";
 import {AVAILABLE_PAYMENT_METHODS,enabledPaymentMethods,paymentMethodDescriptions} from "../lib/paymentMethods.js";
-const labels={PIX:"PIX Mercado Pago",CASH:"Dinheiro",CARD_ON_DELIVERY:"Cartão na maquininha"};
+const labels={PIX:"PIX online",CARD_ONLINE:"Cartão online",CASH:"Dinheiro",CARD_ON_DELIVERY:"Cartão na maquininha"};
 export default function PaymentMethodsSettings({restaurantId}){
  const [methods,setMethods]=useState([...AVAILABLE_PAYMENT_METHODS]);
  const [busy,setBusy]=useState(false),[loading,setLoading]=useState(true),[message,setMessage]=useState(""),[error,setError]=useState("");
@@ -22,7 +22,7 @@ export default function PaymentMethodsSettings({restaurantId}){
  async function save(){if(!methods.length){setError("Ative pelo menos uma forma de pagamento.");return}setBusy(true);setMessage("");setError("");try{const data=await request("POST",{action:"paymentOptions",restaurantId,paymentMethods:methods});setMethods(enabledPaymentMethods(data.paymentMethods));setMessage("Formas de pagamento salvas. O cardápio e o PDV serão atualizados com as opções permitidas.")}catch(e){setError(e.message)}finally{setBusy(false)}}
  return <section className="panel big dishyIntegrationPanel"><div className="moduleIntro"><div><h2>Formas de pagamento aceitas</h2><p>Escolha somente os meios aceitos pelo seu estabelecimento. O cliente não verá os métodos desativados.</p></div></div>
  <div className="paymentMethodsGrid">{AVAILABLE_PAYMENT_METHODS.map(method=><label key={method} className={"paymentMethodSetting"+(methods.includes(method)?" isActive":"")}><input type="checkbox" checked={methods.includes(method)} onChange={()=>toggle(method)} disabled={busy||loading}/><span><b>{labels[method]}</b><small>{paymentMethodDescriptions[method]}</small></span></label>)}</div>
- <p className="techNote">Exemplo: se deixar apenas Dinheiro marcado, somente Dinheiro ficará disponível no cardápio, no PDV e no fechamento presencial. Para aceitar PIX, configure primeiro as credenciais do Mercado Pago.</p>
+ <p className="techNote">Exemplo: se deixar apenas Dinheiro marcado, somente Dinheiro ficará disponível no cardápio, no PDV e no fechamento presencial. Para usar PIX ou cartão online, configure primeiro as credenciais do provedor de pagamento.</p>
  <button type="button" className="integrationPrimaryButton" onClick={save} disabled={loading||busy||!methods.length}>{loading?"Carregando...":busy?"Salvando...":"Salvar formas de pagamento"}</button>
  {!methods.length&&<p role="alert">Selecione pelo menos uma opção.</p>}{error&&<p role="alert" className="integrationError">{error}</p>}{message&&<p role="status" className="integrationSuccess">{message}</p>}
  </section>
