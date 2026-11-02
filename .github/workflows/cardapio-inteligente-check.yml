@@ -4,6 +4,7 @@ on:
     branches:
       - feat/cardapio-inteligente
       - feat/montagem-cliente-igual-pdv
+      - feat/modalidades-pagamentos-comercial
   workflow_dispatch:
 jobs:
   check:
