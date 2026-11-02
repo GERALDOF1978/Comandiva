@@ -50,9 +50,10 @@ export default async function handler(req,res){
       const [restaurantSnap,member,access]=await Promise.all([restaurant.get(),restaurant.collection("members").doc(decoded.uid).get(),db.collection("userRestaurantAccess").doc(decoded.uid).collection("restaurants").doc(rid).get()]);
       if(!restaurantSnap.exists)return res.status(404).json({error:"restaurant_not_found"});
       const isOwner=restaurantSnap.data().ownerUid===decoded.uid||(member.exists&&member.data().active===true&&member.data().role==="owner");
-      const isMember=access.exists&&access.data().active===true;
+      const isMember=member.exists&&member.data().active===true&&access.exists&&access.data().active===true;
       if(!isOwner&&!isMember)return res.status(403).json({error:"access_denied"});
-      if(!isOwner){const perms=member.data()?.permissions||access.data()?.permissions||[];if(!Array.isArray(perms)||!perms.includes("PDV"))return res.status(403).json({error:"pos_permission_required"})}
+      if(restaurantSnap.data().status!=="active")return res.status(403).json({error:"restaurant_suspended"});
+      if(!isOwner){const perms=member.data()?.permissions||[];if(!Array.isArray(perms)||!perms.includes("PDV"))return res.status(403).json({error:"pos_permission_required"})}
       const method=String(body.paymentMethod||"");
       if(!["CASH","CARD_ON_DELIVERY","PIX"].includes(method))return res.status(400).json({error:"pos_payment_not_supported"});
       const payCfg=await restaurant.collection("settings").doc("public").get();
@@ -176,6 +177,7 @@ export default async function handler(req,res){
       const actor=await restaurant.collection("members").doc(decoded.uid).get();
       if(!actor.exists||actor.data().active!==true)return res.status(403).json({error:"access_denied"});
       const role=actor.data().role;
+      if(role!=="owner"&&!(Array.isArray(actor.data().permissions)&&actor.data().permissions.includes("Equipe em serviço")))return res.status(403).json({error:"shift_permission_required"});
       const supervisor=role==="owner"||(role==="manager"&&Array.isArray(actor.data().permissions)&&actor.data().permissions.includes("Equipe em serviço"));
       const shifts=restaurant.collection("staffShifts");
       if(req.method==="GET"){
