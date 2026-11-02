@@ -1,6 +1,7 @@
 import {cert,getApps,initializeApp} from "firebase-admin/app";
 import {getAuth} from "firebase-admin/auth";
 import {FieldValue,getFirestore} from "firebase-admin/firestore";
+import {canAccessAnyModule} from "../src/lib/staffPermissions.js";
 function init(){if(getApps().length)return;const projectId=process.env.FIREBASE_PROJECT_ID,clientEmail=process.env.FIREBASE_CLIENT_EMAIL,privateKey=process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g,"\n");if(!projectId||!clientEmail||!privateKey)throw new Error("firebase_not_configured");initializeApp({credential:cert({projectId,clientEmail,privateKey})})}
 export default async function handler(req,res){
  if(!["GET","POST","PATCH"].includes(req.method))return res.status(405).json({error:"method_not_allowed"});
@@ -10,7 +11,7 @@ export default async function handler(req,res){
   const restaurantId=String(req.method==="GET"?req.query.restaurantId:req.body?.restaurantId||"").trim();
   if(!restaurantId)return res.status(400).json({error:"restaurant_required"});
   const db=getFirestore(),member=await db.collection("restaurants").doc(restaurantId).collection("members").doc(user.uid).get();
-  if(!member.exists||member.data().active!==true||!["owner","manager"].includes(member.data().role))return res.status(403).json({error:"forbidden"});
+  if(!member.exists||!canAccessAnyModule(member.data(),["Entregadores","Delivery"]))return res.status(403).json({error:"forbidden"});
   const drivers=db.collection("restaurants").doc(restaurantId).collection("drivers");
   if(req.method==="GET"){const snap=await drivers.limit(200).get();return res.status(200).json({drivers:snap.docs.map(d=>({id:d.id,...d.data(),createdAt:undefined,updatedAt:undefined}))})}
   if(req.method==="POST"){
