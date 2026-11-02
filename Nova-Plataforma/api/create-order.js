@@ -2,6 +2,7 @@ import {randomInt,randomBytes,createHash,createDecipheriv,randomUUID} from "node
 import {cert,getApps,initializeApp} from "firebase-admin/app";
 import {FieldValue,getFirestore} from "firebase-admin/firestore";
 import {resolvePizzaSelection} from "../src/lib/pizzaSelection.js";
+import {enabledPaymentMethods} from "../src/lib/paymentMethods.js";
 import {getAuth} from "firebase-admin/auth";
 
 function init(){
@@ -132,6 +133,7 @@ export default async function handler(req,res){
     const restaurantId=slugDoc.data().restaurantId;
     const [restaurant,settings,deliveryConfig]=await Promise.all([db.collection("restaurants").doc(restaurantId).get(),db.collection("restaurants").doc(restaurantId).collection("settings").doc("public").get(),db.collection("restaurants").doc(restaurantId).collection("settings").doc("delivery").get()]);
     if(!restaurant.exists||restaurant.data().status!=="active"||!settings.exists||settings.data().published!==true)return res.status(403).json({error:"restaurant_unavailable"});
+    if(!enabledPaymentMethods(settings.data().paymentMethods).includes(paymentMethod))return res.status(400).json({error:"payment_method_disabled"});
     let totalCents=0; const items=[];
     for(const raw of body.items){
       const qty=Number(raw.qty);
