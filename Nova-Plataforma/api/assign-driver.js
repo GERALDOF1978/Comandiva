@@ -11,7 +11,7 @@ async function notifyDriverAssigned(base,restaurantId,driverId,orderId,order){
  if(!tokens.length)return;
  const result=await getMessaging().sendEachForMulticast({
   tokens,
-  data:{kind:"driver",event:"DRIVER_ASSIGNED",restaurantId:String(restaurantId),orderId:String(orderId),number,title:"Nova entrega atribuída!",body:"Pedido #"+number+" • Bairro: "+neighborhood,icon:"https://dishy.com.br/dishy-icon.svg"},
+  data:{kind:"driver",event:"DRIVER_ASSIGNED",restaurantId:String(restaurantId),orderId:String(orderId),number,neighborhood,title:"Nova entrega atribuída!",body:"Pedido #"+number+" • Bairro: "+neighborhood,icon:"https://dishy.com.br/dishy-icon.svg"},
   webpush:{headers:{Urgency:"high",TTL:"3600"}}
  });
  console.info("dishy_driver_push_result",{restaurantId,driverId,orderId,success:result.successCount,failure:result.failureCount,errors:result.responses.filter(x=>!x.success).map(x=>x.error?.code||"unknown")});
