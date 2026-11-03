@@ -2,6 +2,9 @@ const clean=v=>typeof v==="string"?v.trim():"";
 const num=v=>{if(v===null||v===undefined||v==="")return null;const n=Number(v);return Number.isFinite(n)?n:null};
 const baseGeo=()=>process.env.GEOCODER_BASE_URL||"https://nominatim.openstreetmap.org";
 const headers={"User-Agent":"SaaS-Delivery/1.0","Accept-Language":"pt-BR"};
+const MAX_ADDRESS_LENGTH=240;
+const validText=value=>typeof value==="string"&&value.length<=MAX_ADDRESS_LENGTH;
+const validCoordinates=(lat,lon)=>(lat===null||lat>=-90&&lat<=90)&&(lon===null||lon>=-180&&lon<=180);
 async function geocodeAddress(q){
   const queries=Array.isArray(q)?q:[q];
   for(const raw of queries){
@@ -31,9 +34,11 @@ export default async function handler(req,res){
  if(req.method!=="POST")return res.status(405).json({error:"method_not_allowed"});
  try{
   const b=req.body||{};
+  if(!b||typeof b!=="object"||Array.isArray(b))return res.status(400).json({error:"invalid_request"});
+  if(b.action!==undefined&&!["geocode","reverse"].includes(b.action))return res.status(400).json({error:"invalid_action"});
   if(b.action==="geocode"){
     const a=b.address||{},street=clean(a.address),number=clean(a.number),city=clean(a.city),state=clean(a.state);
-    if(!street||!number||!city||!state)return res.status(400).json({error:"invalid_address"});
+    if(!street||!number||!city||!state||[a.address,a.number,a.city,a.state,a.neighborhood].some(v=>v!==undefined&&!validText(v)))return res.status(400).json({error:"invalid_address"});
     const queries=[
       [street,number,clean(a.neighborhood),city,state,"Brasil"].filter(Boolean).join(", "),
       [street+", "+number,city,state,"Brasil"].join(", "),
@@ -54,6 +59,9 @@ export default async function handler(req,res){
     try{return res.status(200).json({ok:true,...await reversePoint(lat,lon)})}catch(e){return res.status(e.message==="address_not_found"?422:502).json({error:e.message})}
   }
   const origin={latitude:num(b.origin?.latitude),longitude:num(b.origin?.longitude)},dest={latitude:num(b.destination?.latitude),longitude:num(b.destination?.longitude)};
+  const fallbacks=b.destination?.fallbackAddresses;
+  if((b.origin?.address!==undefined&&!validText(b.origin.address))||(b.destination?.address!==undefined&&!validText(b.destination.address))||(fallbacks!==undefined&&(!Array.isArray(fallbacks)||fallbacks.length>3||fallbacks.some(x=>!validText(x)))))return res.status(400).json({error:"invalid_address"});
+  if(!validCoordinates(origin.latitude,origin.longitude)||!validCoordinates(dest.latitude,dest.longitude))return res.status(400).json({error:"invalid_coordinates"});
   let o=origin,d=dest;
   if(o.latitude===null||o.longitude===null){const q=clean(b.origin?.address);if(!q)return res.status(400).json({error:"origin_required"});try{o=await geocodeAddress(q)}catch(e){return res.status(e.message==="address_not_found"?422:502).json({error:e.message==="address_not_found"?"origin_not_found":"geocoder_unavailable"})}}
   if(d.latitude===null||d.longitude===null){const q=clean(b.destination?.address),fallbacks=Array.isArray(b.destination?.fallbackAddresses)?b.destination.fallbackAddresses:[];if(!q&&!fallbacks.length)return res.status(400).json({error:"destination_required"});try{d=await geocodeAddress([q,...fallbacks])}catch(e){return res.status(e.message==="address_not_found"?422:502).json({error:e.message==="address_not_found"?"destination_not_found":"geocoder_unavailable"})}}

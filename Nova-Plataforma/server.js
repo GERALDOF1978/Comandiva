@@ -12,6 +12,11 @@ const app=http.createServer(async(req,res)=>{
   try{
     const url=new URL(req.url||"/","http://localhost");
     const pathname=decodeURIComponent(url.pathname);
+    res.setHeader("X-Content-Type-Options","nosniff");
+    res.setHeader("Referrer-Policy","strict-origin-when-cross-origin");
+    res.setHeader("X-Frame-Options","SAMEORIGIN");
+    res.setHeader("Permissions-Policy","camera=(self), geolocation=(self), microphone=()");
+    if(pathname.startsWith("/api/"))res.setHeader("Cache-Control","no-store");
     if(pathname==="/health"){res.setHeader("Content-Type","application/json");res.end(JSON.stringify({ok:true}));return;}
     if(pathname.startsWith("/api/")){
       const name=pathname.slice(5);

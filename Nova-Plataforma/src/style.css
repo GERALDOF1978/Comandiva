@@ -1637,3 +1637,22 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
  .tableComposerPizzaStickyDetails>b{font-size:14px}
  .tableComposerPizzaStickyDetails>span,.tableComposerPizzaStickyDetails>small{font-size:11px}
 }
+
+/* QR Code público do cardápio: independente dos códigos de mesas e comandas. */
+.menuQrOverlay{position:fixed;inset:0;z-index:15000;background:rgba(8,20,40,.72);display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto}
+.menuQrDialog{width:min(100%,510px);max-height:calc(100dvh - 32px);overflow:auto;background:#fff;color:#172238;padding:22px;border-radius:22px;box-shadow:0 22px 65px #0004}
+.menuQrHead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.menuQrHead small{letter-spacing:.07em;color:#64748b;font-size:11px;font-weight:750}
+.menuQrHead h2{font-size:22px;margin:3px 0 6px}
+.menuQrHead>button{background:#f1f5f9;border:0;border-radius:12px;padding:10px;cursor:pointer;color:#172238}
+.menuQrDialog>p{color:#526079;margin:8px 0 14px;font-size:14px;line-height:1.5}
+.menuQrPreview{border:1px solid #e2e8f0;border-radius:16px;background:#f8fafc;padding:18px;display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center}
+.menuQrBrand{width:54px;height:54px;object-fit:contain;border-radius:12px}
+.menuQrImage{max-width:100%;width:min(320px,100%);height:auto;aspect-ratio:1;display:block;image-rendering:auto;background:white;border-radius:10px}
+.menuQrLink{display:block;overflow-wrap:anywhere;white-space:normal;background:#f1f5f9;border-radius:10px;padding:12px;margin:12px 0;color:#334155;font-size:12px}
+.menuQrActions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+.menuQrActions button,.menuQrActions a{display:flex;align-items:center;justify-content:center;min-height:46px;border:1px solid #d3dce9;border-radius:12px;background:#fff;color:#152b48;padding:9px 12px;font-weight:750;text-decoration:none;cursor:pointer;text-align:center}
+.menuQrActions button:last-child{grid-column:1/-1;background:#172c60;color:#fff;border-color:#172c60}
+.menuQrActions :disabled,.menuQrActions a[aria-disabled="true"]{opacity:.55;cursor:not-allowed}
+.publicProduct:disabled{cursor:not-allowed;opacity:.72}
+@media(max-width:480px){.menuQrDialog{padding:16px;border-radius:18px}.menuQrHead h2{font-size:20px}.menuQrActions{grid-template-columns:1fr}.menuQrActions button:last-child{grid-column:auto}}
