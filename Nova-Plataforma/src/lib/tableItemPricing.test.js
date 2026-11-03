@@ -14,3 +14,36 @@ test("marmita exige quantidade correta",()=>assert.throws(()=>buildTableOrderLin
 test("preco do cliente nao sobrescreve o servidor",()=>{const line=buildTableOrderLine({id:pid,name:"Agua",priceCents:500},{qty:1,priceCents:1,totalCents:1});assert.equal(line.totalCents,500)});
 test("produto desativado nao pode ser vendido",()=>assert.throws(()=>buildTableOrderLine({id:pid,active:false,priceCents:100},{qty:1}),/product_unavailable/));
 test("montagem e identificada",()=>{assert.ok(tableProductNeedsAssembly(pizza));assert.equal(tableProductStartingPrice(pizza),3500)});
+
+function assertFirestoreSafe(value,path="line",parentIsArray=false){
+ if(Array.isArray(value)){
+  assert.equal(parentIsArray,false,"Firestore não aceita array dentro de array: "+path);
+  value.forEach((entry,index)=>assertFirestoreSafe(entry,path+"["+index+"]",true));
+ }else if(value&&typeof value==="object"){
+  Object.entries(value).forEach(([key,entry])=>assertFirestoreSafe(entry,path+"."+key,false));
+ }
+}
+test("lanche montado grava complementos sem array aninhado no Firestore",()=>{
+ const lanche={id:pid,name:"Lu lanche",active:true,priceCents:2500,optionGroups:[
+  {name:"Molhos",required:true,min:1,max:2,options:[{name:"Mostarda",priceCents:0},{name:"Açúcar",priceCents:0}]},
+  {name:"Adicionais",max:1,options:[{name:"Bacon",priceCents:500}]}
+ ]};
+ const line=buildTableOrderLine(lanche,{qty:2,optionSelection:[[0,1],[0]]});
+ assert.equal(line.totalCents,6000);
+ assert.deepEqual(line.options.map(o=>o.name),["Mostarda","Açúcar","Bacon"]);
+ assert.deepEqual(line.optionSelection,[{groupIndex:0,indices:[0,1]},{groupIndex:1,indices:[0]}]);
+ assertFirestoreSafe(line);
+ assertFirestoreSafe(JSON.parse(JSON.stringify(line)));
+});
+test("marmita com proteína repetida continua válida para Firestore",()=>{
+ const line=buildTableOrderLine(marmita,{qty:1,optionSelection:[[0],[0,0]]});
+ assert.equal(line.totalCents,3000);
+ assert.deepEqual(line.optionSelection,[{groupIndex:0,indices:[0]},{groupIndex:1,indices:[0,0]}]);
+ assertFirestoreSafe(line);
+});
+test("pizza montada mantém tamanho, fatias, borda, adicionais e estrutura válida",()=>{
+ const line=buildTableOrderLine(pizza,{qty:1,pizzaSelection:selection});
+ assert.equal(line.unitPriceCents,5400);
+ assert.equal(line.pizzaSelection.quarterIndices.length,4);
+ assertFirestoreSafe(line);
+});

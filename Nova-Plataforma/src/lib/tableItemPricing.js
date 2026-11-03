@@ -43,7 +43,8 @@ export function buildTableOrderLine(p,item){
    if(!Array.isArray(chosen)||!Number.isInteger(max)||max<0||!Number.isInteger(min)||min<0||chosen.length<min||chosen.length>max||chosen.some(i=>!idx(i,available.length))||(!g.allowRepeat&&new Set(chosen).size!==chosen.length))fail("invalid_option_selection");
    for(const i of chosen){const option=available[i],cost=Number(option.priceCents||0);if(!cents(cost))fail("invalid_option_price");price+=cost;options.push({group:String(g.name||"Opções"),name:String(option.name||"Opção"),priceCents:cost})}
   }
-  optionSelection=selected.map(x=>[...x]);
+  // Arrays de arrays não podem ser armazenados no Firestore. Grupos como mapas preservam as escolhas e os valores na comanda.
+  optionSelection=selected.map((indices,groupIndex)=>({groupIndex,indices:[...indices]}));
  }else if(item?.pizzaSelection!=null||item?.optionSelection!=null||p.productType==="pizza")fail("assembly_required");
  if(!cents(price)||price>100000000||!cents(price*qty)||price*qty>100000000)fail("invalid_price");
  return {productId:p.id,name:String(p.name||"Produto").slice(0,120),qty,quantity:qty,priceCents:price,unitPriceCents:price,totalCents:price*qty,...(options.length?{options}:{}),...(pizzaSelection?{pizzaSelection}:{}),...(optionSelection?{optionSelection}:{})}
