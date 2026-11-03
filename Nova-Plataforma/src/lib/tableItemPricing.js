@@ -31,8 +31,15 @@ export function buildTableOrderLine(p,item){
   options=[{group:"Tamanho",name:String(sizes[si].name||"Tamanho")},...parts.map((i,q)=>({group:"Fatia "+(q+1),name:String(flavors[i].name||"Sabor")})),...(ci===null?[]:[{group:"Borda",name:String(crusts[ci].name||"Borda"),priceCents:crustAmount}]),...ei.map(i=>({group:"Adicional",name:String(extras[i].name||"Adicional"),priceCents:Number(extras[i].priceCents||0)}))];
  }else if(hasGroups){
   if(item?.pizzaSelection!=null)fail("invalid_pizza_product");
-  const groups=p.optionGroups,selected=item?.optionSelection;
-  if(!Array.isArray(selected)||selected.length!==groups.length)fail("invalid_option_selection");
+  const groups=p.optionGroups,provided=item?.optionSelection;
+  // O montador usa índices agrupados; o carrinho pode reenviar a linha já preparada
+  // para Firestore ({groupIndex,indices}). Validar ambos com as MESMAS regras.
+  const selected=Array.isArray(provided)&&provided.length===groups.length
+   ?provided.every(Array.isArray)?provided
+   :provided.every((entry,index)=>entry&&typeof entry==="object"&&!Array.isArray(entry)&&entry.groupIndex===index&&Array.isArray(entry.indices))
+    ?provided.map(entry=>entry.indices):null
+   :null;
+  if(!selected)fail("invalid_option_selection");
   const si=p.productType==="marmita"?selected[0]?.[0]:null;
   if(p.productType==="marmita"&&(!idx(si,(groups[0]?.options||[]).length)||selected[0].length!==1))fail("invalid_option_selection");
   if(p.productType==="marmita"&&Number(groups[0].options[si].priceCents||0)>0)price=0;

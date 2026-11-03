@@ -47,3 +47,27 @@ test("pizza montada mantém tamanho, fatias, borda, adicionais e estrutura váli
  assert.equal(line.pizzaSelection.quarterIndices.length,4);
  assertFirestoreSafe(line);
 });
+
+test("montador -> carrinho -> API: aceita opções sanitizadas e preserva o preço",()=>{
+ const lanche={id:pid,active:true,name:"Lu lanche",priceCents:2500,optionGroups:[{name:"Molhos",min:1,max:2,required:true,options:[{name:"Mostarda",priceCents:0},{name:"Açúcar",priceCents:0}]},{name:"Adicionais",min:0,max:1,options:[{name:"Bacon",priceCents:500}]}]};
+ const built=buildTableOrderLine(lanche,{qty:1,optionSelection:[[0,1],[0]]});
+ const sent=buildTableOrderLine(lanche,{qty:1,optionSelection:built.optionSelection});
+ assert.equal(sent.totalCents,3000);
+ assert.deepEqual(sent.options,built.options);
+ assert.deepEqual(sent.optionSelection,built.optionSelection);
+ assertFirestoreSafe(sent);
+});
+test("QR Code: grupo obrigatório ainda é exigido mesmo com opção sanitizada",()=>{
+ const lanche={id:pid,active:true,priceCents:800,optionGroups:[{name:"Sabor",required:true,min:1,max:1,options:[{name:"Morango",priceCents:0}]}]};
+ assert.throws(()=>buildTableOrderLine(lanche,{qty:1,optionSelection:[{groupIndex:0,indices:[]}]}),/invalid_option_selection/);
+ assert.throws(()=>buildTableOrderLine(lanche,{qty:1,optionSelection:[{groupIndex:1,indices:[0]}]}),/invalid_option_selection/);
+ assert.throws(()=>buildTableOrderLine(lanche,{qty:1,optionSelection:[{groupIndex:0,indices:[9]}]}),/invalid_option_selection/);
+});
+test("marmita: seleção já preparada mantém proteína repetida e valor",()=>{
+ const ready=buildTableOrderLine(marmita,{qty:1,optionSelection:[[0],[0,0]]});
+ const saved=buildTableOrderLine(marmita,{qty:1,optionSelection:ready.optionSelection});
+ assert.equal(saved.totalCents,3000);
+ assert.deepEqual(saved.options,ready.options);
+ assert.deepEqual(saved.optionSelection,ready.optionSelection);
+ assertFirestoreSafe(saved);
+});
