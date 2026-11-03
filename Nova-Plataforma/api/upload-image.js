@@ -16,8 +16,8 @@ export default async function handler(req,res){
     if(!h.startsWith("Bearer "))return res.status(401).json({error:"unauthorized"});
     const user=await getAuth().verifyIdToken(h.slice(7),true);
     const {restaurantId,image}=req.body||{};
-    if(typeof restaurantId!=="string"||!restaurantId)return res.status(400).json({error:"invalid_restaurant"});
-    if(typeof image!=="string"||!image.startsWith("data:image/")||image.length>6_000_000)return res.status(400).json({error:"invalid_image"});
+    if(typeof restaurantId!=="string"||!/^[A-Za-z0-9_-]{5,128}$/.test(restaurantId))return res.status(400).json({error:"invalid_restaurant"});
+    if(typeof image!=="string"||image.length>6_000_000||!/^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/i.test(image))return res.status(400).json({error:"invalid_image"});
     if(restaurantId==="__platform__"){const master=await getFirestore().doc("platformAdmins/"+user.uid).get();if(!master.exists||master.data().active!==true)return res.status(403).json({error:"master_only"});}else{const member=await getFirestore().doc(`restaurants/${restaurantId}/members/${user.uid}`).get();if(!member.exists||member.data().active!==true||!["owner","manager"].includes(member.data().role))return res.status(403).json({error:"forbidden"});}
     const key=process.env.IMGBB_API_KEY;
     if(!key)throw new Error("IMGBB_API_KEY ausente");
