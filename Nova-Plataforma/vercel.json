@@ -1,10 +1,40 @@
 {
   "rewrites": [
-    { "source": "/master", "destination": "/" },
-    { "source": "/master/", "destination": "/" },
-    { "source": "/login", "destination": "/" },
-    { "source": "/login/", "destination": "/" },
-    { "source": "/cadastro", "destination": "/" },
-    { "source": "/cadastro/", "destination": "/" }
+    {
+      "source": "/api/lookup-cep",
+      "destination": "/api/index?route=lookup-cep"
+    },
+    {
+      "source": "/api/delivery-route",
+      "destination": "/api/index?route=delivery-route"
+    },
+    {
+      "source": "/api/delivery-sheet",
+      "destination": "/api/index?route=delivery-sheet"
+    },
+    {
+      "source": "/master",
+      "destination": "/"
+    },
+    {
+      "source": "/master/",
+      "destination": "/"
+    },
+    {
+      "source": "/login",
+      "destination": "/"
+    },
+    {
+      "source": "/login/",
+      "destination": "/"
+    },
+    {
+      "source": "/cadastro",
+      "destination": "/"
+    },
+    {
+      "source": "/cadastro/",
+      "destination": "/"
+    }
   ]
 }

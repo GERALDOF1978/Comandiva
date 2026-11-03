@@ -16,7 +16,8 @@ const app=http.createServer(async(req,res)=>{
     if(pathname.startsWith("/api/")){
       const name=pathname.slice(5);
       if(!/^[a-zA-Z0-9_-]+$/.test(name)){res.writeHead(404);res.end("Not found");return;}
-      const file=join(apiRoot,name+".js");
+      let file=join(apiRoot,name+".js");
+      if(!existsSync(file))file=join(root,"server-api",name+".js");
       if(!existsSync(file)){res.writeHead(404);res.end("Not found");return;}
       const chunks=[];let length=0;
       for await(const chunk of req){length+=chunk.length;if(length>1048576){res.writeHead(413);res.end("Payload too large");return;}chunks.push(chunk);}
