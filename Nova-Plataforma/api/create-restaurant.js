@@ -394,6 +394,7 @@ export default async function handler(req,res){
       return res.status(200).json({ok:true});
     }
     if(!decoded.email) return res.status(400).json({error:"email_required"});
+    if(decoded.email_verified!==true)return res.status(403).json({error:"email_not_verified"});
     const {name,type,phone}=req.body||{};
     if(typeof name!=="string"||name.trim().length<3||name.trim().length>100) return res.status(400).json({error:"invalid_name"});
     if(typeof type!=="string"||!["restaurant","pizzeria","snack_bar","marmitaria","bar","bakery","other"].includes(type)) return res.status(400).json({error:"invalid_type"});
