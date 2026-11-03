@@ -2,7 +2,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {subscriptionAccess,restaurantMayReceiveOrders,NEW_TRIAL_DAYS} from "./subscriptionAccess.js";
 const now=Date.parse("2026-11-03T12:00:00Z");
-test("novos restaurantes recebem 180 dias",()=>assert.equal(NEW_TRIAL_DAYS,180));
+test("novos restaurantes recebem 100 dias",()=>assert.equal(NEW_TRIAL_DAYS,100));
 test("trial não expirado recebe pedidos",()=>assert.equal(subscriptionAccess({planId:"trial",status:"trial",trialEndsAt:new Date(now+86400000)},now).allowed,true));
 test("trial vencido bloqueia apenas novos pedidos",()=>assert.equal(subscriptionAccess({planId:"trial",status:"trial",trialEndsAt:new Date(now-1)},now).error,"subscription_expired"));
 test("trial exatamente no vencimento bloqueia",()=>assert.equal(subscriptionAccess({planId:"trial",status:"trial",trialEndsAt:new Date(now)},now).allowed,false));

@@ -2,8 +2,8 @@
 Versão 03/11/2026. Código de referência: branch `feat/pronto-operacao-180-dias`. Estado de produção exige confirmar commit e testes antes de comunicar ao cliente.
 
 ## Modelo de negócio
-- Um plano comercial: **Dishy Completo**; valor e meio de cobrança devem ser definidos e informados por escrito antes da contratação.
-- Novos restaurantes: **180 dias de teste** contados da criação. Não há cobrança automática.
+- Oferta de inauguração: **100 dias grátis** nos novos cadastros. Após o teste, oferecer o **plano de manutenção**, sem cobrança automática. Outros planos poderão ser disponibilizados futuramente; valor e cobrança devem ser informados antes da contratação.
+- Novos restaurantes: **100 dias de teste** contados da criação. Não há cobrança automática.
 - No fim do trial, a API bloqueia novos pedidos do restaurante até a ativação manual de plano pago pelo Master; o painel, histórico, consultas e a conclusão de pedidos/pagamentos já existentes continuam acessíveis.
 - Master marca `pending_payment` ao atribuir plano pago. Só mudar para `active` após confirmar pagamento por meio externo e registrar comprovante comercial.
 - Planos com status `pending_payment`, `canceled` ou trial vencido não recebem novos pedidos. Pedidos antigos não são apagados.
@@ -23,7 +23,7 @@ Versão 03/11/2026. Código de referência: branch `feat/pronto-operacao-180-dia
 ## Cadastro do estabelecimento
 1. Proprietário acessa `https://dishy.com.br/cadastro`.
 2. Cria conta com e-mail/senha ou Google. Contas por senha confirmam e-mail antes de criar restaurante; o link pode ser reenviado.
-3. Após verificação, cria o estabelecimento. O backend gera assinatura trial de 180 dias.
+3. Após verificação, cria o estabelecimento. O backend gera assinatura trial de 100 dias.
 4. Em **Configurações**, define logo, banner, cores, endereço, horário, modalidades de atendimento (Entrega, Retirada, Mesas, Comandas) e publica o cardápio.
 5. Em **Cardápio**, cadastra produtos, preços, tamanhos, adicionais e disponibilidade. Testar ingredientes e montagem.
 6. Em **Configurações**, ativa os meios de pagamento aceitos. O proprietário conecta Mercado Pago; as chaves ficam bloqueadas para edição acidental após salvar.

@@ -2,6 +2,7 @@ import {startTabPix} from "./tab-pix.js";
 import {buildTableOrderLine} from "../src/lib/tableItemPricing.js";
 import {enabledPaymentMethods} from "../src/lib/paymentMethods.js";
 import {restaurantMayReceiveOrders} from "../src/lib/subscriptionAccess.js";
+import {isAcceptingOrders} from "../src/lib/operationalStatus.js";
 import {cert,getApps,initializeApp} from "firebase-admin/app";
 import {getFirestore,FieldValue} from "firebase-admin/firestore";
 function init(){if(!getApps().length)initializeApp({credential:cert({projectId:process.env.FIREBASE_PROJECT_ID,clientEmail:process.env.FIREBASE_CLIENT_EMAIL,privateKey:process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g,"\n")})})}
@@ -18,6 +19,7 @@ export default async function handler(req,res){
  if(action==="ORDER"){
  const [restaurantDoc,settingsDoc]=await Promise.all([base.get(),base.collection("settings").doc("public").get()]);
  if(!restaurantDoc.exists||restaurantDoc.data().status!=="active"||!settingsDoc.exists||settingsDoc.data().published!==true)return res.status(403).json({error:"restaurant_unavailable"});
+ if(!isAcceptingOrders(settingsDoc.data()))return res.status(403).json({error:"restaurant_closed"});
  const entitlement=await restaurantMayReceiveOrders(db,mapping.data().restaurantId);
  if(!entitlement.allowed)return res.status(403).json({error:entitlement.error});
  const name=clean(input.name).slice(0,90),phone=clean(input.phone).replace(/\D/g,"").slice(0,15),items=input.items;

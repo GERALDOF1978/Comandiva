@@ -7,7 +7,7 @@
 O Dishy fornece ao estabelecimento contratante acesso a funcionalidades de cardápio digital, pedidos, Mesas e Comandas, PDV, recebimentos via provedores de pagamento configurados pelo cliente e serviços auxiliares. O contratante deve fornecer dados corretos, gerenciar seus usuários e respeitar a legislação aplicável a seu comércio.
 
 ## 2. Teste gratuito e plano
-Novos estabelecimentos recebem até **180 dias de teste**, contados da ativação da conta e sujeitos às condições informadas antes da adesão. Após o teste, o uso operacional para **novos pedidos** dependerá de assinatura ativa do plano Dishy Completo. O histórico, o painel e as obrigações sobre pedidos/pagamentos já realizados não devem desaparecer apenas pelo vencimento da assinatura.
+Novos estabelecimentos recebem até **100 dias de teste**, contados da ativação da conta e sujeitos às condições informadas antes da adesão. Após o teste, o uso operacional para **novos pedidos** dependerá de assinatura ativa do plano de manutenção vigente. O histórico, o painel e as obrigações sobre pedidos/pagamentos já realizados não devem desaparecer apenas pelo vencimento da assinatura.
 
 O **preço do plano, periodicidade, reajustes, forma de cobrança, vencimentos e política de cancelamento** serão definidos no instrumento comercial/aceite específico: [VALOR E CONDIÇÕES]. O sistema não realiza cobrança automática do SaaS nesta versão; a ativação do plano pago é efetuada manualmente pelo administrador após confirmação de pagamento. Não haverá cobrança sem informação/aceite conforme regras aplicáveis.
 

@@ -1,5 +1,5 @@
 // Regras únicas de acesso comercial. Não grava cobrança nem altera pedidos existentes.
-export const NEW_TRIAL_DAYS=180;
+export const NEW_TRIAL_DAYS=100;
 export function subscriptionAccess(record,now=Date.now()){
  if(!record||typeof record!=="object")return {allowed:false,error:"subscription_unavailable"};
  if(record.status==="active"&&record.planId!=="trial")return {allowed:true,status:"active"};
