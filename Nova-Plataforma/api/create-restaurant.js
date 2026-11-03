@@ -3,9 +3,10 @@ import {cert,getApps,initializeApp} from "firebase-admin/app";
 import {getAuth} from "firebase-admin/auth";
 import {FieldValue,getFirestore} from "firebase-admin/firestore";
 import {enabledPaymentMethods,validPaymentMethods} from "../src/lib/paymentMethods.js";
+import {NEW_TRIAL_DAYS,restaurantMayReceiveOrders} from "../src/lib/subscriptionAccess.js";
 
 // Oferta vigente para novos cadastros e novas concessões; não reduz testes já concedidos.
-const TRIAL_DURATION_DAYS=100;
+const TRIAL_DURATION_DAYS=NEW_TRIAL_DAYS;
 
 function getAdmin(){
   if(getApps().length) return getApps()[0];
@@ -53,6 +54,8 @@ export default async function handler(req,res){
       const isMember=member.exists&&member.data().active===true&&access.exists&&access.data().active===true;
       if(!isOwner&&!isMember)return res.status(403).json({error:"access_denied"});
       if(restaurantSnap.data().status!=="active")return res.status(403).json({error:"restaurant_suspended"});
+      const entitlement=await restaurantMayReceiveOrders(db,rid);
+      if(!entitlement.allowed)return res.status(403).json({error:entitlement.error});
       if(!isOwner){const perms=member.data()?.permissions||[];if(!Array.isArray(perms)||!perms.includes("PDV"))return res.status(403).json({error:"pos_permission_required"})}
       const method=String(body.paymentMethod||"");
       if(!["CASH","CARD_ON_DELIVERY","PIX"].includes(method))return res.status(400).json({error:"pos_payment_not_supported"});

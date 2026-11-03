@@ -1,6 +1,7 @@
 import {startTabPix} from "./tab-pix.js";
 import {buildTableOrderLine} from "../src/lib/tableItemPricing.js";
 import {enabledPaymentMethods} from "../src/lib/paymentMethods.js";
+import {restaurantMayReceiveOrders} from "../src/lib/subscriptionAccess.js";
 import {cert,getApps,initializeApp} from "firebase-admin/app";
 import {getFirestore,FieldValue} from "firebase-admin/firestore";
 function init(){if(!getApps().length)initializeApp({credential:cert({projectId:process.env.FIREBASE_PROJECT_ID,clientEmail:process.env.FIREBASE_CLIENT_EMAIL,privateKey:process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g,"\n")})})}
@@ -15,6 +16,10 @@ export default async function handler(req,res){
  if(req.method==="GET"){const d=tab.data();const ordersSnap=await base.collection("orders").where("tabId","==",tabId).limit(200).get();const orders=ordersSnap.docs.filter(o=>o.data().channel==="TABLE"&&o.data().status!=="CANCELLED"&&!o.id.startsWith("tabpayment_")).map(o=>({id:o.id,number:o.data().number,status:o.data().status,items:(o.data().items||[]).map(i=>({name:i.name,qty:i.qty,priceCents:i.priceCents,totalCents:i.totalCents,options:i.options||[]})),createdAt:o.data().createdAt?.toDate?.()?.toISOString()||null})).sort((a,b)=>(a.createdAt||"").localeCompare(b.createdAt||""));return res.status(200).json({tab:{label:d.label,type:d.type,status:d.status,totalCents:Number(d.totalCents||0),pixPayment:d.pixPayment||null,orders}})}
  const action=clean(input.action);
  if(action==="ORDER"){
+ const [restaurantDoc,settingsDoc]=await Promise.all([base.get(),base.collection("settings").doc("public").get()]);
+ if(!restaurantDoc.exists||restaurantDoc.data().status!=="active"||!settingsDoc.exists||settingsDoc.data().published!==true)return res.status(403).json({error:"restaurant_unavailable"});
+ const entitlement=await restaurantMayReceiveOrders(db,mapping.data().restaurantId);
+ if(!entitlement.allowed)return res.status(403).json({error:entitlement.error});
  const name=clean(input.name).slice(0,90),phone=clean(input.phone).replace(/\D/g,"").slice(0,15),items=input.items;
  if(name.length<2||phone.length<10||!Array.isArray(items)||!items.length||items.length>30)return res.status(400).json({error:"invalid_order"});
  const ids=items.map(x=>clean(x.productId));if(ids.some(x=>!/^[\w-]{5,128}$/.test(x)))return res.status(400).json({error:"invalid_items"});

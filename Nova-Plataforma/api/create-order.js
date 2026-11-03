@@ -4,6 +4,7 @@ import {FieldValue,getFirestore} from "firebase-admin/firestore";
 import {resolvePizzaSelection} from "../src/lib/pizzaSelection.js";
 import {enabledPaymentMethods} from "../src/lib/paymentMethods.js";
 import {enabledServiceModes} from "../src/lib/serviceModes.js";
+import {restaurantMayReceiveOrders} from "../src/lib/subscriptionAccess.js";
 import {createInfiniteCheckout,confirmInfinitePayment} from "./_infinitepay.js";
 import {getAuth} from "firebase-admin/auth";
 
@@ -151,6 +152,8 @@ export default async function handler(req,res){
     const restaurantId=slugDoc.data().restaurantId;
     const [restaurant,settings,deliveryConfig]=await Promise.all([db.collection("restaurants").doc(restaurantId).get(),db.collection("restaurants").doc(restaurantId).collection("settings").doc("public").get(),db.collection("restaurants").doc(restaurantId).collection("settings").doc("delivery").get()]);
     if(!restaurant.exists||restaurant.data().status!=="active"||!settings.exists||settings.data().published!==true)return res.status(403).json({error:"restaurant_unavailable"});
+    const entitlement=await restaurantMayReceiveOrders(db,restaurantId);
+    if(!entitlement.allowed)return res.status(403).json({error:entitlement.error});
     if(!enabledServiceModes(settings.data().serviceModes).includes(channel))return res.status(403).json({error:"service_disabled"});
     if(!enabledPaymentMethods(settings.data().paymentMethods).includes(paymentMethod))return res.status(400).json({error:"payment_method_disabled"});
     let totalCents=0; const items=[];

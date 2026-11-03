@@ -2,6 +2,7 @@ import {startTabPix} from "../server/tab-pix.js";
 import {buildTableOrderLine} from "../src/lib/tableItemPricing.js";
 import {enabledPaymentMethods} from "../src/lib/paymentMethods.js";
 import {enabledServiceModes} from "../src/lib/serviceModes.js";
+import {restaurantMayReceiveOrders} from "../src/lib/subscriptionAccess.js";
 import {canAccessModule} from "../src/lib/staffPermissions.js";
 import publicTabHandler from "../server/public-tab.js";
 import {randomBytes} from "node:crypto";
@@ -21,6 +22,11 @@ export default async function handler(req,res){
  const tabs=base.collection("tabs");
  if(req.method==="GET"){const [snap,calls]=await Promise.all([tabs.limit(300).get(),base.collection("serviceCalls").where("status","==","PENDING").limit(100).get()]);return res.status(200).json({tabs:snap.docs.map(d=>({id:d.id,...d.data(),createdAt:d.data().createdAt?.toDate?.()?.toISOString()||null,updatedAt:d.data().updatedAt?.toDate?.()?.toISOString()||null})),serviceCalls:calls.docs.map(d=>({id:d.id,...d.data(),createdAt:d.data().createdAt?.toDate?.()?.toISOString()||null}))})}
  const action=String(body.action||""),id=String(body.tabId||"");
+ if(["OPEN","ADD_BATCH","ADD"].includes(action)){
+  const r=await base.get();if(!r.exists||r.data().status!=="active")return res.status(403).json({error:"restaurant_suspended"});
+  const entitlement=await restaurantMayReceiveOrders(db,restaurantId);
+  if(!entitlement.allowed)return res.status(403).json({error:entitlement.error});
+ }
  if(action==="RESOLVE_SERVICE_CALL"){
  const callId=String(body.callId||"");if(!/^[a-zA-Z0-9_-]{5,128}$/.test(callId))return res.status(400).json({error:"invalid_call"});
  const callRef=base.collection("serviceCalls").doc(callId);
