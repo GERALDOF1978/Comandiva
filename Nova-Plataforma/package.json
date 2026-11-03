@@ -11,15 +11,17 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "latest",
-    "vite": "latest",
-    "typescript": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "lucide-react": "latest",
-    "firebase": "latest",
-    "firebase-admin": "13.10.0",
-    "qrcode": "^1.5.4"
+    "@vitejs/plugin-react": "6.2.1",
+    "firebase": "13.2.0",
+    "firebase-admin": "14.5.0",
+    "lucide-react": "1.67.0",
+    "qrcode": "1.5.4",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "typescript": "7.0.2",
+    "vite": "8.3.5"
   },
-  "devDependencies": {}
+  "overrides": {
+    "@grpc/grpc-js": "1.14.7"
+  }
 }
