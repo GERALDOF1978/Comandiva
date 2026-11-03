@@ -17,3 +17,10 @@ test("consulta usa documento por restaurante",async()=>{
  const permission=await restaurantMayReceiveOrders(fake,"restaurante_a",now);
  assert.equal(id,"restaurante_a");assert.equal(permission.allowed,true);
 });
+
+test("estabelecimento antigo sem assinatura não perde pedidos já operantes",async()=>{
+ const db={collection:()=>({doc:()=>({get:async()=>({exists:false})})})};
+ const result=await restaurantMayReceiveOrders(db,"legacy",now);
+ assert.equal(result.allowed,true);
+ assert.equal(result.status,"legacy_without_subscription");
+});

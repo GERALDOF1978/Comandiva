@@ -15,5 +15,8 @@ export function subscriptionAccess(record,now=Date.now()){
 }
 export async function restaurantMayReceiveOrders(db,restaurantId,now=Date.now()){
  const snapshot=await db.collection("subscriptions").doc(restaurantId).get();
- return subscriptionAccess(snapshot.exists?snapshot.data():null,now);
+ // Compatibilidade: estabelecimentos criados antes do módulo de planos podem não ter
+ // documento de assinatura. Não interromper os pedidos atuais; o Master deve migrá-los.
+ if(!snapshot.exists)return {allowed:true,status:"legacy_without_subscription"};
+ return subscriptionAccess(snapshot.data(),now);
 }
