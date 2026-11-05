@@ -4,7 +4,7 @@ const statusOptions=[["new","Novo"],["in_progress","Em atendimento"],["resolved"
 
 export default function MasterSupportPanel({user,active,onNewCount}){
  const [data,setData]=useState({items:[],unread:0,whatsapp:""}),[phone,setPhone]=useState(""),[loading,setLoading]=useState(true),[error,setError]=useState(""),[notice,setNotice]=useState(""),[busy,setBusy]=useState("");
- const previousCount=useRef(null);
+ const previousCount=useRef(null),phoneInitialized=useRef(false);
  async function call(action,payload){
    const token=await user.getIdToken();
    const res=await fetch("/api/create-restaurant"+(payload?"":"?action="+encodeURIComponent(action)),{
@@ -19,7 +19,7 @@ export default function MasterSupportPanel({user,active,onNewCount}){
  async function refresh(){
    try{
      const result=await call("supportMaster");
-     setData(result);setPhone(prev=>prev===null?"":result.whatsapp||"");
+     setData(result);if(!phoneInitialized.current){setPhone(result.whatsapp||"");phoneInitialized.current=true;}
      if(previousCount.current!==null&&result.unread>previousCount.current&&typeof Notification!=="undefined"&&Notification.permission==="granted"){
        new Notification("Dishy Master — novo pedido de ajuda",{body:"Uma loja enviou uma solicitação de suporte.",tag:"dishy-master-support"});
      }
