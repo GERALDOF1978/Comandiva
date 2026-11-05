@@ -270,16 +270,7 @@ export default async function handler(req,res){
   const [subscription,restaurant]=await Promise.all([db.collection("subscriptions").doc(restaurantId).get(),db.collection("restaurants").doc(restaurantId).get()]);
   if(!restaurant.exists)return res.status(404).json({error:"restaurant_not_found"});
   let raw=subscription.exists?subscription.data():null;
-  // Upgrade legacy 30-day trials once to the current offer, preserving their original start date. Existing 180-day grants remain intact.
-  if(raw?.planId==="trial"&&raw?.status==="trial"&&!raw.trialDurationDays&&raw.trialEndsAt?.toDate){
-    const legacyEnd=raw.trialEndsAt.toDate();
-    const start=raw.createdAt?.toDate?.()||raw.updatedAt?.toDate?.();
-    if(start&&Math.abs((legacyEnd-start)/86400000-30)<2){
-      const ref=db.collection("subscriptions").doc(restaurantId);
-      await db.runTransaction(async tx=>{const fresh=await tx.get(ref);const current=fresh.data();if(current?.planId!=="trial"||current?.status!=="trial"||current?.trialDurationDays)return;const oldEnd=current.trialEndsAt?.toDate?.(),begin=current.createdAt?.toDate?.()||current.updatedAt?.toDate?.();if(!oldEnd||!begin||Math.abs((oldEnd-begin)/86400000-30)>=2)return;tx.update(ref,{trialEndsAt:new Date(begin.getTime()+TRIAL_DURATION_DAYS*86400000),trialDurationDays:TRIAL_DURATION_DAYS,updatedAt:FieldValue.serverTimestamp()})});
-      const updated=await ref.get();raw=updated.data();
-    }
-  }
+  // Preservar o prazo já concedido; a oferta de 37 dias vale apenas para novos testes.
   const planId=raw?.planId||restaurant.data().planId||"trial";
   const plan=planId!=="trial"?await db.collection("plans").doc(planId).get():null;
   function iso(v){return v?.toDate?.()?.toISOString?.()|| (v instanceof Date?v.toISOString():typeof v==="string"?v:null)}
