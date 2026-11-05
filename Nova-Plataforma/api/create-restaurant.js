@@ -129,7 +129,7 @@ export default async function handler(req,res){
       const owner=rs.data().ownerUid===decoded.uid||(member.exists&&member.data().active===true&&member.data().role==="owner");
       const operator=member.exists&&member.data().active===true&&access.exists&&access.data().active===true&&(member.data().permissions||[]).includes("PDV");
       if(!owner&&!operator)return res.status(403).json({error:"access_denied"});
-      if(req.method==="GET")return res.status(200).json({enabled:tap.data()?.enabled===true,handle:tap.data()?.handle||"",pagbankReady:false});
+      if(req.method==="GET"){const [mpCfg,infCfg]=await Promise.all([restaurant.collection("privateIntegrations").doc("mercadoPago").get(),restaurant.collection("privateIntegrations").doc("infinitepay").get()]);return res.status(200).json({enabled:tap.data()?.enabled===true,handle:tap.data()?.handle||"",pixProviders:{mercado_pago:!!mpCfg.data()?.encryptedAccessToken,infinitepay:!!infCfg.data()?.encryptedApiKey}})}
       if(!owner)return res.status(403).json({error:"owner_only"});
       const handle=String(req.body.handle||"").trim(),enabled=req.body.enabled===true;
       if((enabled&&!/^[A-Za-z0-9_.-]{2,64}$/.test(handle))||handle.length>64)return res.status(400).json({error:"invalid_tap_handle"});
@@ -189,7 +189,9 @@ export default async function handler(req,res){
         try{const deeplink=buildInfiniteTapLink({amountCents:totalCents,orderId:ref.id,handle:tapCfg.handle,paymentMethod:String(body.tapKind||"debit"),installments:Number(body.tapInstallments||1)});return res.status(201).json({ok:true,orderId:ref.id,code:"PDV-"+ref.id.slice(0,6).toUpperCase(),totalCents,tap:{deeplink,provider:"infinitepay"}})}catch(e){await ref.update({paymentStatus:"ERROR",paymentError:e.message});return res.status(400).json({error:e.message,orderId:ref.id})}
       }
       if(method==="PIX"){
-        const pixProvider=payCfg.data()?.paymentProviders?.PIX==="infinitepay"?"infinitepay":"mercado_pago";
+        const selectedPixProvider=body.pixProvider==null?"":String(body.pixProvider);
+        if(selectedPixProvider&&!["mercado_pago","infinitepay"].includes(selectedPixProvider))return res.status(400).json({error:"invalid_pix_provider"});
+        const pixProvider=selectedPixProvider||(payCfg.data()?.paymentProviders?.PIX==="infinitepay"?"infinitepay":"mercado_pago");
         if(pixProvider==="infinitepay"){
           try{
             const payment=await createInfiniteCheckout({db,restaurantId:rid,orderId:ref.id,slug:"",number:"PDV-"+ref.id.slice(0,6).toUpperCase(),totalCents,name:String(body.customerName||"Balcão").trim()||"Balcão",returnTo:"pos"});
