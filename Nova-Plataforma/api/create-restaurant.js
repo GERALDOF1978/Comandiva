@@ -462,7 +462,7 @@ export default async function handler(req,res){
     if(decoded.email_verified!==true)return res.status(403).json({error:"email_not_verified"});
     const {name,type,phone}=req.body||{};
     if(typeof name!=="string"||name.trim().length<3||name.trim().length>100) return res.status(400).json({error:"invalid_name"});
-    if(typeof type!=="string"||!["restaurant","pizzeria","snack_bar","marmitaria","bar","bakery","other"].includes(type)) return res.status(400).json({error:"invalid_type"});
+    if(typeof type!=="string"||!["restaurant","pizzeria","snack_bar","burger_shop","marmitaria","acai_shop","ice_cream_shop","snack_cart","food_truck","pastry_shop","sweet_shop","cafe","juice_bar","bar","barbecue","skewers","bakery","other"].includes(type)) return res.status(400).json({error:"invalid_type"});
     if(typeof phone!=="string"||phone.replace(/\D/g,"").length<10||phone.replace(/\D/g,"").length>13) return res.status(400).json({error:"invalid_phone"});
 
     const db=getFirestore();
