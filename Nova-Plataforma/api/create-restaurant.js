@@ -135,6 +135,18 @@ export default async function handler(req,res){
       await tap.ref.set({handle,enabled,updatedBy:decoded.uid,updatedAt:FieldValue.serverTimestamp()},{merge:true});
       return res.status(200).json({ok:true,enabled,handle,pagbankReady:false});
     }
+    if(req.method==="POST"&&req.body?.action==="posTapConfirm"){
+      const rid=String(req.body.restaurantId||""),orderId=String(req.body.orderId||""),nsu=String(req.body.nsu||"").trim();
+      if(!/^[A-Za-z0-9_-]{5,128}$/.test(rid)||!/^[A-Za-z0-9_-]{5,128}$/.test(orderId)||!/^[A-Za-z0-9_-]{5,100}$/.test(nsu)||req.body.verifiedInApp!==true)return res.status(400).json({error:"invalid_tap_confirmation"});
+      const db=getFirestore(),restaurant=db.collection("restaurants").doc(rid),orderRef=restaurant.collection("orders").doc(orderId);
+      const [rs,member,access]=await Promise.all([restaurant.get(),restaurant.collection("members").doc(decoded.uid).get(),db.collection("userRestaurantAccess").doc(decoded.uid).collection("restaurants").doc(rid).get()]);
+      if(!rs.exists)return res.status(404).json({error:"restaurant_not_found"});
+      const owner=rs.data().ownerUid===decoded.uid||(member.exists&&member.data().active===true&&member.data().role==="owner");
+      const operator=member.exists&&member.data().active===true&&access.exists&&access.data().active===true&&(member.data().permissions||[]).includes("PDV");
+      if(!owner&&!operator)return res.status(403).json({error:"access_denied"});
+      try{await db.runTransaction(async tx=>{const snap=await tx.get(orderRef);const o=snap.data();if(!snap.exists||o.source!=="POS"||o.paymentMethod!=="NFC_INFINITE_TAP"||o.paymentStatus!=="PENDING"||o.status!=="PENDING_PAYMENT")throw Error("invalid_tap_order_state");tx.update(orderRef,{paymentStatus:"PAID",status:o.requiresPreparation===false?"READY":"RECEIVED",paidAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp(),nfcApprovalReference:nsu,nfcConfirmedBy:decoded.uid,nfcConfirmationMode:"MANUAL_MERCHANT_VERIFICATION"})})}catch(e){return res.status(409).json({error:e.message==="invalid_tap_order_state"?e.message:"tap_confirmation_failed"})}
+      return res.status(200).json({ok:true,orderId});
+    }
     if(req.method==="POST"&&req.body?.action==="posSale"){
       const body=req.body||{},rid=String(body.restaurantId||"");
       if(!/^[a-zA-Z0-9_-]{5,128}$/.test(rid))return res.status(400).json({error:"invalid_restaurant"});
@@ -170,6 +182,7 @@ export default async function handler(req,res){
       const ref=restaurant.collection("orders").doc(),now=FieldValue.serverTimestamp();
       const ready=items.every(item=>{const p=entries.find(d=>d.id===item.productId).data();return p.requiresPreparation===false});
       const needsPayment=method==="PIX"||method==="NFC_INFINITE_TAP";const status=needsPayment?"PENDING_PAYMENT":ready?"READY":"RECEIVED";
+      if(method==="NFC_INFINITE_TAP"){try{buildInfiniteTapLink({amountCents:totalCents,orderId:ref.id,handle:tapCfg.handle,paymentMethod:String(body.tapKind||"debit"),installments:Number(body.tapInstallments||1)})}catch(e){return res.status(400).json({error:e.message})}}
       await ref.create({code:"PDV-"+ref.id.slice(0,6).toUpperCase(),number:"PDV-"+ref.id.slice(0,6).toUpperCase(),channel:"PICKUP",source:"POS",customer:{name:String(body.customerName||"Balcão").trim().slice(0,80)||"Balcão",phone:""},customerSnapshot:{name:String(body.customerName||"Balcão").trim().slice(0,80)||"Balcão"},customerName:String(body.customerName||"Balcão").trim().slice(0,80)||"Balcão",items,totalCents,subtotalCents:totalCents,deliveryFeeCents:0,paymentMethod:method,paymentStatus:needsPayment?"PENDING":"PAID",status,requiresPreparation:!ready,createdAt:now,updatedAt:now,...(!needsPayment?{paidAt:now}:{}),createdBy:decoded.uid,notes:String(body.notes||"").slice(0,500)});
       if(method==="NFC_INFINITE_TAP"){
         try{const deeplink=buildInfiniteTapLink({amountCents:totalCents,orderId:ref.id,handle:tapCfg.handle,paymentMethod:String(body.tapKind||"debit"),installments:Number(body.tapInstallments||1)});return res.status(201).json({ok:true,orderId:ref.id,code:"PDV-"+ref.id.slice(0,6).toUpperCase(),totalCents,tap:{deeplink,provider:"infinitepay"}})}catch(e){await ref.update({paymentStatus:"ERROR",paymentError:e.message});return res.status(400).json({error:e.message,orderId:ref.id})}
