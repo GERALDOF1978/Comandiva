@@ -1656,3 +1656,22 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
 .menuQrActions :disabled,.menuQrActions a[aria-disabled="true"]{opacity:.55;cursor:not-allowed}
 .publicProduct:disabled{cursor:not-allowed;opacity:.72}
 @media(max-width:480px){.menuQrDialog{padding:16px;border-radius:18px}.menuQrHead h2{font-size:20px}.menuQrActions{grid-template-columns:1fr}.menuQrActions button:last-child{grid-column:auto}}
+
+/* Lancamento Dishy 37 dias */
+.dishyJourneySteps{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.dishyJourneySteps>div{position:relative;min-height:150px;border-color:#52677c;box-shadow:inset 0 1px 0 #ffffff14}
+.dishyJourneySteps>div:nth-child(3n+1){background:linear-gradient(150deg,#24364a,#18293c)}
+.dishyJourneySteps>div:nth-child(3n+2){background:linear-gradient(150deg,#2b3443,#1d293b)}
+.dishyJourneySteps b{background:#ff8c48;color:#18202a;font-weight:900}
+.onboardVerify{border:1px solid #fed7aa;box-shadow:0 22px 60px #0f172a20}
+.onboardVerify h1{color:#101828}
+.onboardVerify>p{color:#475467;font-size:15px;line-height:1.65;overflow-wrap:anywhere}
+.onboardVerifyBenefits{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:16px 0 22px}
+.onboardVerifyBenefits span{display:inline-flex;align-items:center;gap:5px;border:1px solid #fed7aa;background:#fff7ed;color:#9a3412;border-radius:100px;padding:8px 11px;font-size:12px;font-weight:800}
+.onboardVerify>button{display:block;width:100%;min-height:46px;border:0;border-radius:11px;padding:11px 14px;margin-top:10px;background:#f97316;color:#fff;font-size:14px;font-weight:800;cursor:pointer}
+.onboardVerify>button:nth-of-type(2){background:#fff;color:#9a3412;border:1px solid #fdba74}
+.onboardVerify>button:nth-of-type(3){background:transparent;color:#475467;text-decoration:underline}
+.onboardVerify>button:disabled{opacity:.55;cursor:wait}
+.onboardVerify>button:focus-visible{outline:3px solid #9a3412;outline-offset:2px}
+@media(max-width:760px){.dishyJourneySteps{grid-template-columns:repeat(2,minmax(0,1fr))}.onboardVerify{padding:25px 18px}}
+@media(max-width:420px){.dishyJourneySteps{grid-template-columns:1fr}}
