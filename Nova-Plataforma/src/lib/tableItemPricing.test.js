@@ -71,3 +71,17 @@ test("marmita: seleção já preparada mantém proteína repetida e valor",()=>{
  assert.deepEqual(saved.optionSelection,ready.optionSelection);
  assertFirestoreSafe(saved);
 });
+
+
+test("marmita ignora preço-base antigo e usa valor integral do tamanho",()=>{
+ const product={...marmita,priceCents:2300,optionGroups:[{...marmita.optionGroups[0],options:[{name:"Grande",priceCents:3200}]},marmita.optionGroups[1]]};
+ const line=buildTableOrderLine(product,{qty:1,optionSelection:[[0],[0,0]]});
+ assert.equal(line.unitPriceCents,3200);
+ assert.equal(line.totalCents,3200);
+ assert.equal(tableProductStartingPrice(product),3200);
+});
+test("marmita não vende tamanho com preço zerado, mesmo que haja preço-base",()=>{
+ const product={...marmita,priceCents:2300,optionGroups:[{...marmita.optionGroups[0],options:[{name:"Pequena",priceCents:0}]},marmita.optionGroups[1]]};
+ assert.equal(tableProductStartingPrice(product),null);
+ assert.throws(()=>buildTableOrderLine(product,{qty:1,optionSelection:[[0],[0,0]]}),/invalid_marmita_price/);
+});
