@@ -44,6 +44,80 @@ export default async function handler(req,res){
     const authHeader=req.headers.authorization||"";
     if(!authHeader.startsWith("Bearer ")) return res.status(401).json({error:"unauthorized"});
     const decoded=await getAuth().verifyIdToken(authHeader.slice(7),true);
+
+    // Suporte Dishy: fila privada por API autenticada; nenhum acesso direto do cliente à coleção Master.
+    const supportAction=String(req.method==="GET"?req.query?.action||"":req.body?.action||"");
+    if(["supportTenant","supportCreate","supportMaster","supportMasterSave","supportMasterStatus"].includes(supportAction)){
+      res.setHeader("Cache-Control","private, no-store");
+      const database=getFirestore(),now=Date.now();
+      if(decoded.email_verified!==true)return res.status(403).json({error:"email_not_verified"});
+      if(supportAction.startsWith("supportMaster")){
+        const admin=await database.collection("platformAdmins").doc(decoded.uid).get();
+        if(admin.data()?.active!==true)return res.status(403).json({error:"master_only"});
+        if(supportAction==="supportMaster"){
+          if(req.method!=="GET")return res.status(405).json({error:"method_not_allowed"});
+          const [cases,config]=await Promise.all([
+            database.collection("platformSupportRequests").orderBy("createdAt","desc").limit(100).get(),
+            database.doc("platformSettings/support").get()
+          ]);
+          const items=cases.docs.map(d=>({id:d.id,...d.data(),createdAt:d.data().createdAt?.toDate?.()?.toISOString?.()||null,updatedAt:d.data().updatedAt?.toDate?.()?.toISOString?.()||null}));
+          return res.status(200).json({items,unread:items.filter(x=>x.status==="new").length,whatsapp:config.data()?.whatsapp||""});
+        }
+        if(req.method!=="POST")return res.status(405).json({error:"method_not_allowed"});
+        if(supportAction==="supportMasterSave"){
+          let whatsapp=String(req.body.whatsapp||"").replace(/\D/g,"");
+          if(whatsapp&&/^\d{10,11}$/.test(whatsapp))whatsapp="55"+whatsapp;
+          if(whatsapp&&!/^55\d{10,11}$/.test(whatsapp))return res.status(400).json({error:"invalid_whatsapp"});
+          await database.doc("platformSettings/support").set({whatsapp,updatedBy:decoded.uid,updatedAt:FieldValue.serverTimestamp()},{merge:true});
+          return res.status(200).json({ok:true,whatsapp});
+        }
+        if(supportAction==="supportMasterStatus"){
+          const caseId=String(req.body.id||""),status=String(req.body.status||"");
+          if(!/^[A-Za-z0-9_-]{8,128}$/.test(caseId)||!["new","in_progress","resolved"].includes(status))return res.status(400).json({error:"invalid_request"});
+          const ticket=database.collection("platformSupportRequests").doc(caseId);
+          if(!(await ticket.get()).exists)return res.status(404).json({error:"request_not_found"});
+          await ticket.update({status,updatedBy:decoded.uid,updatedAt:FieldValue.serverTimestamp()});
+          return res.status(200).json({ok:true});
+        }
+      }
+      const rid=String(req.method==="GET"?req.query.restaurantId||"":req.body?.restaurantId||"");
+      if(!/^[A-Za-z0-9_-]{5,128}$/.test(rid))return res.status(400).json({error:"invalid_restaurant"});
+      const restaurant=database.collection("restaurants").doc(rid);
+      const [store,member,linked]=await Promise.all([
+        restaurant.get(),restaurant.collection("members").doc(decoded.uid).get(),
+        database.collection("userRestaurantAccess").doc(decoded.uid).collection("restaurants").doc(rid).get()
+      ]);
+      if(!store.exists)return res.status(404).json({error:"restaurant_not_found"});
+      const owner=store.data()?.ownerUid===decoded.uid;
+      const responsible=member.exists&&member.data()?.active===true&&["owner","manager"].includes(member.data()?.role)&&linked.exists&&linked.data()?.active===true;
+      if(!owner&&!responsible)return res.status(403).json({error:"support_access_denied"});
+      if(supportAction==="supportTenant"){
+        if(req.method!=="GET")return res.status(405).json({error:"method_not_allowed"});
+        const [config,tickets]=await Promise.all([
+          database.doc("platformSettings/support").get(),
+          database.collection("platformSupportRequests").where("restaurantId","==",rid).limit(60).get()
+        ]);
+        const items=tickets.docs.map(d=>({id:d.id,status:d.data().status||"new",subject:d.data().subject||"",createdAt:d.data().createdAt?.toDate?.()?.toISOString?.()||null})).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
+        return res.status(200).json({whatsapp:config.data()?.whatsapp||"",items:items.slice(0,20)});
+      }
+      if(supportAction==="supportCreate"){
+        if(req.method!=="POST")return res.status(405).json({error:"method_not_allowed"});
+        const subject=String(req.body.subject||"").trim(),message=String(req.body.message||"").trim(),kind=String(req.body.kind||"");
+        const contact=String(req.body.contact||"").trim().slice(0,30);
+        if(subject.length<5||subject.length>120||message.length<15||message.length>2000||!["setup","menu","payments","orders","deliveries","other"].includes(kind))return res.status(400).json({error:"invalid_support_request"});
+        if(contact&&(!/^\+?[\d\s().-]+$/.test(contact)||contact.replace(/\D/g,"").length<10||contact.replace(/\D/g,"").length>13))return res.status(400).json({error:"invalid_contact"});
+        const cooldown=database.collection("supportSubmissionCooldown").doc(decoded.uid+"_"+rid),ticket=database.collection("platformSupportRequests").doc();
+        try{
+          await database.runTransaction(async tx=>{
+            const last=await tx.get(cooldown);
+            if(last.exists&&now-Number(last.data()?.lastAtMs||0)<120000)throw Error("support_rate_limited");
+            tx.set(cooldown,{lastAtMs:now});
+            tx.create(ticket,{restaurantId:rid,restaurantName:String(store.data()?.name||"Estabelecimento").slice(0,100),userUid:decoded.uid,email:String(decoded.email||"").slice(0,254),contact,kind,subject,message,status:"new",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
+          });
+        }catch(e){if(e.message==="support_rate_limited")return res.status(429).json({error:"support_rate_limited"});throw e;}
+        return res.status(201).json({ok:true,requestId:ticket.id});
+      }
+    }
     if(req.method==="POST"&&req.body?.action==="posSale"){
       const body=req.body||{},rid=String(body.restaurantId||"");
       if(!/^[a-zA-Z0-9_-]{5,128}$/.test(rid))return res.status(400).json({error:"invalid_restaurant"});
