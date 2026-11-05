@@ -4,6 +4,7 @@ import {getAuth} from "firebase-admin/auth";
 import {FieldValue,getFirestore} from "firebase-admin/firestore";
 import {enabledPaymentMethods,validPaymentMethods} from "../src/lib/paymentMethods.js";
 import {buildInfiniteTapLink} from "../src/lib/nfcTap.js";
+import {createInfiniteCheckout} from "./_infinitepay.js";
 import {NEW_TRIAL_DAYS,restaurantMayReceiveOrders} from "../src/lib/subscriptionAccess.js";
 
 // Oferta vigente para novos cadastros e novas concessões; não reduz testes já concedidos.
@@ -188,6 +189,17 @@ export default async function handler(req,res){
         try{const deeplink=buildInfiniteTapLink({amountCents:totalCents,orderId:ref.id,handle:tapCfg.handle,paymentMethod:String(body.tapKind||"debit"),installments:Number(body.tapInstallments||1)});return res.status(201).json({ok:true,orderId:ref.id,code:"PDV-"+ref.id.slice(0,6).toUpperCase(),totalCents,tap:{deeplink,provider:"infinitepay"}})}catch(e){await ref.update({paymentStatus:"ERROR",paymentError:e.message});return res.status(400).json({error:e.message,orderId:ref.id})}
       }
       if(method==="PIX"){
+        const pixProvider=payCfg.data()?.paymentProviders?.PIX==="infinitepay"?"infinitepay":"mercado_pago";
+        if(pixProvider==="infinitepay"){
+          try{
+            const payment=await createInfiniteCheckout({db,restaurantId:rid,orderId:ref.id,slug:"",number:"PDV-"+ref.id.slice(0,6).toUpperCase(),totalCents,name:String(body.customerName||"Balcão").trim()||"Balcão",returnTo:"pos"});
+            await ref.update({provider:"infinitepay",providerOrderNsu:payment.orderNsu,updatedAt:FieldValue.serverTimestamp()});
+            return res.status(201).json({ok:true,orderId:ref.id,code:"PDV-"+ref.id.slice(0,6).toUpperCase(),totalCents,payment:{type:"INFINITEPAY",checkoutUrl:payment.checkoutUrl}});
+          }catch(e){
+            await ref.update({paymentStatus:"ERROR",paymentError:String(e.message).slice(0,120),updatedAt:FieldValue.serverTimestamp()}).catch(()=>{});
+            return res.status(502).json({error:e.message==="infinitepay_not_configured"?"infinitepay_not_configured":"infinitepay_checkout_failed",orderId:ref.id});
+          }
+        }
         try{
           const cfg=(await restaurant.collection("privateIntegrations").doc("mercadoPago").get()).data(),key=process.env.PAYMENT_CREDENTIALS_ENCRYPTION_KEY;
           if(!cfg?.encryptedAccessToken||!/^[a-fA-F0-9]{64}$/.test(key||""))throw Error("payment_not_configured");

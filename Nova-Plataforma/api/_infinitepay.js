@@ -15,11 +15,11 @@ function paymentBaseUrl(){
  if(!base)throw Error("payment_callback_not_configured");
  return "https://"+String(base).replace(/^https?:\/\//,"").replace(/\/$/,"");
 }
-export async function createInfiniteCheckout({db,restaurantId,orderId,slug,number,totalCents,name}){
+export async function createInfiniteCheckout({db,restaurantId,orderId,slug,number,totalCents,name,returnTo="menu"}){
  const {handle,apiKey}=await infinitepayCredentials(db,restaurantId);
  if(!Number.isSafeInteger(totalCents)||totalCents<100)throw Error("infinitepay_minimum_R$1");
  const origin=paymentBaseUrl(),orderNsu=restaurantId+":"+orderId;
- const payload={handle,order_nsu:orderNsu,items:[{quantity:1,price:totalCents,description:"Pedido Dishy #"+number}],redirect_url:origin+"/?loja="+encodeURIComponent(slug)+"&pedido="+encodeURIComponent(orderId)+"&ip_return=1",webhook:{url:origin+"/api/create-order?action=infinitepay-webhook&restaurantId="+encodeURIComponent(restaurantId)+"&orderId="+encodeURIComponent(orderId),events:["paid"]},customer:{name:name.slice(0,80)},options:{single_payment:true,valid_until:new Date(Date.now()+2*60*60*1000).toISOString()}};
+ const payload={handle,order_nsu:orderNsu,items:[{quantity:1,price:totalCents,description:"Pedido Dishy #"+number}],redirect_url:returnTo==="pos"?origin+"/login?ip_return=1":origin+"/?loja="+encodeURIComponent(slug)+"&pedido="+encodeURIComponent(orderId)+"&ip_return=1",webhook:{url:origin+"/api/create-order?action=infinitepay-webhook&restaurantId="+encodeURIComponent(restaurantId)+"&orderId="+encodeURIComponent(orderId),events:["paid"]},customer:{name:name.slice(0,80)},options:{single_payment:true,valid_until:new Date(Date.now()+2*60*60*1000).toISOString()}};
  const response=await fetch(host+"/links",{method:"POST",headers:{"Content-Type":"application/json","X-Api-Key":apiKey},body:JSON.stringify(payload),signal:AbortSignal.timeout(15000)});
  const result=await response.json().catch(()=>({}));
  const checkoutUrl=String(result.url||result.checkout_url||result.checkoutUrl||"");
@@ -45,7 +45,7 @@ export async function confirmInfinitePayment({db,restaurantId,orderId,orderNsu,t
   const order=current.data();
   if(order.provider!=="infinitepay"||order.paymentStatus==="PAID"||order.status==="CANCELLED"||Number(order.totalCents)!==result.amount)return;
   const method=result.capture_method==="pix"?"PIX":"CARD_ONLINE";
-  tx.update(ref,{paymentStatus:"PAID",paymentMethod:method,providerPaymentMethod:method,providerPaymentStatus:"approved",providerTransactionNsu:String(transactionNsu),providerInvoiceSlug:String(slug),status:"RECEIVED",paidAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
+  tx.update(ref,{paymentStatus:"PAID",paymentMethod:method,providerPaymentMethod:method,providerPaymentStatus:"approved",providerTransactionNsu:String(transactionNsu),providerInvoiceSlug:String(slug),status:order.source==="POS"&&order.requiresPreparation===false?"READY":"RECEIVED",paidAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
  });
  return true;
 }
