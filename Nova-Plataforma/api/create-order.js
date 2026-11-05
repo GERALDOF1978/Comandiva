@@ -289,7 +289,7 @@ export default async function handler(req,res){
       try{
         const gateway=settings.data()?.paymentProviders?.[paymentMethod]==="infinitepay"?"infinitepay":"mercado_pago";
         if(gateway==="infinitepay"){
-          payment=await createInfiniteCheckout({db,restaurantId,orderId:orderRef.id,slug,number,totalCents:totalCents+deliveryFeeCents,name});
+          payment=await createInfiniteCheckout({db,restaurantId,orderId:orderRef.id,slug,number,totalCents:totalCents+deliveryFeeCents,name,phone,email:clean(body.customer?.email)});
           await orderRef.update({provider:"infinitepay",providerPaymentId:null,providerOrderNsu:payment.orderNsu,updatedAt:FieldValue.serverTimestamp()});
         }else{
         const config=(await db.collection("restaurants").doc(restaurantId).collection("privateIntegrations").doc("mercadoPago").get()).data();

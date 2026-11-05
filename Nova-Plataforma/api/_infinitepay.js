@@ -15,11 +15,16 @@ function paymentBaseUrl(){
  if(!base)throw Error("payment_callback_not_configured");
  return "https://"+String(base).replace(/^https?:\/\//,"").replace(/\/$/,"");
 }
-export async function createInfiniteCheckout({db,restaurantId,orderId,slug,number,totalCents,name,returnTo="menu"}){
+export async function createInfiniteCheckout({db,restaurantId,orderId,slug,number,totalCents,name,phone="",email="",returnTo="menu"}){
  const {handle,apiKey}=await infinitepayCredentials(db,restaurantId);
  if(!Number.isSafeInteger(totalCents)||totalCents<100)throw Error("infinitepay_minimum_R$1");
  const origin=paymentBaseUrl(),orderNsu=restaurantId+":"+orderId;
- const payload={handle,order_nsu:orderNsu,items:[{quantity:1,price:totalCents,description:"Pedido Dishy #"+number}],redirect_url:returnTo==="pos"?origin+"/login?ip_return=1":origin+"/?loja="+encodeURIComponent(slug)+"&pedido="+encodeURIComponent(orderId)+"&ip_return=1",webhook:{url:origin+"/api/create-order?action=infinitepay-webhook&restaurantId="+encodeURIComponent(restaurantId)+"&orderId="+encodeURIComponent(orderId),events:["paid"]},customer:{name:name.slice(0,80)},options:{single_payment:true,valid_until:new Date(Date.now()+2*60*60*1000).toISOString()}};
+ const customer={name:String(name||"Cliente").slice(0,80)};
+ const digits=String(phone||"").replace(/\D/g,"");
+ const national=digits.startsWith("55")&&digits.length>=12?digits.slice(2):digits;
+ if(national.length===10||national.length===11)customer.phone_number="+55"+national;
+ if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email||"").trim()))customer.email=String(email).trim().slice(0,120);
+ const payload={handle,order_nsu:orderNsu,items:[{quantity:1,price:totalCents,description:"Pedido Dishy #"+number}],redirect_url:returnTo==="pos"?origin+"/login?ip_return=1":origin+"/?loja="+encodeURIComponent(slug)+"&pedido="+encodeURIComponent(orderId)+"&ip_return=1",webhook:{url:origin+"/api/create-order?action=infinitepay-webhook&restaurantId="+encodeURIComponent(restaurantId)+"&orderId="+encodeURIComponent(orderId),events:["paid"]},customer,options:{require_delivery_address:false,single_payment:true,valid_until:new Date(Date.now()+2*60*60*1000).toISOString()}};
  const response=await fetch(host+"/links",{method:"POST",headers:{"Content-Type":"application/json","X-Api-Key":apiKey},body:JSON.stringify(payload),signal:AbortSignal.timeout(15000)});
  const result=await response.json().catch(()=>({}));
  const checkoutUrl=String(result.url||result.checkout_url||result.checkoutUrl||"");
