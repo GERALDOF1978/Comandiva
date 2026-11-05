@@ -3,6 +3,7 @@ import {cert,getApps,initializeApp} from "firebase-admin/app";
 import {getAuth} from "firebase-admin/auth";
 import {FieldValue,getFirestore} from "firebase-admin/firestore";
 import {enabledPaymentMethods,validPaymentMethods} from "../src/lib/paymentMethods.js";
+import {buildInfiniteTapLink} from "../src/lib/nfcTap.js";
 import {NEW_TRIAL_DAYS,restaurantMayReceiveOrders} from "../src/lib/subscriptionAccess.js";
 
 // Oferta vigente para novos cadastros e novas concessões; não reduz testes já concedidos.
@@ -118,6 +119,22 @@ export default async function handler(req,res){
         return res.status(201).json({ok:true,requestId:ticket.id});
       }
     }
+    if((req.method==="GET"&&req.query?.action==="posTapSettings")||(req.method==="POST"&&req.body?.action==="posTapSettings")){
+      const rid=String(req.method==="GET"?req.query.restaurantId:req.body.restaurantId||"");
+      if(!/^[A-Za-z0-9_-]{5,128}$/.test(rid))return res.status(400).json({error:"invalid_restaurant"});
+      const restaurant=getFirestore().collection("restaurants").doc(rid);
+      const [rs,member,access,tap]=await Promise.all([restaurant.get(),restaurant.collection("members").doc(decoded.uid).get(),getFirestore().collection("userRestaurantAccess").doc(decoded.uid).collection("restaurants").doc(rid).get(),restaurant.collection("settings").doc("nfcTap").get()]);
+      if(!rs.exists)return res.status(404).json({error:"restaurant_not_found"});
+      const owner=rs.data().ownerUid===decoded.uid||(member.exists&&member.data().active===true&&member.data().role==="owner");
+      const operator=member.exists&&member.data().active===true&&access.exists&&access.data().active===true&&(member.data().permissions||[]).includes("PDV");
+      if(!owner&&!operator)return res.status(403).json({error:"access_denied"});
+      if(req.method==="GET")return res.status(200).json({enabled:tap.data()?.enabled===true,handle:tap.data()?.handle||"",pagbankReady:false});
+      if(!owner)return res.status(403).json({error:"owner_only"});
+      const handle=String(req.body.handle||"").trim(),enabled=req.body.enabled===true;
+      if((enabled&&!/^[A-Za-z0-9_.-]{2,64}$/.test(handle))||handle.length>64)return res.status(400).json({error:"invalid_tap_handle"});
+      await tap.ref.set({handle,enabled,updatedBy:decoded.uid,updatedAt:FieldValue.serverTimestamp()},{merge:true});
+      return res.status(200).json({ok:true,enabled,handle,pagbankReady:false});
+    }
     if(req.method==="POST"&&req.body?.action==="posSale"){
       const body=req.body||{},rid=String(body.restaurantId||"");
       if(!/^[a-zA-Z0-9_-]{5,128}$/.test(rid))return res.status(400).json({error:"invalid_restaurant"});
@@ -132,9 +149,11 @@ export default async function handler(req,res){
       if(!entitlement.allowed)return res.status(403).json({error:entitlement.error});
       if(!isOwner){const perms=member.data()?.permissions||[];if(!Array.isArray(perms)||!perms.includes("PDV"))return res.status(403).json({error:"pos_permission_required"})}
       const method=String(body.paymentMethod||"");
-      if(!["CASH","CARD_ON_DELIVERY","PIX"].includes(method))return res.status(400).json({error:"pos_payment_not_supported"});
+      if(!["CASH","CARD_ON_DELIVERY","PIX","NFC_INFINITE_TAP"].includes(method))return res.status(400).json({error:"pos_payment_not_supported"});
       const payCfg=await restaurant.collection("settings").doc("public").get();
-      if(!enabledPaymentMethods(payCfg.data()?.paymentMethods).includes(method))return res.status(400).json({error:"payment_method_disabled"});
+      if(method!=="NFC_INFINITE_TAP"&&!enabledPaymentMethods(payCfg.data()?.paymentMethods).includes(method))return res.status(400).json({error:"payment_method_disabled"});
+      const tapCfg=method==="NFC_INFINITE_TAP"?(await restaurant.collection("settings").doc("nfcTap").get()).data():null;
+      if(method==="NFC_INFINITE_TAP"&&(tapCfg?.enabled!==true||!/^[A-Za-z0-9_.-]{2,64}$/.test(String(tapCfg?.handle||""))))return res.status(409).json({error:"nfc_not_configured"});
       const raw=Array.isArray(body.items)?body.items:[];
       if(!raw.length||raw.length>40)return res.status(400).json({error:"invalid_items"});
       const requests=[];
@@ -150,8 +169,11 @@ export default async function handler(req,res){
       if(totalCents<=0||totalCents>100000000)return res.status(400).json({error:"invalid_total"});
       const ref=restaurant.collection("orders").doc(),now=FieldValue.serverTimestamp();
       const ready=items.every(item=>{const p=entries.find(d=>d.id===item.productId).data();return p.requiresPreparation===false});
-      const status=method==="PIX"?"PENDING_PAYMENT":ready?"READY":"RECEIVED";
-      await ref.create({code:"PDV-"+ref.id.slice(0,6).toUpperCase(),number:"PDV-"+ref.id.slice(0,6).toUpperCase(),channel:"PICKUP",source:"POS",customer:{name:String(body.customerName||"Balcão").trim().slice(0,80)||"Balcão",phone:""},customerSnapshot:{name:String(body.customerName||"Balcão").trim().slice(0,80)||"Balcão"},customerName:String(body.customerName||"Balcão").trim().slice(0,80)||"Balcão",items,totalCents,subtotalCents:totalCents,deliveryFeeCents:0,paymentMethod:method,paymentStatus:method==="PIX"?"PENDING":"PAID",status,requiresPreparation:!ready,createdAt:now,updatedAt:now,...(method!=="PIX"?{paidAt:now}:{}),createdBy:decoded.uid,notes:String(body.notes||"").slice(0,500)});
+      const needsPayment=method==="PIX"||method==="NFC_INFINITE_TAP";const status=needsPayment?"PENDING_PAYMENT":ready?"READY":"RECEIVED";
+      await ref.create({code:"PDV-"+ref.id.slice(0,6).toUpperCase(),number:"PDV-"+ref.id.slice(0,6).toUpperCase(),channel:"PICKUP",source:"POS",customer:{name:String(body.customerName||"Balcão").trim().slice(0,80)||"Balcão",phone:""},customerSnapshot:{name:String(body.customerName||"Balcão").trim().slice(0,80)||"Balcão"},customerName:String(body.customerName||"Balcão").trim().slice(0,80)||"Balcão",items,totalCents,subtotalCents:totalCents,deliveryFeeCents:0,paymentMethod:method,paymentStatus:needsPayment?"PENDING":"PAID",status,requiresPreparation:!ready,createdAt:now,updatedAt:now,...(!needsPayment?{paidAt:now}:{}),createdBy:decoded.uid,notes:String(body.notes||"").slice(0,500)});
+      if(method==="NFC_INFINITE_TAP"){
+        try{const deeplink=buildInfiniteTapLink({amountCents:totalCents,orderId:ref.id,handle:tapCfg.handle,paymentMethod:String(body.tapKind||"debit"),installments:Number(body.tapInstallments||1)});return res.status(201).json({ok:true,orderId:ref.id,code:"PDV-"+ref.id.slice(0,6).toUpperCase(),totalCents,tap:{deeplink,provider:"infinitepay"}})}catch(e){await ref.update({paymentStatus:"ERROR",paymentError:e.message});return res.status(400).json({error:e.message,orderId:ref.id})}
+      }
       if(method==="PIX"){
         try{
           const cfg=(await restaurant.collection("privateIntegrations").doc("mercadoPago").get()).data(),key=process.env.PAYMENT_CREDENTIALS_ENCRYPTION_KEY;
