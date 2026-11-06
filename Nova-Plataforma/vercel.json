@@ -13,6 +13,10 @@
       "destination": "/api/index?route=delivery-sheet"
     },
     {
+      "source": "/:slug/funcionarios",
+      "destination": "/"
+    },
+    {
       "source": "/master",
       "destination": "/"
     },

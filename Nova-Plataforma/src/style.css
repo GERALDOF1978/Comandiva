@@ -1722,3 +1722,26 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
 .masterSupportList label{display:flex;align-items:center;gap:12px;font-size:13px;font-weight:800}
 .masterSupportError{color:#ffcaca!important}
 @media(max-width:760px){.dishyHelpGrid{grid-template-columns:1fr}.dishyHelpCard{padding:17px}.masterSupportSettings{display:grid;grid-template-columns:1fr}.masterSupportList label{align-items:stretch;flex-direction:column}}
+
+
+/* Public employee entry, separate from the owner and delivery portals. */
+.employeeLinks{display:grid;gap:10px;max-width:630px}
+.employeeLinks h3,.employeeLinks p{margin:0}
+.employeeLinks label{display:grid;gap:6px;font-weight:700;font-size:13px;color:#344054}
+.employeeLinks input{width:100%;min-width:0;border:1px solid #d0d5dd;border-radius:9px;background:#f8fafc;padding:11px;font-size:13px;color:#344054}
+.employeeLinks button{justify-self:start;border:0;border-radius:10px;padding:11px 15px;background:#172c60;color:#fff;font-weight:750;cursor:pointer}
+.employeeLinks button:disabled{opacity:.5;cursor:not-allowed}
+/* Actions stay descriptive on desktop and become a compact icon toolbar on mobile. */
+.dashboardHeroActions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.app .hero .dashboardHeroAction{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:12px 16px;font-size:14px;font-weight:750;min-height:46px;white-space:nowrap;cursor:pointer}
+.dashboardHeroAction .dashboardActionLabel{display:inline}
+.dashboardHeroAction .dashboardStatusIcon{font-size:22px;line-height:1;font-weight:900}
+.app .hero .dashboardHeroAction:disabled{opacity:.54;cursor:not-allowed}
+.app .hero .dashboardHeroAction:focus-visible{outline:3px solid #fff;outline-offset:2px}
+@media(max-width:700px){
+ .dashboardHeroActions{width:100%;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+ .app .hero .dashboardHeroAction{padding:9px 4px;min-height:50px;min-width:0;width:100%;height:50px}
+ .dashboardHeroAction .dashboardActionLabel{display:none}
+ .dashboardHeroAction svg{width:23px;height:23px;flex-shrink:0}
+ .dashboardHeroAction .dashboardStatusIcon{font-size:27px}
+}
