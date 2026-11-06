@@ -1,4 +1,5 @@
 import {startTabPix} from "./tab-pix.js";
+import {startTabOnlineCheckout} from "./tab-online.js";
 import {buildTableOrderLine} from "../src/lib/tableItemPricing.js";
 import {enabledPaymentMethods} from "../src/lib/paymentMethods.js";
 import {restaurantMayReceiveOrders} from "../src/lib/subscriptionAccess.js";
@@ -14,7 +15,7 @@ export default async function handler(req,res){
  const db=getFirestore(),mapping=await db.collection("restaurantSlugs").doc(slug).get();if(!mapping.exists||mapping.data().active===false)return res.status(404).json({error:"not_found"});
  const base=db.collection("restaurants").doc(mapping.data().restaurantId),ref=base.collection("tabs").doc(tabId),tab=await ref.get();
  if(!tab.exists||tab.data().customerAccessToken!==access)return res.status(403).json({error:"invalid_tab_link"});
- if(req.method==="GET"){const d=tab.data();const ordersSnap=await base.collection("orders").where("tabId","==",tabId).limit(200).get();const orders=ordersSnap.docs.filter(o=>o.data().channel==="TABLE"&&o.data().status!=="CANCELLED"&&!o.id.startsWith("tabpayment_")).map(o=>({id:o.id,number:o.data().number,status:o.data().status,items:(o.data().items||[]).map(i=>({name:i.name,qty:i.qty,priceCents:i.priceCents,totalCents:i.totalCents,options:i.options||[]})),createdAt:o.data().createdAt?.toDate?.()?.toISOString()||null})).sort((a,b)=>(a.createdAt||"").localeCompare(b.createdAt||""));return res.status(200).json({tab:{label:d.label,type:d.type,status:d.status,totalCents:Number(d.totalCents||0),pixPayment:d.pixPayment||null,orders}})}
+ if(req.method==="GET"){const d=tab.data();const ordersSnap=await base.collection("orders").where("tabId","==",tabId).limit(200).get();const orders=ordersSnap.docs.filter(o=>o.data().channel==="TABLE"&&o.data().status!=="CANCELLED"&&!o.id.startsWith("tabpayment_")&&!o.id.startsWith("tabpix_")&&o.data().paymentPurpose!=="TAB_CLOSE").map(o=>({id:o.id,number:o.data().number,status:o.data().status,items:(o.data().items||[]).map(i=>({name:i.name,qty:i.qty,priceCents:i.priceCents,totalCents:i.totalCents,options:i.options||[]})),createdAt:o.data().createdAt?.toDate?.()?.toISOString()||null})).sort((a,b)=>(a.createdAt||"").localeCompare(b.createdAt||""));return res.status(200).json({tab:{label:d.label,type:d.type,status:d.status,totalCents:Number(d.totalCents||0),pixPayment:d.pixPayment||null,onlinePayment:d.onlinePayment||null,orders}})}
  const action=clean(input.action);
  if(action==="ORDER"){
  const [restaurantDoc,settingsDoc]=await Promise.all([base.get(),base.collection("settings").doc("public").get()]);
@@ -43,11 +44,30 @@ export default async function handler(req,res){
  await db.runTransaction(async tx=>{const current=await tx.get(ref);if(!current.exists||current.data().customerAccessToken!==access||current.data().status!=="OPEN")throw new Error("not_open");const d=current.data();tx.set(callRef,{tabId,table:(d.type==="TABLE"?"Mesa ":"Comanda ")+d.label,reason,status:"PENDING",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()})});
  return res.status(200).json({ok:true});
  }
- if(action==="CREATE_PIX"){const settings=await base.collection("settings").doc("public").get();if(!enabledPaymentMethods(settings.data()?.paymentMethods).includes("PIX"))return res.status(400).json({error:"payment_method_disabled"});const phone=clean(input.phone).replace(/\D/g,"");if(phone.length<10||!(tab.data().customerPhones||[]).includes(phone))return res.status(403).json({error:"phone_not_found"});try{return res.status(200).json({ok:true,payment:await startTabPix(base,ref,mapping.data().restaurantId)})}catch(e){return res.status(409).json({error:e.message})}}
+ if(action==="CREATE_PIX"){
+  const settings=await base.collection("settings").doc("public").get();
+  if(!enabledPaymentMethods(settings.data()?.paymentMethods).includes("PIX"))return res.status(400).json({error:"payment_method_disabled"});
+  if(settings.data()?.paymentProviders?.PIX==="infinitepay")return res.status(409).json({error:"payment_provider_mismatch"});
+  const phone=clean(input.phone).replace(/\D/g,"");
+  if(phone.length<10||!(tab.data().customerPhones||[]).includes(phone))return res.status(403).json({error:"phone_not_found"});
+  try{return res.status(200).json({ok:true,payment:await startTabPix(base,ref,mapping.data().restaurantId)})}
+  catch(e){return res.status(409).json({error:e.message})}
+ }
+ if(action==="CREATE_ONLINE_CHECKOUT"){
+  if(tab.data().type!=="TABLE")return res.status(403).json({error:"online_only_table"});
+  const cfg=(await base.collection("settings").doc("public").get()).data()||{},method=String(input.paymentMethod||"PIX");
+  if(!["PIX","CARD_ONLINE"].includes(method)||!enabledPaymentMethods(cfg.paymentMethods).includes(method)||cfg.paymentProviders?.[method]!=="infinitepay")return res.status(400).json({error:"payment_method_disabled"});
+  const phone=clean(input.phone).replace(/\D/g,"").slice(0,15),email=clean(input.email).toLowerCase().slice(0,120);
+  if(!phone||!(tab.data().customerPhones||[]).includes(phone))return res.status(403).json({error:"phone_not_found"});
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return res.status(400).json({error:"invalid_customer_email"});
+  const name=clean(input.name).slice(0,80)||"Cliente";
+  try{return res.status(200).json({ok:true,payment:await startTabOnlineCheckout(base,ref,mapping.data().restaurantId,{slug,name,phone,email,paymentMethod:method})})}
+  catch(e){if(["payment_pending","payment_preparing","not_open","invalid_tab_type","invalid_total"].includes(e.message))return res.status(409).json({error:e.message});console.error("table-online-checkout",e.message);return res.status(502).json({error:"online_checkout_failed"})}
+ }
  if(action==="REQUEST_BILL"){
- const settings=await base.collection("settings").doc("public").get();if(!["CASH","CARD_ON_DELIVERY"].includes(input.paymentMethod)||!enabledPaymentMethods(settings.data()?.paymentMethods).includes(input.paymentMethod))return res.status(400).json({error:"payment_method_disabled"});
+ const settings=await base.collection("settings").doc("public").get();if(!["CASH","CARD_ON_DELIVERY",...(tab.data().type==="INDIVIDUAL"?["AT_ATTENDANT"]:[])].includes(input.paymentMethod)||input.paymentMethod!=="AT_ATTENDANT"&&!enabledPaymentMethods(settings.data()?.paymentMethods).includes(input.paymentMethod))return res.status(400).json({error:"payment_method_disabled"});
  const phone=clean(input.phone).replace(/\D/g,"");if(phone.length<10)return res.status(400).json({error:"invalid_phone"});
- await db.runTransaction(async tx=>{const current=await tx.get(ref);if(!current.exists||current.data().customerAccessToken!==access||current.data().status!=="OPEN")throw new Error("not_open");if(!(current.data().customerPhones||[]).includes(phone))throw new Error("phone_not_found");tx.update(ref,{status:"BILL_REQUESTED",requestedPaymentMethod:["CASH","CARD_ON_DELIVERY"].includes(input.paymentMethod)?input.paymentMethod:null,updatedAt:FieldValue.serverTimestamp()})});
+ await db.runTransaction(async tx=>{const current=await tx.get(ref);if(!current.exists||current.data().customerAccessToken!==access||current.data().status!=="OPEN")throw new Error("not_open");if(!(current.data().customerPhones||[]).includes(phone))throw new Error("phone_not_found");if(current.data().onlinePayment?.orderId||current.data().pixPayment?.paymentId||current.data().nfcPayment?.orderId)throw Error("payment_pending");tx.update(ref,{status:"BILL_REQUESTED",requestedPaymentMethod:["CASH","CARD_ON_DELIVERY"].includes(input.paymentMethod)?input.paymentMethod:null,updatedAt:FieldValue.serverTimestamp()})});
  return res.status(200).json({ok:true});
  }
  return res.status(400).json({error:"invalid_action"});

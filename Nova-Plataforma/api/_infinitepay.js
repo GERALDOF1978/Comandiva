@@ -50,7 +50,15 @@ export async function confirmInfinitePayment({db,restaurantId,orderId,orderNsu,t
   const order=current.data();
   if(order.provider!=="infinitepay"||order.paymentStatus==="PAID"||order.status==="CANCELLED"||Number(order.totalCents)!==result.amount)return;
   const method=result.capture_method==="pix"?"PIX":"CARD_ONLINE";
-  tx.update(ref,{paymentStatus:"PAID",paymentMethod:method,providerPaymentMethod:method,providerPaymentStatus:"approved",providerTransactionNsu:String(transactionNsu),providerInvoiceSlug:String(slug),status:order.source==="POS"&&order.requiresPreparation===false?"READY":"RECEIVED",paidAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
+  let closedTab=false;
+  if(order.paymentPurpose==="TAB_CLOSE"){
+   const tabRef=db.collection("restaurants").doc(restaurantId).collection("tabs").doc(String(order.tabId||""));
+   const tab=await tx.get(tabRef);
+   if(!tab.exists||tab.data().type!=="TABLE"||tab.data().status!=="BILL_REQUESTED"||tab.data().onlinePayment?.orderId!==orderId||Number(tab.data().totalCents)!==result.amount)return;
+   tx.update(tabRef,{status:"CLOSED",paymentMethod:method,paymentStatus:"PAID",onlinePayment:{...tab.data().onlinePayment,status:"PAID"},financeOrderId:orderId,closedAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
+   closedTab=true;
+  }
+  tx.update(ref,{paymentStatus:"PAID",paymentMethod:method,providerPaymentMethod:method,providerPaymentStatus:"approved",providerTransactionNsu:String(transactionNsu),providerInvoiceSlug:String(slug),status:closedTab?"COMPLETED":order.source==="POS"&&order.requiresPreparation===false?"READY":"RECEIVED",paidAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
  });
  return true;
 }
