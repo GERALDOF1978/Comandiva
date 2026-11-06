@@ -1,0 +1,65 @@
+/* Cadastro de campanhas do Dishy: não altera as telas operacionais nem o cadastro orgânico */
+.dar-page{--dar-orange:#ff7907;--dar-ink:#142034;--dar-soft:#647085;min-height:100vh;background:#101726;color:#fff;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.dar-page *{box-sizing:border-box}
+.dar-page a{text-decoration:none}
+.dar-header{height:92px;max-width:1190px;padding:10px 32px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:18px}
+.dar-brand{display:flex;align-items:center;max-width:176px}
+.dar-brand img{width:155px;height:auto;display:block;max-height:70px;object-fit:contain}
+.dar-origin{display:flex;align-items:center;gap:6px;color:#d7dfe8;font-size:13px}
+.dar-login{font-size:14px;font-weight:800;color:#fff;display:flex;align-items:center;gap:7px;padding:10px 4px}
+.dar-login:hover,.dar-footer a:hover{color:#ffab50}
+.dar-main{max-width:1190px;min-height:calc(100vh - 153px);padding:26px 32px 65px;margin:auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,482px);align-items:center;gap:6.6%}
+.dar-presentation{position:relative;padding:5px 0 18px}
+.dar-presentation:before{content:"";position:absolute;inset:-80px -70px 0 -50px;background:radial-gradient(ellipse at 32% 65%,#ff760026 0%,transparent 55%);z-index:0;pointer-events:none}
+.dar-presentation>*{position:relative}
+.dar-local{color:#ffaf54;letter-spacing:.085em;font-size:11px;font-weight:900;display:inline-flex;align-items:center;gap:7px;margin:0 0 19px}
+.dar-presentation h1{max-width:600px;margin:0;font-size:clamp(35px,4.1vw,57px);line-height:1.07;letter-spacing:-.045em;font-weight:900;color:#fff}
+.dar-presentation h1 em{font-style:normal;background:linear-gradient(105deg,#ffd040,#ff7d05 80%);background-clip:text;-webkit-background-clip:text;color:transparent}
+.dar-presentation>p{max-width:525px;color:#cfdae9;line-height:1.65;font-size:16px;margin:21px 0 22px}
+.dar-offer{display:flex;align-items:center;gap:13px;margin:12px 0 22px}
+.dar-offer>strong{font-size:65px;line-height:1;font-weight:950;letter-spacing:-.075em;color:#ff8a08}
+.dar-offer span{display:flex;flex-direction:column;gap:2px}
+.dar-offer b{font-size:24px;color:#fff;line-height:1.1}
+.dar-offer small{color:#aeb9c7;font-size:13px}
+.dar-highlights{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;max-width:550px}
+.dar-highlights span{display:flex;align-items:center;gap:8px;color:#eef1f5;font-size:12px;line-height:1.5}
+.dar-highlights svg{color:#ff9a22;flex-shrink:0}
+.dar-visual{display:flex;align-items:center;gap:18px;max-width:470px;margin-top:30px}
+.dar-visual img{height:150px;width:120px;object-fit:cover;object-position:top;border-radius:11px;box-shadow:0 17px 40px #0008}
+.dar-visual>span{color:#d5deed;font-size:14px;font-weight:700;max-width:230px;line-height:1.5}
+.dar-form-panel{width:100%}
+.dar-card{background:#fff;color:var(--dar-ink);border-radius:28px;padding:clamp(26px,3.5vw,44px);box-shadow:0 25px 80px #0007,0 0 0 1px #ff9e250f}
+.dar-step{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:18px;font-size:11px;font-weight:900;letter-spacing:.05em;color:#d4640b}
+.dar-step span:last-child{color:#59806a;display:flex;align-items:center;gap:4px;letter-spacing:0}
+.dar-card h2{font-size:clamp(29px,3vw,38px);line-height:1.1;letter-spacing:-.035em;margin:0 0 12px;color:#142034;font-weight:850}
+.dar-description{font-size:14px;line-height:1.6;color:var(--dar-soft);margin:0 0 25px}
+.dar-form{display:flex;flex-direction:column}
+.dar-form label{color:#2d3543;font-size:13px;font-weight:750;margin:0 0 7px}
+.dar-field{display:flex;align-items:center;gap:11px;height:54px;border:1px solid #d7dde6;border-radius:12px;padding:0 13px;margin:0 0 17px;background:#fff;transition:border-color .15s,box-shadow .15s}
+.dar-field:focus-within{border-color:#ff7f15;box-shadow:0 0 0 3px #ff790725}
+.dar-field>svg{color:#7d899a;flex-shrink:0}
+.dar-field input{border:0!important;outline:none!important;background:transparent!important;color:#172132!important;min-width:0;width:100%;height:100%;font-size:15px;box-shadow:none!important;padding:0!important}
+.dar-field input::placeholder{color:#9aa6b6}
+.dar-field button{border:0;background:transparent;color:#6d7888;display:grid;place-items:center;cursor:pointer;padding:7px}
+.dar-field button:focus-visible,.dar-google:focus-visible,.dar-submit:focus-visible,.dar-page a:focus-visible{outline:3px solid #ff9c35;outline-offset:3px}
+.dar-hint{margin:-11px 0 12px;font-size:11px;color:#bf4d30}
+.dar-hint.good{color:#267e4b}
+.dar-error{background:#fff1f0;border:1px solid #ffc9c6;border-radius:11px;padding:11px;color:#a52422;font-size:13px;line-height:1.45;margin:0 0 12px}
+.dar-submit{height:56px;width:100%;border:0;border-radius:12px;background:linear-gradient(110deg,#f87805,#ff9b17);color:#fff;display:flex;align-items:center;justify-content:center;gap:10px;font-weight:850;font-size:14px;cursor:pointer;box-shadow:0 9px 22px #fa87063b;margin-top:4px}
+.dar-submit:disabled{opacity:.65;cursor:not-allowed}
+.dar-divider{display:flex;align-items:center;gap:12px;color:#a5acb8;font-size:12px;margin:21px 0 17px}
+.dar-divider:before,.dar-divider:after{content:"";height:1px;flex:1;background:#e8ecf1}
+.dar-google{height:52px;width:100%;display:flex;align-items:center;justify-content:center;gap:12px;background:#fff;border:1px solid #d9e0e9;border-radius:12px;color:#263346;font-weight:800;font-size:14px;cursor:pointer}
+.dar-google:hover{background:#f9fafb}
+.dar-google-letter{font-size:20px;font-weight:900;color:#4285f4}
+.dar-assurance{display:flex;align-items:flex-start;justify-content:center;gap:6px;font-size:12px;line-height:1.45;color:#527362;margin:18px 0 7px;text-align:center}
+.dar-assurance svg{flex-shrink:0}
+.dar-smallprint{text-align:center;color:#8d97a4;font-size:11px;line-height:1.5;margin:0}
+.dar-links{display:flex;gap:12px;justify-content:space-between;align-items:center;border-top:1px solid #f0f2f5;padding-top:20px;margin-top:23px}
+.dar-links a{color:#bd570d;font-size:12px;font-weight:800;display:flex;align-items:center;gap:5px}
+.dar-footer{max-width:1190px;padding:13px 32px 28px;display:flex;justify-content:space-between;align-items:center;gap:15px;margin:auto;color:#9caabb;font-size:12px}
+.dar-footer a{color:#fff;font-weight:750}
+@media(min-width:1350px){.dar-main{gap:9%}}
+@media(max-width:960px){.dar-main{grid-template-columns:1fr;gap:33px;max-width:650px;padding:16px 20px 40px}.dar-header{height:75px;padding:8px 20px}.dar-presentation{padding:6px 0 0}.dar-presentation h1{font-size:clamp(31px,6.5vw,46px)}.dar-presentation>p{font-size:14px;margin:15px 0}.dar-highlights{display:none}.dar-visual{display:none}.dar-offer{margin:12px 0 0}.dar-offer>strong{font-size:52px}.dar-offer b{font-size:21px}.dar-card{padding:28px}.dar-footer{padding:12px 20px 24px}}
+@media(max-width:580px){.dar-header{height:69px;padding:8px 15px;gap:8px}.dar-brand{max-width:110px}.dar-brand img{width:105px;max-height:48px}.dar-origin{display:none}.dar-login{font-size:12px;white-space:nowrap}.dar-main{padding:8px 13px 26px;gap:20px}.dar-local{font-size:10px;margin-bottom:10px}.dar-presentation h1{font-size:29px;letter-spacing:-.03em}.dar-presentation>p{font-size:13px;line-height:1.45;margin:11px 0}.dar-offer{gap:9px}.dar-offer>strong{font-size:46px}.dar-offer b{font-size:20px}.dar-offer small{font-size:12px}.dar-card{border-radius:22px;padding:24px 19px}.dar-card h2{font-size:28px}.dar-description{font-size:13px;margin-bottom:19px}.dar-step{font-size:10px}.dar-field{height:51px}.dar-submit{height:54px}.dar-footer{flex-direction:column;align-items:flex-start;gap:8px;font-size:11px;padding:2px 15px 25px}}
+@media(prefers-reduced-motion:reduce){.dar-page *{transition:none!important}}
