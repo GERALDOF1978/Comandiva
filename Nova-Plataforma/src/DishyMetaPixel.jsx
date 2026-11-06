@@ -14,6 +14,8 @@ let pageTracked=false;
 function path(){return window.location.pathname.replace(/\/+$/,"")||"/"}
 function readConsent(){try{return window.localStorage.getItem(CONSENT_KEY)}catch{return null}}
 function writeConsent(value){try{window.localStorage.setItem(CONSENT_KEY,value)}catch{}}
+function openConsentFromUrl(){try{return new URLSearchParams(window.location.search).get("configurar_cookies")==="1"}catch{return false}}
+function removeConsentUrlFlag(){try{const url=new URL(window.location.href);if(url.searchParams.has("configurar_cookies")){url.searchParams.delete("configurar_cookies");window.history.replaceState(window.history.state,"",url.pathname+url.search+url.hash)}}catch{}}
 function getPending(){try{return JSON.parse(window.sessionStorage.getItem(CONVERSION_KEY)||"null")}catch{return null}}
 function clearPending(){try{window.sessionStorage.removeItem(CONVERSION_KEY)}catch{}}
 function setup(){
@@ -58,16 +60,16 @@ export function queueMetaRestaurantRegistration(){
 }
 export default function DishyMetaPixel(){
   const eligible=ENABLED&&ROUTES.has(path());
-  const [choice,setChoice]=useState(()=>readConsent());
+  const [choice,setChoice]=useState(()=>openConsentFromUrl()?null:readConsent());
   const [details,setDetails]=useState(false);
   useEffect(()=>{if(eligible&&choice==="accepted")recordPage()},[eligible,choice]);
   if(!eligible)return null;
   const decide=value=>{
-    writeConsent(value);setChoice(value);
+    writeConsent(value);setChoice(value);removeConsentUrlFlag();
     if(value==="rejected"&&typeof window.fbq==="function")window.fbq("consent","revoke");
     if(value==="accepted")recordPage();
   };
-  if(choice==="accepted"||choice==="rejected")return <button type="button" className="dishyMetaCookieLink" onClick={()=>{setChoice(null);setDetails(false)}} aria-label="Alterar preferências de cookies de marketing">Cookies</button>;
+  if(choice==="accepted"||choice==="rejected")return <button type="button" className="dishyMetaCookieLink" onClick={()=>{setChoice(null);setDetails(false)}} aria-label="Alterar preferências de cookies de marketing">Preferências de cookies</button>;
   return <section className="dishyMetaConsent" aria-label="Permissão de cookies para anúncios">
     <div><strong>Privacidade e medição de anúncios</strong>
       <p>Podemos usar o Pixel da Meta para entender visitas e cadastros do Dishy. Isso só é ativado com sua permissão. Recusar não impede o cadastro.</p>

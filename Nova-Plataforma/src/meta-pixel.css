@@ -7,5 +7,5 @@
 .dishyMetaConsentActions button{min-height:41px;border-radius:9px;padding:9px 13px;font-size:13px;font-weight:750;cursor:pointer}
 .dishyMetaReject{background:white;color:#333;border:1px solid #bdc4cd}
 .dishyMetaAccept{background:#f97316;color:white;border:1px solid #f97316}
-.dishyMetaCookieLink{position:fixed;z-index:18000;bottom:9px;left:9px;padding:6px 10px;border:1px solid #d0d5dc;border-radius:10px;background:#fff;color:#424955;font-size:11px;box-shadow:0 2px 12px #0002;cursor:pointer}
+.dishyMetaCookieLink{position:fixed;z-index:18000;bottom:9px;left:9px;padding:9px 13px;border:1px solid #d0d5dc;border-radius:10px;background:#fff;color:#28313d;font-weight:700;font-size:12px;box-shadow:0 2px 12px #0002;cursor:pointer}
 @media(max-width:640px){.dishyMetaConsent{bottom:8px;max-height:85vh;overflow:auto;display:flex;flex-direction:column;align-items:stretch;gap:12px;padding:14px;width:calc(100vw - 20px)}.dishyMetaConsentActions button{flex:1}.dishyMetaConsent strong{font-size:14px}.dishyMetaConsent p{font-size:12px}}
