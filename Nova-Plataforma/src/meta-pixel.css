@@ -1,0 +1,11 @@
+.dishyMetaConsent{position:fixed;z-index:25000;bottom:12px;left:50%;transform:translateX(-50%);width:min(94vw,810px);padding:17px 20px;border-radius:15px;background:#fff;color:#17202d;box-shadow:0 12px 55px #0007;border:1px solid #e5eaf0;display:flex;align-items:center;gap:24px;font:13px/1.5 Inter,system-ui,sans-serif}
+.dishyMetaConsent>div:first-child{flex:1;min-width:0}
+.dishyMetaConsent strong{font-size:15px}
+.dishyMetaConsent p{margin:5px 0;color:#4b5664}
+.dishyMetaDetails{border:0;background:none;color:#bc5100;padding:0;cursor:pointer;text-decoration:underline;font-weight:700}
+.dishyMetaConsentActions{display:flex;gap:8px;flex-shrink:0}
+.dishyMetaConsentActions button{min-height:41px;border-radius:9px;padding:9px 13px;font-size:13px;font-weight:750;cursor:pointer}
+.dishyMetaReject{background:white;color:#333;border:1px solid #bdc4cd}
+.dishyMetaAccept{background:#f97316;color:white;border:1px solid #f97316}
+.dishyMetaCookieLink{position:fixed;z-index:18000;bottom:9px;left:9px;padding:6px 10px;border:1px solid #d0d5dc;border-radius:10px;background:#fff;color:#424955;font-size:11px;box-shadow:0 2px 12px #0002;cursor:pointer}
+@media(max-width:640px){.dishyMetaConsent{bottom:8px;max-height:85vh;overflow:auto;display:flex;flex-direction:column;align-items:stretch;gap:12px;padding:14px;width:calc(100vw - 20px)}.dishyMetaConsentActions button{flex:1}.dishyMetaConsent strong{font-size:14px}.dishyMetaConsent p{font-size:12px}}

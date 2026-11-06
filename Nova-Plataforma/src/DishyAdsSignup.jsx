@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ArrowRight, Check, ChevronLeft, CreditCard, Eye, EyeOff, LockKeyhole, Mail, MapPin, ShieldCheck, Utensils, Wallet } from "lucide-react";
 import "./dishy-ads-signup.css";
+import {trackMetaRegistrationStart} from "./DishyMetaPixel.jsx";
 
 const TRACK_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "fbclid"];
 
@@ -66,7 +67,7 @@ export default function DishyAdsSignup({
           <h2 id="dar-form-title">Crie sua conta grátis</h2>
           <p className="dar-description">Em seguida, você cadastra seu estabelecimento e configura o atendimento. Não precisa informar cartão de crédito.</p>
 
-          <form onSubmit={onSubmit} className="dar-form">
+          <form onSubmit={onSubmit} onFocusCapture={trackMetaRegistrationStart} className="dar-form">
             <label htmlFor="dar-email">Seu e-mail</label>
             <div className="dar-field"><Mail size={20}/><input id="dar-email" type="email" value={email} onChange={e=>setEmail(e.target.value)} autoComplete="email" inputMode="email" placeholder="voce@restaurante.com.br" required disabled={busy}/></div>
 
