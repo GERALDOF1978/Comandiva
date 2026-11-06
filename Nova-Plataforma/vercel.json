@@ -33,6 +33,22 @@
       "destination": "/"
     },
     {
+      "source": "/anuncio",
+      "destination": "/"
+    },
+    {
+      "source": "/anuncio/",
+      "destination": "/"
+    },
+    {
+      "source": "/cadastro-anuncio",
+      "destination": "/"
+    },
+    {
+      "source": "/cadastro-anuncio/",
+      "destination": "/"
+    },
+    {
       "source": "/cadastro",
       "destination": "/"
     },
