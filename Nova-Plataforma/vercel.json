@@ -13,6 +13,10 @@
       "destination": "/api/index?route=delivery-sheet"
     },
     {
+      "source": "/",
+      "destination": "/index.html"
+    },
+    {
       "source": "/:slug/funcionarios",
       "destination": "/"
     },
@@ -34,19 +38,19 @@
     },
     {
       "source": "/anuncio",
-      "destination": "/"
+      "destination": "/index.html"
     },
     {
       "source": "/anuncio/",
-      "destination": "/"
+      "destination": "/index.html"
     },
     {
       "source": "/cadastro-anuncio",
-      "destination": "/"
+      "destination": "/index.html"
     },
     {
       "source": "/cadastro-anuncio/",
-      "destination": "/"
+      "destination": "/index.html"
     },
     {
       "source": "/cadastro",
