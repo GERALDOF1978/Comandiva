@@ -5,7 +5,7 @@ export async function startTabPix(base,tabRef,restaurantId){
  if(!snap.exists)throw Error("not_found");
  const d=snap.data();
  if(!["OPEN","BILL_REQUESTED"].includes(d.status)||!Number.isInteger(d.totalCents)||d.totalCents<=0)throw Error("invalid_status");
- if(d.pixPayment?.paymentId&&d.pixPayment?.amountCents===d.totalCents)return d.pixPayment;
+ if(d.onlinePayment?.orderId||d.nfcPayment?.orderId)throw Error("payment_pending");if(d.pixPayment?.paymentId&&d.pixPayment?.amountCents===d.totalCents)return d.pixPayment;
  const key=process.env.PAYMENT_CREDENTIALS_ENCRYPTION_KEY;
  const config=(await base.collection("privateIntegrations").doc("mercadoPago").get()).data();
  if(!config?.encryptedAccessToken||!config.iv||!config.authTag||!/^[a-fA-F0-9]{64}$/.test(key||""))throw Error("payment_not_configured");

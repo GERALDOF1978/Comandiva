@@ -1,4 +1,5 @@
 import {startTabPix} from "../server/tab-pix.js";
+import {buildInfiniteTapLink} from "../src/lib/nfcTap.js";
 import {buildTableOrderLine} from "../src/lib/tableItemPricing.js";
 import {enabledPaymentMethods} from "../src/lib/paymentMethods.js";
 import {enabledServiceModes} from "../src/lib/serviceModes.js";
@@ -20,7 +21,7 @@ export default async function handler(req,res){
  const db=getFirestore(),base=db.collection("restaurants").doc(restaurantId),member=await base.collection("members").doc(user.uid).get();
  if(!member.exists||!canAccessModule(member.data(),"Mesas e comandas"))return res.status(403).json({error:"forbidden"});
  const tabs=base.collection("tabs");
- if(req.method==="GET"){const [snap,calls]=await Promise.all([tabs.limit(300).get(),base.collection("serviceCalls").where("status","==","PENDING").limit(100).get()]);return res.status(200).json({tabs:snap.docs.map(d=>({id:d.id,...d.data(),createdAt:d.data().createdAt?.toDate?.()?.toISOString()||null,updatedAt:d.data().updatedAt?.toDate?.()?.toISOString()||null})),serviceCalls:calls.docs.map(d=>({id:d.id,...d.data(),createdAt:d.data().createdAt?.toDate?.()?.toISOString()||null}))})}
+ if(req.method==="GET"){const [snap,calls,nfc,mpCfg]=await Promise.all([tabs.limit(300).get(),base.collection("serviceCalls").where("status","==","PENDING").limit(100).get(),base.collection("settings").doc("nfcTap").get(),base.collection("privateIntegrations").doc("mercadoPago").get()]);return res.status(200).json({tabs:snap.docs.map(d=>({id:d.id,...d.data(),createdAt:d.data().createdAt?.toDate?.()?.toISOString()||null,updatedAt:d.data().updatedAt?.toDate?.()?.toISOString()||null})),serviceCalls:calls.docs.map(d=>({id:d.id,...d.data(),createdAt:d.data().createdAt?.toDate?.()?.toISOString()||null})),nfcEnabled:nfc.data()?.enabled===true&&/^[A-Za-z0-9_.-]{2,64}$/.test(String(nfc.data()?.handle||"")),mpConfigured:!!mpCfg.data()?.encryptedAccessToken})}
  const action=String(body.action||""),id=String(body.tabId||"");
  if(["OPEN","ADD_BATCH","ADD"].includes(action)){
   const r=await base.get();if(!r.exists||r.data().status!=="active")return res.status(403).json({error:"restaurant_suspended"});
@@ -44,7 +45,48 @@ export default async function handler(req,res){
  }
  if(!/^[\w-]{3,130}$/.test(id))return res.status(400).json({error:"invalid_tab"});
  const ref=tabs.doc(id);
- if(action==="CREATE_PIX"){const cfg=await base.collection("settings").doc("public").get();if(!enabledPaymentMethods(cfg.data()?.paymentMethods).includes("PIX"))return res.status(400).json({error:"payment_method_disabled"});try{return res.status(200).json({ok:true,payment:await startTabPix(base,ref,restaurantId)})}catch(e){return res.status(409).json({error:e.message})}}
+ if(action==="CREATE_PIX"){const cfg=await base.collection("settings").doc("public").get();if(!enabledPaymentMethods(cfg.data()?.paymentMethods).includes("PIX"))return res.status(400).json({error:"payment_method_disabled"});if(cfg.data()?.paymentProviders?.PIX==="infinitepay")return res.status(409).json({error:"payment_provider_mismatch"});try{return res.status(200).json({ok:true,payment:await startTabPix(base,ref,restaurantId)})}catch(e){return res.status(409).json({error:e.message})}}
+ if(action==="START_NFC"){
+  const kind=String(body.paymentKind||"debit");
+  if(!["debit","credit"].includes(kind))return res.status(400).json({error:"invalid_tap_method"});
+  const config=(await base.collection("settings").doc("nfcTap").get()).data()||{};
+  if(config.enabled!==true)return res.status(409).json({error:"nfc_not_configured"});
+  const orderRef=base.collection("orders").doc();
+  try{
+   const receipt=await db.runTransaction(async tx=>{
+    const snap=await tx.get(ref);
+    if(!snap.exists)throw Error("not_found");
+    const d=snap.data();
+    if(d.type!=="INDIVIDUAL")throw Error("nfc_only_individual");
+    if(d.status!=="BILL_REQUESTED")throw Error("invalid_status");
+    if(d.pixPayment?.paymentId||d.onlinePayment?.orderId)throw Error("payment_pending");
+    if(d.nfcPayment?.orderId)return d.nfcPayment;
+    const amountCents=Number(d.totalCents);
+    if(!Number.isSafeInteger(amountCents)||amountCents<100)throw Error("invalid_total");
+    const deeplink=buildInfiniteTapLink({amountCents,orderId:orderRef.id,handle:String(config.handle||""),paymentMethod:kind});
+    const payment={orderId:orderRef.id,amountCents,paymentKind:kind,deeplink,status:"PENDING"};
+    tx.set(orderRef,{source:"TAB_NFC",channel:"TABLE",paymentPurpose:"TAB_CLOSE",tabId:id,table:"Comanda "+d.label,number:"C"+orderRef.id.slice(0,8).toUpperCase(),customerSnapshot:{name:"Comanda "+d.label},items:d.items||[],totalCents:amountCents,status:"PENDING_PAYMENT",paymentStatus:"PENDING",paymentMethod:"NFC_INFINITE_TAP",provider:"infinitepay_tap",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
+    tx.update(ref,{nfcPayment:payment,updatedAt:FieldValue.serverTimestamp()});
+    return payment;
+   });
+   return res.status(200).json({ok:true,payment:receipt});
+  }catch(e){if(["not_found","nfc_only_individual","invalid_status","payment_pending","invalid_total","invalid_tap_amount","invalid_tap_handle"].includes(e.message))return res.status(409).json({error:e.message});throw e}
+ }
+ if(action==="CONFIRM_NFC"){
+  const nsu=String(body.nsu||"").trim();
+  if(!/^[A-Za-z0-9_-]{5,100}$/.test(nsu)||body.verifiedInApp!==true)return res.status(400).json({error:"invalid_tap_confirmation"});
+  try{
+   await db.runTransaction(async tx=>{
+    const tab=await tx.get(ref);
+    if(!tab.exists||tab.data().type!=="INDIVIDUAL"||tab.data().status!=="BILL_REQUESTED"||!tab.data().nfcPayment?.orderId||tab.data().nfcPayment.status!=="PENDING")throw Error("invalid_tap_order_state");
+    const d=tab.data(),payment=d.nfcPayment,orderRef=base.collection("orders").doc(payment.orderId),order=await tx.get(orderRef);
+    if(!order.exists||order.data().tabId!==id||order.data().source!=="TAB_NFC"||order.data().paymentMethod!=="NFC_INFINITE_TAP"||order.data().paymentStatus!=="PENDING"||order.data().totalCents!==d.totalCents)throw Error("invalid_tap_order_state");
+    tx.update(orderRef,{paymentStatus:"PAID",status:"COMPLETED",paidAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp(),nfcApprovalReference:nsu,nfcConfirmedBy:user.uid,nfcConfirmationMode:"MANUAL_MERCHANT_VERIFICATION"});
+    tx.update(ref,{status:"CLOSED",paymentStatus:"PAID",paymentMethod:"NFC_INFINITE_TAP",financeOrderId:orderRef.id,nfcPayment:{...payment,status:"PAID"},closedAt:FieldValue.serverTimestamp(),closedBy:user.uid,updatedAt:FieldValue.serverTimestamp()});
+   });
+   return res.status(200).json({ok:true});
+  }catch(e){return res.status(409).json({error:"invalid_tap_order_state"})}
+ }
  if(action==="QR_TOKEN"){const snap=await ref.get();if(!snap.exists)return res.status(404).json({error:"not_found"});if(snap.data().status==="CLOSED")return res.status(409).json({error:"not_open"});let token=snap.data().customerAccessToken;if(!token){token=randomBytes(24).toString("hex");await ref.update({customerAccessToken:token})}return res.status(200).json({ok:true,token})}
  if(action==="ADD_BATCH"||action==="ADD"){
  const incoming=action==="ADD"?[{productId:body.productId,qty:body.qty||1,pizzaSelection:body.pizzaSelection,optionSelection:body.optionSelection}]:Array.isArray(body.items)?body.items:[];
@@ -70,9 +112,9 @@ export default async function handler(req,res){
  if(action==="REQUEST_BILL"||action==="REOPEN"||action==="CLOSE"){
  if(action==="CLOSE"&&!["CASH","CARD_ON_DELIVERY"].includes(body.paymentMethod))return res.status(400).json({error:"invalid_payment"});
  if(action==="CLOSE"){const cfg=await base.collection("settings").doc("public").get();if(!enabledPaymentMethods(cfg.data()?.paymentMethods).includes(body.paymentMethod))return res.status(400).json({error:"payment_method_disabled"})}
- await db.runTransaction(async tx=>{const snap=await tx.get(ref);if(!snap.exists)throw new Error("not_found");const d=snap.data();if(action==="REQUEST_BILL"&&(!(d.items||[]).length||Number(d.totalCents||0)<=0))throw new Error("empty_tab");if(action==="REQUEST_BILL"&&d.status!=="OPEN"||action==="REOPEN"&&d.status!=="BILL_REQUESTED"||action==="CLOSE"&&d.status!=="BILL_REQUESTED")throw new Error("invalid_status");const patch={status:action==="REQUEST_BILL"?"BILL_REQUESTED":action==="REOPEN"?"OPEN":"CLOSED",updatedAt:FieldValue.serverTimestamp()};if(action==="CLOSE"){patch.paymentMethod=body.paymentMethod;patch.closedAt=FieldValue.serverTimestamp();patch.closedBy=user.uid;const orderRef=base.collection("orders").doc("tabpayment_"+id+"_"+Date.now());tx.set(orderRef,{channel:"TABLE",table:(d.type==="TABLE"?"Mesa ":"Comanda ")+d.label,tabId:id,number:"C"+orderRef.id.slice(-8).toUpperCase(),customerSnapshot:{name:(d.type==="TABLE"?"Mesa ":"Comanda ")+d.label},items:d.items||[],totalCents:Number(d.totalCents||0),status:"COMPLETED",paymentStatus:"PAID",paymentMethod:body.paymentMethod,createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});patch.financeOrderId=orderRef.id}tx.update(ref,patch)});
+ await db.runTransaction(async tx=>{const snap=await tx.get(ref);if(!snap.exists)throw new Error("not_found");const d=snap.data();if(action==="REQUEST_BILL"&&(!(d.items||[]).length||Number(d.totalCents||0)<=0))throw new Error("empty_tab");if(action==="REQUEST_BILL"&&d.status!=="OPEN"||action==="REOPEN"&&d.status!=="BILL_REQUESTED"||action==="CLOSE"&&d.status!=="BILL_REQUESTED")throw new Error("invalid_status");if((action==="REOPEN"||action==="CLOSE")&&(d.pixPayment?.paymentId||d.onlinePayment?.orderId||d.nfcPayment?.orderId))throw Error("payment_pending");const patch={status:action==="REQUEST_BILL"?"BILL_REQUESTED":action==="REOPEN"?"OPEN":"CLOSED",updatedAt:FieldValue.serverTimestamp()};if(action==="CLOSE"){patch.paymentMethod=body.paymentMethod;patch.closedAt=FieldValue.serverTimestamp();patch.closedBy=user.uid;const orderRef=base.collection("orders").doc("tabpayment_"+id+"_"+Date.now());tx.set(orderRef,{channel:"TABLE",table:(d.type==="TABLE"?"Mesa ":"Comanda ")+d.label,tabId:id,number:"C"+orderRef.id.slice(-8).toUpperCase(),customerSnapshot:{name:(d.type==="TABLE"?"Mesa ":"Comanda ")+d.label},items:d.items||[],totalCents:Number(d.totalCents||0),status:"COMPLETED",paymentStatus:"PAID",paymentMethod:body.paymentMethod,createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});patch.financeOrderId=orderRef.id}tx.update(ref,patch)});
  return res.status(200).json({ok:true});
  }
  return res.status(400).json({error:"invalid_action"});
- }catch(e){if(["already_open","not_open","not_found","invalid_status","empty_tab","product_unavailable","invalid_price"].includes(e.message))return res.status(409).json({error:e.message});if(["invalid_items","invalid_item","invalid_product","invalid_quantity","invalid_pizza_selection","invalid_pizza_crust","invalid_pizza_price","invalid_option_selection","invalid_option_price","invalid_option_product","invalid_pizza_product","assembly_required","invalid_total"].includes(e.message))return res.status(400).json({error:e.message});console.error("tabs",e);return res.status(500).json({error:"internal_error"})}
+ }catch(e){if(["already_open","not_open","not_found","invalid_status","empty_tab","product_unavailable","invalid_price","payment_pending"].includes(e.message))return res.status(409).json({error:e.message});if(["invalid_items","invalid_item","invalid_product","invalid_quantity","invalid_pizza_selection","invalid_pizza_crust","invalid_pizza_price","invalid_option_selection","invalid_option_price","invalid_option_product","invalid_pizza_product","assembly_required","invalid_total"].includes(e.message))return res.status(400).json({error:e.message});console.error("tabs",e);return res.status(500).json({error:"internal_error"})}
 }
