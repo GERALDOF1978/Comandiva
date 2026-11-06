@@ -47,9 +47,10 @@ export default function DishyAdsSignup({
         <h1>Seu restaurante mais <em>digital.</em> Seu atendimento mais <em>inteligente.</em></h1>
         <p>Comece a organizar seus pedidos, receber pagamentos e oferecer autonomia aos clientes com o Dishy.</p>
         <div className="dar-offer"><strong>37</strong><span><b>dias grátis</b><small>para conhecer o Dishy na sua loja</small></span></div>
+        <div className="dar-nfc-validated"><CreditCard size={16} aria-hidden="true"/><strong>NFC validado:</strong> seu celular vira maquininha</div>
         <div className="dar-highlights">
           <span><Wallet size={17}/> PIX integrado ao pedido</span>
-          <span><CreditCard size={17}/> Celular como maquininha NFC</span>
+          <span><CreditCard size={17}/> NFC já validado: celular como maquininha</span>
           <span><Utensils size={17}/> Cliente fecha a conta na mesa</span>
           <span><Check size={17}/> Cardápio, delivery, PDV e comanda</span>
         </div>
