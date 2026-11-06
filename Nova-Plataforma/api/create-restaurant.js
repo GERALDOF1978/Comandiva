@@ -5,7 +5,7 @@ import {FieldValue,getFirestore} from "firebase-admin/firestore";
 import {enabledPaymentMethods,validPaymentMethods} from "../src/lib/paymentMethods.js";
 
 // Oferta vigente para novos cadastros e novas concessões; não reduz testes já concedidos.
-const TRIAL_DURATION_DAYS=100;
+const TRIAL_DURATION_DAYS=37;
 
 function getAdmin(){
   if(getApps().length) return getApps()[0];
