@@ -23,8 +23,8 @@ export default function DishyGallery({ variant = 'commercial' }) {
     <div className="dishy-gallery__inner">
       <div className="dishy-gallery__intro">
         <span className="dishy-gallery__eyebrow">CONHEÇA O DISHY EM AÇÃO</span>
-        <h2 id={'dishy-gallery-title-' + variant}>Do cardápio à cozinha, tudo conectado.</h2>
-        <p>Veja como funciona a jornada de um pedido e conheça os recursos para o dono do estabelecimento.</p>
+        <h2 id={'dishy-gallery-title-' + variant}>Veja o Dishy funcionando, etapa por etapa.</h2>
+        <p>Conheça o cardápio, a montagem de produtos, os pagamentos, a central de pedidos, a cozinha e a entrega. No celular, cada demonstração aparece inteira, uma abaixo da outra.</p>
       </div>
       <div className="dishy-gallery__journey">
         {journey.map(({ Icon, step, title, description, image }) => <article className="dishy-gallery__step" key={step}>
@@ -32,7 +32,7 @@ export default function DishyGallery({ variant = 'commercial' }) {
           <div className="dishy-gallery__step-copy"><span className="dishy-gallery__step-icon"><Icon size={21}/></span><h3>{title}</h3><p>{description}</p></div>
         </article>)}
       </div>
-      <p className="dishy-gallery__note">Imagens ilustrativas dos recursos. A aparência e as opções variam conforme a configuração de cada estabelecimento.</p>
+      <p className="dishy-gallery__note">Demonstrações visuais ilustrativas. Para conhecer o funcionamento real, acesse a demonstração do estabelecimento. A aparência varia conforme a configuração de cada loja.</p>
       <div className="dishy-gallery__extras">
         <div className="dishy-gallery__extras-heading"><span className="dishy-gallery__eyebrow">ALÉM DO DELIVERY</span><h3>Uma operação completa em um só lugar.</h3></div>
         <div className="dishy-gallery__highlights">{highlights.map(({Icon,title,description}) => <article key={title}><span><Icon size={24}/></span><h4>{title}</h4><p>{description}</p></article>)}</div>
