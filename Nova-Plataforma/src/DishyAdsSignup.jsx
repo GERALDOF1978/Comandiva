@@ -56,7 +56,7 @@ export default function DishyAdsSignup({
           <span><Check size={17}/> Cardápio, delivery, PDV e comanda</span>
         </div>
         <div className="dar-visual">
-          <img src="/marketing/poster-conta-mesa.webp" alt="Demonstração ilustrativa da autonomia do cliente para fechar a conta na mesa usando o Dishy" loading="lazy" />
+          <img src="/marketing/real-mesas.webp" alt="Captura real da tela de mesas e comandas do Dishy" loading="lazy" />
           <span>Um sistema completo para seu restaurante</span>
         </div>
       </aside>

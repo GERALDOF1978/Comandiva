@@ -23,3 +23,17 @@
 .dishy-gallery__highlights h4{font-size:17px}
 .dishy-gallery__extras{margin-top:30px}
 }
+
+/* Capturas reais Dishy: cartões inteiros, toque para ampliar e leitura móvel */
+.dishy-gallery__journey{grid-template-columns:repeat(4,minmax(0,1fr))}
+.dishy-gallery__visual{display:flex;align-items:center;justify-content:center;position:relative;min-height:250px;aspect-ratio:5/4;background:linear-gradient(140deg,#f3f5f9,#e9edf2);text-decoration:none}
+.dishy-gallery__visual img{height:100%;width:100%;object-fit:contain;object-position:center;background:transparent;padding:9px}
+.dishy-gallery__visual:hover img{transform:scale(1.035)}
+.dishy-gallery__visual img{transition:transform .2s}
+.dishy-gallery__zoom{position:absolute;right:9px;bottom:9px;border-radius:999px;padding:6px 9px;background:#172134e8;color:#fff;font-size:10px;font-weight:750}
+.dishy-gallery__step-copy{padding:17px 17px 23px}
+.dishy-gallery__step h3{font-size:19px}
+.dishy-gallery__step p{font-size:13px}
+@media(max-width:1060px){.dishy-gallery__journey{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:580px){.dishy-gallery__journey{display:grid;grid-template-columns:1fr;gap:17px;overflow:visible;scroll-snap-type:none;padding:0}.dishy-gallery__step{width:100%;min-width:0}.dishy-gallery__visual{aspect-ratio:5/4;min-height:260px}.dishy-gallery__visual img{padding:10px}.dishy-gallery__step-copy{padding:20px 22px 24px}.dishy-gallery__step h3{font-size:23px}.dishy-gallery__step p{font-size:15px}.dishy-gallery__zoom{font-size:11px;right:13px;bottom:13px}}
+@media(prefers-reduced-motion:reduce){.dishy-gallery__visual img{transition:none}}
