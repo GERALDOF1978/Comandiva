@@ -69,7 +69,8 @@ export default function DishyMetaPixel(){
     if(value==="rejected"&&typeof window.fbq==="function")window.fbq("consent","revoke");
     if(value==="accepted")recordPage();
   };
-  if(choice==="accepted"||choice==="rejected")return <button type="button" className="dishyMetaCookieLink" onClick={()=>{setChoice(null);setDetails(false)}} aria-label="Alterar preferências de cookies de marketing">Preferências de cookies</button>;
+  // Não desenhar elementos flutuantes depois do consentimento: o CTA não deve ser coberto.
+  if(choice==="accepted"||choice==="rejected")return null;
   return <section className="dishyMetaConsent" aria-label="Permissão de cookies para anúncios">
     <div><strong>Privacidade e medição de anúncios</strong>
       <p>Podemos usar o Pixel da Meta para entender visitas e cadastros do Dishy. Isso só é ativado com sua permissão. Recusar não impede o cadastro.</p>
@@ -81,4 +82,12 @@ export default function DishyMetaPixel(){
       <button type="button" className="dishyMetaAccept" onClick={()=>decide("accepted")}>Permitir medição</button>
     </div>
   </section>;
+}
+
+// Link acessível no fim das páginas comerciais, sem disputar espaço com o CTA fixo.
+export function DishyCookieFooterLink(){
+  if(!ENABLED||!ROUTES.has(path()))return null;
+  let href="?configurar_cookies=1";
+  try{const url=new URL(window.location.href);url.searchParams.set("configurar_cookies","1");href=url.pathname+url.search+url.hash}catch{}
+  return <div className="dishyMetaCookieFooter"><a className="dishyMetaCookieLink" href={href}>Preferências de cookies</a></div>;
 }
