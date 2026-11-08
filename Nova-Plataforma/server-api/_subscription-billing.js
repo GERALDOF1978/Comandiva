@@ -61,7 +61,7 @@ export function billingPayload({invoice,customer,merchant}){
   customer:{name:String(customer.name||"Cliente").slice(0,80),email:String(customer.email||"").slice(0,120)},
   redirect_url:origin+"/login?subscription_return=1",
   webhook:{url:origin+"/api/subscription-contract?action=billingWebhook",events:["paid"]},
-  options:{single_payment:true,require_delivery_address:false,payment_methods_enabled:["credit_card","pix"],valid_until:new Date(invoice.expiresAtMs).toISOString()}
+  options:{single_payment:true,require_delivery_address:false,payment_methods_enabled:[invoice.paymentMethod],valid_until:new Date(invoice.expiresAtMs).toISOString()}
  };
  const digits=String(customer.whatsapp||"").replace(/\D/g,""),national=digits.startsWith("55")?digits.slice(2):digits;
  if(national.length===10||national.length===11)body.customer.phone_number="+55"+national;
@@ -78,7 +78,7 @@ export async function confirmBillingPayment(db,{orderNsu,slug,transactionNsu}){
  const response=await fetch(CHECKOUT_HOST+"/payment_check",{method:"POST",headers:{"Content-Type":"application/json","X-Api-Key":merchant.apiKey},body:JSON.stringify({handle:merchant.handle,order_nsu:orderNsu,transaction_nsu:transactionNsu,slug}),signal:AbortSignal.timeout(10000)});
  if(!response.ok)return {ok:false,code:"payment_check_http_"+response.status};
  const verification=await response.json().catch(()=>({}));
- if(!checkoutPaymentApproved(verification,snap.data().priceCents))return {ok:false,code:"payment_not_verified"};
+ if(!checkoutPaymentApproved(verification,snap.data().priceCents)|| (snap.data().paymentMethod&&verification.capture_method!==snap.data().paymentMethod))return {ok:false,code:"payment_not_verified"};
  const invoice=snap.data(),subRef=db.collection("subscriptions").doc(invoice.restaurantId),contractRef=db.collection("subscriptionContracts").doc(invoice.contractId);
  const notificationId=invoiceId+"_paid";let newlyPaid=false,review=false;
  await db.runTransaction(async tx=>{
