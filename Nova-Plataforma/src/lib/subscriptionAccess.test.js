@@ -24,3 +24,10 @@ test("estabelecimento antigo sem assinatura não perde pedidos já operantes",as
  assert.equal(result.allowed,true);
  assert.equal(result.status,"legacy_without_subscription");
 });
+
+test("mensalidade InfinitePay ativa só libera enquanto período estiver pago",()=>{
+ const active={planId:"Essencial",status:"active",billingMode:"manual_checkout",paidUntil:new Date(now+86400000)};
+ assert.equal(subscriptionAccess(active,now).allowed,true);
+ assert.equal(subscriptionAccess({...active,paidUntil:new Date(now-1)},now).error,"subscription_past_due");
+ assert.equal(subscriptionAccess({...active,paidUntil:null},now).allowed,false);
+});
