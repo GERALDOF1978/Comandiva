@@ -1,7 +1,7 @@
 import {createHash} from "node:crypto";
 
 // Texto-base para revisão jurídica. Nunca ativar aceites sem identificar o prestador real.
-export const DISHY_CONTRACT_VERSION="2026-11-08-draft-1";
+export const DISHY_CONTRACT_VERSION="2026-11-08-draft-2";
 export const CONTRACT_REQUIRED_FIELDS=["issuerName","issuerDocument","issuerEmail","issuerAddress"];
 export function contractIssuerReady(config){
  return config?.enabled===true &&
@@ -33,7 +33,7 @@ Documento preparado em: ${when} (horário de Brasília)
 
 3. TESTE GRATUITO. Novos cadastros podem receber até 37 dias gratuitos nas condições da oferta vigente. O período gratuito não gera cobrança automática nem autoriza débito ou renovação onerosa sem contratação expressa.
 
-4. PAGAMENTO E ATIVAÇÃO. As condições de cobrança, vencimento e meio de pagamento devem ser apresentadas e confirmadas antes da cobrança. O aceite deste contrato, isoladamente, não comprova quitação, não processa pagamento e não ativa um plano pago. A ativação depende de pagamento confirmado e registrado pelo prestador.
+4. PAGAMENTO E ATIVAÇÃO. A mensalidade indicada na cláusula 2 é cobrada por checkout avulso InfinitePay, com opção de PIX ou cartão. O aceite do contrato não autoriza cobrança automática, não realiza pagamento nem ativa o plano. Cada mensalidade requer confirmação expressa no checkout. A liberação de acesso depende de pagamento efetivamente confirmado pela intermediadora e verificado pelo servidor do Dishy. A mensalidade paga assegura um mês de acesso, contado do final do teste gratuito ainda vigente, do final do período já pago, ou da confirmação do pagamento quando não houver período vigente. O link de pagamento fica disponível nos sete dias anteriores ao vencimento ou após o encerramento do período anterior.
 
 5. USO DO SERVIÇO. O contratante responde pelos dados de seu cardápio, produtos, preços, funcionamento, funcionários, tributos e atendimento ao consumidor. É proibido compartilhar acessos de forma insegura, usar a plataforma para fraude ou realizar práticas ilícitas.
 
