@@ -12,7 +12,7 @@ export default function SubscriptionBillingPanel({user,membership}){
  async function refresh(){
   try{
    const token=await user.getIdToken();
-   const r=await fetch("/api/subscription-billing?restaurantId="+encodeURIComponent(restaurantId),{headers:{Authorization:"Bearer "+token},cache:"no-store"});
+   const r=await fetch("/api/subscription-contract?action=billingStatus&restaurantId="+encodeURIComponent(restaurantId),{headers:{Authorization:"Bearer "+token},cache:"no-store"});
    const data=await r.json().catch(()=>({}));
    if(!r.ok)throw Error("Não foi possível consultar as mensalidades.");
    setInvoices(Array.isArray(data.invoices)?data.invoices:[]);
