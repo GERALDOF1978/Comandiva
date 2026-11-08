@@ -11,13 +11,14 @@ export default async function handler(req,res){
   await verifyBillingOwner(db,user,rid);
   if(req.method==="GET"){
    const entries=await db.collection("subscriptionInvoices").where("restaurantId","==",rid).limit(30).get();
-   const bills=entries.docs.map(s=>({id:s.id,status:s.data().status,planId:s.data().planId,planName:s.data().planName,priceCents:s.data().priceCents,checkoutUrl:s.data().checkoutUrl||null,expiresAtMs:s.data().expiresAtMs,paidAt:s.data().paidAt?.toDate?.()?.toISOString?.()||null,periodEndAt:s.data().periodEndAt?.toDate?.()?.toISOString?.()||null}));
+   const bills=entries.docs.map(s=>({id:s.id,status:s.data().status,planId:s.data().planId,planName:s.data().planName,priceCents:s.data().priceCents,paymentMethod:s.data().paymentMethod||null,checkoutUrl:s.data().checkoutUrl||null,expiresAtMs:s.data().expiresAtMs,paidAt:s.data().paidAt?.toDate?.()?.toISOString?.()||null,periodEndAt:s.data().periodEndAt?.toDate?.()?.toISOString?.()||null}));
    bills.sort((a,b)=>(b.expiresAtMs||0)-(a.expiresAtMs||0));
    return res.status(200).json({enabled:billingEnabled(),invoices:bills,checkoutMode:"PIX_OR_CARD_ONE_TIME",automaticRenewal:false});
   }
   if(body.action!=="checkout")return res.status(400).json({error:"unknown_action"});
   if(!billingEnabled())return res.status(409).json({error:"billing_not_configured"});
-  const contractId=String(body.contractId||"");
+  const contractId=String(body.contractId||""),paymentMethod=String(body.paymentMethod||"");
+  if(!["pix","credit_card"].includes(paymentMethod))return res.status(400).json({error:"select_payment_method"});
   if(!/^[a-f0-9]{40}$/.test(contractId))return res.status(400).json({error:"invalid_contract"});
   const [contractSnap,subscriptionSnap]=await Promise.all([db.collection("subscriptionContracts").doc(contractId).get(),db.collection("subscriptions").doc(rid).get()]);
   if(!contractSnap.exists||!subscriptionSnap.exists)return res.status(404).json({error:"contract_or_subscription_not_found"});
@@ -37,17 +38,18 @@ export default async function handler(req,res){
    if(old.exists){
     const oldInvoice=old.data();
     if(oldInvoice.contractId!==contractId||oldInvoice.priceCents!==contract.priceCents)throw Error("another_invoice_exists_for_cycle");
+    if(oldInvoice.paymentMethod&&oldInvoice.paymentMethod!==paymentMethod)throw Error("invoice_payment_method_locked");
     if(oldInvoice.status==="paid")throw Error("invoice_already_paid");
     if(oldInvoice.checkoutUrl&&oldInvoice.status==="pending"&&oldInvoice.expiresAtMs>Date.now()){existingUrl=oldInvoice.checkoutUrl;return;}
     if(oldInvoice.status==="creating"&&Date.now()-Number(oldInvoice.lastAttemptMs||0)<120000)throw Error("invoice_creation_in_progress");
     if(oldInvoice.expiresAtMs<Date.now())throw Error("invoice_expired_contact_support");
     if(!["creating","error","pending"].includes(oldInvoice.status))throw Error("invoice_not_payable");
-    invoiceData=oldInvoice;needsCreation=true;
-    tx.update(invoiceRef,{status:"creating",lastAttemptMs:Date.now(),updatedAt:FieldValue.serverTimestamp()});
+    invoiceData={...oldInvoice,paymentMethod:oldInvoice.paymentMethod||paymentMethod};needsCreation=true;
+    tx.update(invoiceRef,{status:"creating",paymentMethod:oldInvoice.paymentMethod||paymentMethod,lastAttemptMs:Date.now(),updatedAt:FieldValue.serverTimestamp()});
     return;
    }
    const now=Date.now(),expiresAtMs=now+14*86400000;
-   invoiceData={restaurantId:rid,contractId,planId:contract.planId,planName:contract.planName,priceCents:contract.priceCents,orderNsu,billingAnchor:billingAnchor(sub),dueAtMs:(Number.isFinite(toMillis(sub.paidUntil))?toMillis(sub.paidUntil):sub.status==="trial"&&Number.isFinite(toMillis(sub.trialEndsAt))?toMillis(sub.trialEndsAt):now),status:"creating",createdAt:FieldValue.serverTimestamp(),lastAttemptMs:now,expiresAtMs};
+   invoiceData={restaurantId:rid,contractId,planId:contract.planId,planName:contract.planName,priceCents:contract.priceCents,paymentMethod,orderNsu,billingAnchor:billingAnchor(sub),dueAtMs:(Number.isFinite(toMillis(sub.paidUntil))?toMillis(sub.paidUntil):sub.status==="trial"&&Number.isFinite(toMillis(sub.trialEndsAt))?toMillis(sub.trialEndsAt):now),status:"creating",createdAt:FieldValue.serverTimestamp(),lastAttemptMs:now,expiresAtMs};
    tx.create(invoiceRef,invoiceData);needsCreation=true;
   });
   if(existingUrl)return res.status(200).json({ok:true,invoiceId,checkoutUrl:existingUrl,reused:true,automaticRenewal:false});
@@ -75,7 +77,7 @@ export default async function handler(req,res){
   return res.status(201).json({ok:true,invoiceId,checkoutUrl,automaticRenewal:false,note:"Cobrança avulsa. Ativação somente após confirmação oficial InfinitePay."});
  }catch(error){
   const code=String(error.message||"billing_processing_failed");
-  const known=["owner_access_denied","unauthorized","subscription_cycle_changed","another_invoice_exists_for_cycle","invoice_already_paid","invoice_creation_in_progress","invoice_expired_contact_support","invoice_not_payable"];
+  const known=["owner_access_denied","unauthorized","subscription_cycle_changed","another_invoice_exists_for_cycle","invoice_payment_method_locked","invoice_already_paid","invoice_creation_in_progress","invoice_expired_contact_support","invoice_not_payable"];
   return res.status(code==="unauthorized"?401:code==="owner_access_denied"?403:known.includes(code)?409:500).json({error:known.includes(code)?code:code==="unauthorized"?"unauthorized":"billing_processing_failed"});
  }
 }
