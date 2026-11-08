@@ -1,0 +1,120 @@
+{
+  "name": "Dishy | Contratos assinados | WhatsApp + e-mail (CONFIGURAR)",
+  "nodes": [
+    {
+      "id": "f6d2ce70-0001-4000-9000-000000000001",
+      "name": "Contrato aceito (Webhook)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dishy-contrato-aceito",
+        "authentication": "headerAuth",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "notes": "IMPORTANTE: configurar a credencial Header Auth (header X-Dishy-Contract-Key), idêntica a N8N_CONTRACT_WEBHOOK_TOKEN na Vercel. Não publicar sem credencial."
+    },
+    {
+      "id": "f6d2ce70-0002-4000-9000-000000000002",
+      "name": "Validar evento e montar mensagens",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const body = $input.first().json.body ?? $input.first().json;\nif(body.eventType !== \"CONTRACT_ACCEPTED\") throw Error(\"Evento incorreto\");\nif(!/^[a-f0-9]{40}$/i.test(String(body.eventId||\"\"))) throw Error(\"Identificador inválido\");\nif(!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(String(body.toEmail||\"\"))) throw Error(\"E-mail inválido\");\nconst phone=String(body.toWhatsApp||\"\").replace(/\\D/g,\"\");\nif(phone.length<10||phone.length>13||!String(body.contractText||\"\").trim()) throw Error(\"Destinatário ou contrato ausente\");\nconst whatsappNumber=phone.startsWith(\"55\")?phone:\"55\"+phone;\nconst subject=\"Seu contrato Dishy — \"+String(body.planName||\"Plano\");\nconst message=\"Olá! Seu aceite do contrato do Dishy foi registrado.\\n\\nPlano: \"+String(body.planName||\"\")+\n\"\\nProtocolo: \"+body.eventId+\"\\nSHA-256: \"+String(body.sha256||\"\")+\n\"\\n\\nO documento integral foi enviado para o seu e-mail cadastrado. Para consultar sua assinatura, entre no seu painel em https://dishy.com.br/login e abra Meu plano.\\n\\nNenhum pagamento é cobrado por esta mensagem.\";\nreturn [{json:{eventId:body.eventId,toEmail:body.toEmail,toWhatsApp:whatsappNumber,subject,emailText:String(body.contractText),whatsappText:message,planId:body.planId,sha256:body.sha256}}];"
+      }
+    },
+    {
+      "id": "f6d2ce70-0003-4000-9000-000000000003",
+      "name": "Enviar contrato por e-mail (SMTP)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        790,
+        180
+      ],
+      "parameters": {
+        "fromEmail": "CONFIGURAR_REMETENTE@exemplo.com",
+        "toEmail": "={{ $json.toEmail }}",
+        "subject": "={{ $json.subject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.emailText }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "notes": "Configurar SMTP e remetente real; recebe o texto integral da cópia aceita.",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000
+    },
+    {
+      "id": "f6d2ce70-0004-4000-9000-000000000004",
+      "name": "Avisar no WhatsApp (Evolution)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        790,
+        430
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://CONFIGURAR_EVOLUTION/message/sendText/CONFIGURAR_INSTANCIA",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ number: $json.toWhatsApp, text: $json.whatsappText }) }}",
+        "options": {}
+      },
+      "notes": "Configurar a URL da Evolution API e credencial HTTP Header Auth com nome apikey e chave da instância. O WhatsApp recebe confirmação + referência; e-mail recebe texto integral.",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000
+    }
+  ],
+  "connections": {
+    "Contrato aceito (Webhook)": {
+      "main": [
+        [
+          {
+            "node": "Validar evento e montar mensagens",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar evento e montar mensagens": {
+      "main": [
+        [
+          {
+            "node": "Enviar contrato por e-mail (SMTP)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Avisar no WhatsApp (Evolution)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "tags": []
+}
