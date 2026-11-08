@@ -47,7 +47,7 @@ export default async function handler(req,res){
     return;
    }
    const now=Date.now(),expiresAtMs=now+14*86400000;
-   invoiceData={restaurantId:rid,contractId,planId:contract.planId,planName:contract.planName,priceCents:contract.priceCents,orderNsu,billingAnchor:billingAnchor(sub),status:"creating",createdAt:FieldValue.serverTimestamp(),lastAttemptMs:now,expiresAtMs};
+   invoiceData={restaurantId:rid,contractId,planId:contract.planId,planName:contract.planName,priceCents:contract.priceCents,orderNsu,billingAnchor:billingAnchor(sub),dueAtMs:(Number.isFinite(toMillis(sub.paidUntil))?toMillis(sub.paidUntil):sub.status==="trial"&&Number.isFinite(toMillis(sub.trialEndsAt))?toMillis(sub.trialEndsAt):now),status:"creating",createdAt:FieldValue.serverTimestamp(),lastAttemptMs:now,expiresAtMs};
    tx.create(invoiceRef,invoiceData);needsCreation=true;
   });
   if(existingUrl)return res.status(200).json({ok:true,invoiceId,checkoutUrl:existingUrl,reused:true,automaticRenewal:false});
