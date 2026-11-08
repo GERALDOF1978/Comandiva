@@ -8,6 +8,7 @@ import {PLAN_MODULES,PLAN_ALWAYS_AVAILABLE,PLAN_OPTIONAL_MODULES,normalizePlanMo
 import WhatsAppConnection from "./components/WhatsAppConnection.jsx";
 import SupportPage from "./components/SupportPage.jsx";
 import SubscriptionContractDialog from "./components/SubscriptionContractDialog.jsx";
+import SubscriptionBillingPanel from "./components/SubscriptionBillingPanel.jsx";
 import MasterSupportPanel from "./components/MasterSupportPanel.jsx";
 import {enabledPaymentMethods} from "./lib/paymentMethods.js";
 import {enabledServiceModes,validServiceModes} from "./lib/serviceModes.js";
@@ -380,6 +381,7 @@ function MyPlanPage({user,membership}){
    <p className="myPlanNote">O pedido de troca chega ao Master para análise. Clicar em solicitar não contrata, ativa nem cobra o plano; o estabelecimento mantém a assinatura atual até confirmação. Pagamentos online de assinaturas ainda não estão integrados.</p>
    </>}
   </>}
+  <SubscriptionBillingPanel user={user} membership={membership}/>
   {contractPlan&&<SubscriptionContractDialog user={user} membership={membership} plan={contractPlan} onClose={()=>setContractPlan(null)}/>}
  </section>
 }
