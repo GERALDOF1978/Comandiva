@@ -410,7 +410,7 @@ export default async function handler(req,res){
         const restaurantId=String(req.query.restaurantId||"");if(!/^[a-zA-Z0-9_-]{5,128}$/.test(restaurantId))return res.status(400).json({error:"invalid_restaurant"});
   const db=getFirestore();const access=await db.collection("userRestaurantAccess").doc(decoded.uid).collection("restaurants").doc(restaurantId).get();
   if(!access.exists||access.data().active!==true)return res.status(403).json({error:"access_denied"});
-  const [subscription,restaurant]=await Promise.all([db.collection("subscriptions").doc(restaurantId).get(),db.collection("restaurants").doc(restaurantId).get()]);
+  const [subscription,restaurant,planCatalog]=await Promise.all([db.collection("subscriptions").doc(restaurantId).get(),db.collection("restaurants").doc(restaurantId).get(),db.collection("plans").get()]);
   if(!restaurant.exists)return res.status(404).json({error:"restaurant_not_found"});
   let raw=subscription.exists?subscription.data():null;
   // Preservar o prazo já concedido; a oferta de 37 dias vale apenas para novos testes.
@@ -418,7 +418,16 @@ export default async function handler(req,res){
   const plan=await db.collection("plans").doc(planId).get();
   function iso(v){return v?.toDate?.()?.toISOString?.()|| (v instanceof Date?v.toISOString():typeof v==="string"?v:null)}
   res.setHeader("Cache-Control","private, no-store");
-  return res.status(200).json({subscription:{planId,status:raw?.status||"unknown",trialEndsAt:iso(raw?.trialEndsAt),updatedAt:iso(raw?.updatedAt)},plan:plan?.exists?{name:plan.data().name,priceCents:plan.data().priceCents,active:plan.data().active,modules:normalizePlanModules(plan.data().modules)}:(planId==="trial"?{name:"Teste gratuito (37 dias)",priceCents:0,active:true,modules:PLAN_MODULES}:null)});
+  const availablePlans=planCatalog.docs.filter(p=>p.id!=="trial"&&p.data().active===true)
+    .map(p=>({id:p.id,name:p.data().name||p.id,priceCents:Number(p.data().priceCents)||0,modules:normalizePlanModules(p.data().modules)}))
+    .sort((a,b)=>a.priceCents-b.priceCents||a.name.localeCompare(b.name,"pt-BR"));
+  const trialPlan=planCatalog.docs.find(p=>p.id==="trial")?.data()||{};
+  res.setHeader("Cache-Control","private, no-store");
+  return res.status(200).json({
+    subscription:{planId,status:raw?.status||"unknown",trialEndsAt:iso(raw?.trialEndsAt),updatedAt:iso(raw?.updatedAt)},
+    plan:plan?.exists?{name:plan.data().name,priceCents:plan.data().priceCents,active:plan.data().active,modules:normalizePlanModules(plan.data().modules)}:(planId==="trial"?{name:"Teste gratuito (37 dias)",priceCents:0,active:true,modules:PLAN_MODULES}:null),
+    availablePlans:[{id:"trial",name:"Teste gratuito (37 dias)",priceCents:0,trialDurationDays:37,modules:normalizePlanModules(trialPlan.modules)},...availablePlans]
+  });
 
     }
     if(req.method==="POST"&&req.body?.action==="addEmployee"){
