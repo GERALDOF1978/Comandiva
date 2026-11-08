@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {createSubscriptionContractText,contractHash,cleanContractContact,DISHY_CONTRACT_VERSION} from "../../api/_subscription-contract.js";
+import {createSubscriptionContractText,contractHash,cleanContractContact,DISHY_CONTRACT_VERSION} from "../../server-api/_subscription-contract.js";
 const args={
  issuer:{issuerName:"Prestadora Exemplo Ltda",issuerDocument:"00.000.000/0001-00",issuerAddress:"Rua Teste, 1",issuerEmail:"prestador@example.com"},
  customer:{name:"Titular de Teste",document:"00000000000",email:"cliente@example.com"},
