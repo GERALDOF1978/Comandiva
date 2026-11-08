@@ -14,7 +14,7 @@ export default function SubscriptionContractDialog({user,membership,plan,onClose
  const [checkoutBusy,setCheckoutBusy]=useState(false);
  const [checkoutUrl,setCheckoutUrl]=useState("");
  const rid=membership.restaurantId;
- useEffect(()=>{let mounted=true;user.getIdToken().then(token=>fetch("/api/subscription-billing?restaurantId="+encodeURIComponent(rid),{headers:{Authorization:"Bearer "+token}})).then(r=>r.ok?r.json():{enabled:false}).then(data=>{if(mounted)setBillingEnabled(data.enabled===true)}).catch(()=>{});return()=>{mounted=false}},[rid,user.uid]);
+ useEffect(()=>{let mounted=true;user.getIdToken().then(token=>fetch("/api/subscription-contract?action=billingStatus&restaurantId="+encodeURIComponent(rid),{headers:{Authorization:"Bearer "+token}})).then(r=>r.ok?r.json():{enabled:false}).then(data=>{if(mounted)setBillingEnabled(data.enabled===true)}).catch(()=>{});return()=>{mounted=false}},[rid,user.uid]);
  function change(setter,value){setter(value);setPreview(null);setAccepted(false);setAllowWhatsapp(false);setError("")}
  async function prepare(){
   setBusy(true);setError("");setSuccess(null);
@@ -42,7 +42,7 @@ export default function SubscriptionContractDialog({user,membership,plan,onClose
   if(!window.confirm("Abrir pagamento pela InfinitePay? A mensalidade é avulsa, por PIX ou cartão, sem débito recorrente automático. Se você ainda estiver no período gratuito, a mensalidade paga será acrescida após o fim do teste."))return;
   setCheckoutBusy(true);setError("");
   try{
-   const token=await user.getIdToken(),response=await fetch("/api/subscription-billing",{method:"POST",headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({action:"checkout",restaurantId:rid,contractId:success.id})});
+   const token=await user.getIdToken(),response=await fetch("/api/subscription-contract?action=billingCheckout",{method:"POST",headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({action:"checkout",restaurantId:rid,contractId:success.id})});
    const data=await response.json().catch(()=>({}));
    if(!response.ok)throw Error(({payment_not_due_yet:"O pagamento ficará disponível a partir de 7 dias antes do fim do teste ou do período pago.",another_invoice_exists_for_cycle:"Já existe uma cobrança para esse período. Consulte seu histórico.",plan_change_requires_master:"A mudança de plano durante uma assinatura ativa precisa ser aprovada no Master.",contract_plan_changed:"O plano mudou desde o aceite. Confira um novo contrato."})[data.error]||data.error||"Falha ao gerar cobrança.");
    if(!/^https:\/\//.test(data.checkoutUrl))throw Error("Link de checkout inválido.");
