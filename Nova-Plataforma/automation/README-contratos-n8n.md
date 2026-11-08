@@ -53,10 +53,10 @@ Padrão seguro: se alguma configuração faltar, **somente a minuta é mostrada;
 Implementação adicional, **desabilitada até que o prestador efetivo e a conta que recebe estejam legalmente definidos**.
 
 ### Endpoints
-- \`GET /api/subscription-billing?restaurantId=...\`: consulta mensalidades, somente conta proprietária com token Firebase.
-- \`POST /api/subscription-billing\`: \`{"action":"checkout","restaurantId":"...","contractId":"..."}\`. Exige contrato aceito pelo proprietário e regras comerciais habilitadas. Gera checkout de uma única utilização, com vencimento próprio, PIX/cartão.
-- \`POST /api/subscription-payment-webhook\`: webhook público da InfinitePay. **Não possui assinatura de origem**, portanto sempre valida \`order_nsu\`, \`invoice_slug\`, \`transaction_nsu\` e valor **diretamente** no endpoint oficial \`payment_check\`, antes de ativar plano. Eventos repetidos não repetem a ativação.
-- \`POST /api/subscription-reminders\`: endpoint autenticado pelo segredo no header \`X-Dishy-Billing-Cron-Key\`, invocado pelo n8n diariamente às 09h (America/Sao_Paulo); prepara lembretes 7 e 2 dias antes, no vencimento, e 1, 3 e 5 dias após. Um mesmo evento por competência e marco de prazo não deve ser criado duas vezes.
+- \`GET /api/subscription-contract?action=billingStatus&restaurantId=...\`: consulta mensalidades, somente conta proprietária com token Firebase.
+- \`POST /api/subscription-contract?action=billingCheckout\`: \`{"action":"checkout","restaurantId":"...","contractId":"..."}\`. Exige contrato aceito pelo proprietário e regras comerciais habilitadas. Gera checkout de uma única utilização, com vencimento próprio, PIX/cartão.
+- \`POST /api/subscription-contract?action=billingWebhook\`: webhook público da InfinitePay. **Não possui assinatura de origem**, portanto sempre valida \`order_nsu\`, \`invoice_slug\`, \`transaction_nsu\` e valor **diretamente** no endpoint oficial \`payment_check\`, antes de ativar plano. Eventos repetidos não repetem a ativação.
+- \`POST /api/subscription-contract?action=billingReminders\`: endpoint autenticado pelo segredo no header \`X-Dishy-Billing-Cron-Key\`, invocado pelo n8n diariamente às 09h (America/Sao_Paulo); prepara lembretes 7 e 2 dias antes, no vencimento, e 1, 3 e 5 dias após. Um mesmo evento por competência e marco de prazo não deve ser criado duas vezes.
 
 ### Workflows importáveis no n8n (inativos)
 - \`automation/n8n-dishy-mensalidades.workflow.json\`: webhook \`dishy-assinatura-evento\`, valida evento, envia texto por SMTP e WhatsApp Evolution API. Autenticação obrigatória \`X-Dishy-Billing-Key\`, mesmo valor que a variável segura \`N8N_BILLING_WEBHOOK_TOKEN\`.
