@@ -2,7 +2,14 @@
 export const NEW_TRIAL_DAYS=37;
 export function subscriptionAccess(record,now=Date.now()){
  if(!record||typeof record!=="object")return {allowed:false,error:"subscription_unavailable"};
- if(record.status==="active"&&record.planId!=="trial")return {allowed:true,status:"active"};
+ if(record.status==="active"&&record.planId!=="trial"){
+  if(record.billingMode==="manual_checkout"){
+   const paidUntil=record.paidUntil?.toMillis?.()??record.paidUntil?.toDate?.()?.getTime?.()??(record.paidUntil instanceof Date?record.paidUntil.getTime():typeof record.paidUntil==="string"?Date.parse(record.paidUntil):NaN);
+   if(!Number.isFinite(paidUntil))return {allowed:false,error:"subscription_unavailable"};
+   if(paidUntil<=now)return {allowed:false,error:"subscription_past_due",paidUntil};
+  }
+  return {allowed:true,status:"active"};
+ }
  if(record.status!=="trial"||record.planId!=="trial")return {allowed:false,error:"subscription_inactive"};
  const raw=record.trialEndsAt;
  const expiration=raw instanceof Date?raw.getTime()
