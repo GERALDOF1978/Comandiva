@@ -37,17 +37,21 @@ export default async function handler(req,res){
   const provider=issuer(),ready=signingReady(provider);
   const previewIssuer=ready?provider:{issuerName:"[PRESTADOR RESPONSÁVEL A INFORMAR]",issuerDocument:"[DOCUMENTO DO PRESTADOR]",issuerAddress:"[ENDEREÇO]",issuerEmail:"[E-MAIL]"};
   if(req.method==="GET"){
-   const customer={name:String(rs.data().name||"Contratante"),document:"[CPF/CNPJ DO CONTRATANTE]",email:user.email};
-   const text=createSubscriptionContractText({issuer:previewIssuer,customer,restaurant:{name:rs.data().name||"Estabelecimento"},plan,acceptedAt:Date.now()});
-   return res.status(200).json({ready,version:DISHY_CONTRACT_VERSION,planId,name:plan.name,priceCents:plan.priceCents,text,reason:ready?null:"O fornecedor legal, a revisão do contrato e o webhook n8n precisam estar configurados antes do aceite.",channels:["email","whatsapp"]});
+   const customer={name:String(req.query?.customerName||"").trim().slice(0,120)||"[CONTRATANTE]",document:String(req.query?.customerDocument||"").replace(/\\D/g,"").slice(0,14)||"[CPF/CNPJ DO CONTRATANTE]",email:user.email};
+   const draftTimestamp=Date.now();
+   const text=createSubscriptionContractText({issuer:previewIssuer,customer,restaurant:{name:rs.data().name||"Estabelecimento"},plan,acceptedAt:draftTimestamp});
+   return res.status(200).json({ready,version:DISHY_CONTRACT_VERSION,planId,name:plan.name,priceCents:plan.priceCents,text,draftTimestamp,draftHash:contractHash(text),reason:ready?null:"O fornecedor legal, a revisão do contrato e o webhook n8n precisam estar configurados antes do aceite.",channels:["email","whatsapp"]});
   }
   if(req.body?.action!=="accept"||req.body?.contractVersion!==DISHY_CONTRACT_VERSION||req.body?.acceptedTerms!==true||req.body?.authorizedWhatsApp!==true)return res.status(400).json({error:"acceptance_required"});
   if(!ready)return res.status(409).json({error:"contract_not_ready"});
   const name=String(req.body.customerName||"").trim().slice(0,120),document=String(req.body.customerDocument||"").replace(/\D/g,""),phone=cleanContractContact(req.body.whatsapp);
   const national=phone.startsWith("55")&&phone.length>=12?phone.slice(2):phone;
   if(name.length<5||![11,14].includes(document.length)||![10,11].includes(national.length))return res.status(400).json({error:"invalid_customer_identity"});
-  const now=new Date(),text=createSubscriptionContractText({issuer:provider,customer:{name,document,email:user.email},restaurant:{name:rs.data().name||"Estabelecimento"},plan,acceptedAt:now.toISOString()});
+  const draftTimestamp=Number(req.body.draftTimestamp);
+  if(!Number.isSafeInteger(draftTimestamp)||draftTimestamp>Date.now()||Date.now()-draftTimestamp>600000)return res.status(409).json({error:"contract_preview_expired"});
+  const text=createSubscriptionContractText({issuer:provider,customer:{name,document,email:user.email},restaurant:{name:rs.data().name||"Estabelecimento"},plan,acceptedAt:draftTimestamp});
   const sha256=contractHash(text);
+  if(sha256!==req.body.draftHash)return res.status(409).json({error:"contract_preview_changed"});
   const contractId=contractHash([rid,user.uid,planId,document,DISHY_CONTRACT_VERSION,plan.priceCents,contractHash(JSON.stringify(plan.modules))].join("|")).slice(0,40);
   const ref=db.collection("subscriptionContracts").doc(contractId),outbox=db.collection("contractDeliveryOutbox").doc(contractId);
   let newContract=false;
@@ -55,7 +59,7 @@ export default async function handler(req,res){
    const existing=await tx.get(ref);
    if(existing.exists)return;
    newContract=true;
-   tx.create(ref,{restaurantId:rid,actorUid:user.uid,planId,planName:plan.name,priceCents:plan.priceCents,modules:plan.modules,customer:{name,document,email:user.email,whatsapp:phone},issuer:provider,version:DISHY_CONTRACT_VERSION,contractText:text,sha256,acceptedAt:FieldValue.serverTimestamp(),state:"accepted_awaiting_payment",deliveryStatus:"queued"});
+   tx.create(ref,{restaurantId:rid,actorUid:user.uid,planId,planName:plan.name,priceCents:plan.priceCents,modules:plan.modules,customer:{name,document,email:user.email,whatsapp:phone},issuer:provider,version:DISHY_CONTRACT_VERSION,contractText:text,sha256,draftIssuedAt:new Date(draftTimestamp),acceptedAt:FieldValue.serverTimestamp(),state:"accepted_awaiting_payment",deliveryStatus:"queued"});
    tx.create(outbox,{contractId,restaurantId:rid,status:"queued",eventType:"CONTRACT_ACCEPTED",toEmail:user.email,toWhatsApp:phone,sha256,contractText:text,createdAt:FieldValue.serverTimestamp()});
   });
   if(!newContract)return res.status(200).json({ok:true,alreadyAccepted:true,contractId,deliveryStatus:"not_resent"});
