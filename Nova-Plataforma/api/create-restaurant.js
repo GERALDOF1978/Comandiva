@@ -6,6 +6,7 @@ import {enabledPaymentMethods,validPaymentMethods} from "../src/lib/paymentMetho
 import {buildInfiniteTapLink} from "../src/lib/nfcTap.js";
 import {createInfiniteCheckout} from "./_infinitepay.js";
 import {NEW_TRIAL_DAYS,restaurantMayReceiveOrders} from "../src/lib/subscriptionAccess.js";
+import {PLAN_MODULES,normalizePlanModules,validPlanModules} from "../src/lib/planModules.js";
 
 // Oferta vigente para novos cadastros e novas concessões; não reduz testes já concedidos.
 const TRIAL_DURATION_DAYS=NEW_TRIAL_DAYS;
@@ -17,6 +18,12 @@ function getAdmin(){
   const privateKey=process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g,"\n");
   if(!projectId||!clientEmail||!privateKey) throw new Error("Firebase Admin não configurado");
   return initializeApp({credential:cert({projectId,clientEmail,privateKey})});
+}
+async function getRestaurantPlanModules(db,restaurantId){
+  const [sub,restaurant]=await Promise.all([db.collection("subscriptions").doc(restaurantId).get(),db.collection("restaurants").doc(restaurantId).get()]);
+  const planId=sub.data()?.planId||restaurant.data()?.planId||"trial";
+  const plan=await db.collection("plans").doc(planId).get();
+  return {planId,modules:normalizePlanModules(plan.exists?plan.data()?.modules:undefined)};
 }
 function slugify(v){return v.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,50)}
 export default async function handler(req,res){
@@ -46,6 +53,18 @@ export default async function handler(req,res){
     const authHeader=req.headers.authorization||"";
     if(!authHeader.startsWith("Bearer ")) return res.status(401).json({error:"unauthorized"});
     const decoded=await getAuth().verifyIdToken(authHeader.slice(7),true);
+    // Autorização comercial também no servidor para operações protegidas nesta API.
+    // A permissão de funcionário/owner continua sendo conferida pelos handlers.
+    const actionName=String(req.method==="GET"?req.query?.action||"":req.body?.action||"");
+    const gatedActions={posTapSettings:"PDV",posSale:"PDV",pointTerminals:"PDV",pointSelectTerminal:"PDV",addEmployee:"Funcionários e permissões",setEmployeePermissions:"Funcionários e permissões",shifts:"Equipe em serviço",shift:"Equipe em serviço"};
+    if(gatedActions[actionName]){
+      const rid=String(req.method==="GET"?req.query?.restaurantId||"":req.body?.restaurantId||"");
+      if(!/^[A-Za-z0-9_-]{5,128}$/.test(rid))return res.status(400).json({error:"invalid_restaurant"});
+      const membership=await getFirestore().collection("restaurants").doc(rid).collection("members").doc(decoded.uid).get();
+      if(!membership.exists||membership.data()?.active!==true)return res.status(403).json({error:"access_denied"});
+      const capabilities=await getRestaurantPlanModules(getFirestore(),rid);
+      if(!capabilities.modules.includes(gatedActions[actionName]))return res.status(403).json({error:"plan_module_not_included"});
+    }
 
     // Suporte Dishy: fila privada por API autenticada; nenhum acesso direto do cliente à coleção Master.
     const supportAction=String(req.method==="GET"?req.query?.action||"":req.body?.action||"");
@@ -160,6 +179,7 @@ export default async function handler(req,res){
       if(restaurantSnap.data().status!=="active")return res.status(403).json({error:"restaurant_suspended"});
       const entitlement=await restaurantMayReceiveOrders(db,rid);
       if(!entitlement.allowed)return res.status(403).json({error:entitlement.error});
+      if(!(await getRestaurantPlanModules(db,rid)).modules.includes("PDV"))return res.status(403).json({error:"plan_module_not_included"});
       if(!isOwner){const perms=member.data()?.permissions||[];if(!Array.isArray(perms)||!perms.includes("PDV"))return res.status(403).json({error:"pos_permission_required"})}
       const method=String(body.paymentMethod||"");
       if(!["CASH","CARD_ON_DELIVERY","PIX","NFC_INFINITE_TAP"].includes(method))return res.status(400).json({error:"pos_payment_not_supported"});
@@ -380,25 +400,34 @@ export default async function handler(req,res){
       const db=getFirestore(),access=await db.collection("restaurants").doc(id).collection("members").doc(decoded.uid).get();
       if(!access.exists||access.data().active!==true)return res.status(403).json({error:"access_denied"});
       const role=access.data().role||"employee";
-      const permissionKeys=["Início","Pedidos","Cardápio","Clientes","Financeiro","Cozinha","PDV","Mesas e comandas","Delivery","Entregadores","Promoções","Marketing","Configurações","Meu plano","Funcionários e permissões","Equipe em serviço"];
-      const permissions=role==="owner"?permissionKeys:(Array.isArray(access.data().permissions)?access.data().permissions:[]);
-      if(role!=="owner")return res.status(200).json({role,permissions,employees:[]});
+      const planAccess=await getRestaurantPlanModules(db,id);
+      const permissions=(role==="owner"?PLAN_MODULES:(Array.isArray(access.data().permissions)?access.data().permissions:[])).filter(mod=>planAccess.modules.includes(mod));
+      if(role!=="owner")return res.status(200).json({role,permissions,planId:planAccess.planId,planModules:planAccess.modules,employees:[]});
       const members=await db.collection("restaurants").doc(id).collection("members").get();
-      return res.status(200).json({role,permissions,employees:members.docs.map(d=>({uid:d.id,email:d.data().email||"",name:d.data().name||"",role:d.data().role||"employee",active:d.data().active===true,permissions:Array.isArray(d.data().permissions)?d.data().permissions:[]}))});
+      return res.status(200).json({role,permissions,planId:planAccess.planId,planModules:planAccess.modules,employees:members.docs.map(d=>({uid:d.id,email:d.data().email||"",name:d.data().name||"",role:d.data().role||"employee",active:d.data().active===true,permissions:Array.isArray(d.data().permissions)?d.data().permissions:[]}))});
     }
     if(req.method==="GET"){
         const restaurantId=String(req.query.restaurantId||"");if(!/^[a-zA-Z0-9_-]{5,128}$/.test(restaurantId))return res.status(400).json({error:"invalid_restaurant"});
   const db=getFirestore();const access=await db.collection("userRestaurantAccess").doc(decoded.uid).collection("restaurants").doc(restaurantId).get();
-  if(!access.exists||access.data().active!==true)return res.status(403).json({error:"access_denied"});
-  const [subscription,restaurant]=await Promise.all([db.collection("subscriptions").doc(restaurantId).get(),db.collection("restaurants").doc(restaurantId).get()]);
+  if(!access.exists||access.data().active!==true||access.data().role!=="owner")return res.status(403).json({error:"owner_only"});
+  const [subscription,restaurant,planCatalog]=await Promise.all([db.collection("subscriptions").doc(restaurantId).get(),db.collection("restaurants").doc(restaurantId).get(),db.collection("plans").get()]);
   if(!restaurant.exists)return res.status(404).json({error:"restaurant_not_found"});
   let raw=subscription.exists?subscription.data():null;
   // Preservar o prazo já concedido; a oferta de 37 dias vale apenas para novos testes.
   const planId=raw?.planId||restaurant.data().planId||"trial";
-  const plan=planId!=="trial"?await db.collection("plans").doc(planId).get():null;
+  const plan=await db.collection("plans").doc(planId).get();
   function iso(v){return v?.toDate?.()?.toISOString?.()|| (v instanceof Date?v.toISOString():typeof v==="string"?v:null)}
   res.setHeader("Cache-Control","private, no-store");
-  return res.status(200).json({subscription:{planId,status:raw?.status||"unknown",trialEndsAt:iso(raw?.trialEndsAt),updatedAt:iso(raw?.updatedAt)},plan:plan?.exists?{name:plan.data().name,priceCents:plan.data().priceCents,active:plan.data().active}:null});
+  const availablePlans=planCatalog.docs.filter(p=>p.id!=="trial"&&p.data().active===true)
+    .map(p=>({id:p.id,name:p.data().name||p.id,priceCents:Number(p.data().priceCents)||0,modules:normalizePlanModules(p.data().modules)}))
+    .sort((a,b)=>a.priceCents-b.priceCents||a.name.localeCompare(b.name,"pt-BR"));
+  const trialPlan=planCatalog.docs.find(p=>p.id==="trial")?.data()||{};
+  res.setHeader("Cache-Control","private, no-store");
+  return res.status(200).json({
+    subscription:{planId,status:raw?.status||"unknown",trialEndsAt:iso(raw?.trialEndsAt),updatedAt:iso(raw?.updatedAt)},
+    plan:plan?.exists?{name:plan.data().name,priceCents:plan.data().priceCents,active:plan.data().active,modules:normalizePlanModules(plan.data().modules)}:(planId==="trial"?{name:"Teste gratuito (37 dias)",priceCents:0,active:true,modules:PLAN_MODULES}:null),
+    availablePlans:[{id:"trial",name:"Teste gratuito (37 dias)",priceCents:0,trialDurationDays:37,modules:normalizePlanModules(trialPlan.modules)},...availablePlans]
+  });
 
     }
     if(req.method==="POST"&&req.body?.action==="addEmployee"){
@@ -437,17 +466,27 @@ export default async function handler(req,res){
       batch.create(db.collection("restaurants").doc(restaurantId).collection("audit").doc(),{action:"OWNER_UPDATE_EMPLOYEE_PERMISSIONS",actorUid:decoded.uid,targetUid:uid,createdAt:FieldValue.serverTimestamp()});
       await batch.commit();return res.status(200).json({ok:true});
     }
-    if(["createPlan","updatePlan","setPlanActive","assignSubscription","setSubscriptionStatus"].includes(req.body?.action)){
+    if(["createPlan","updatePlan","updateTrialPlan","setPlanActive","assignSubscription","setSubscriptionStatus"].includes(req.body?.action)){
       const db=getFirestore(),master=await db.collection("platformAdmins").doc(decoded.uid).get();
       if(master.data()?.active!==true)return res.status(403).json({error:"master_access_denied"});
-      const {action,planId,restaurantId,name,priceCents,active}=req.body;
+      const {action,planId,restaurantId,name,priceCents,active,modules}=req.body;
       const validId=v=>typeof v==="string"&&/^[a-zA-Z0-9_-]{1,128}$/.test(v);
       const now=FieldValue.serverTimestamp();
+      if(["createPlan","updatePlan","updateTrialPlan"].includes(action)&&modules!==undefined&&!validPlanModules(modules))return res.status(400).json({error:"invalid_plan_modules"});
+      if(action==="updateTrialPlan"){
+        if(planId!=="trial"||modules===undefined||!validPlanModules(modules))return res.status(400).json({error:"invalid_trial_plan"});
+        const normalized=normalizePlanModules(modules);
+        const batch=db.batch();
+        batch.set(db.collection("plans").doc("trial"),{name:"Teste gratuito (37 dias)",priceCents:0,active:true,trialDurationDays:TRIAL_DURATION_DAYS,modules:normalized,updatedAt:now},{merge:true});
+        batch.create(db.collection("platformAudit").doc(),{action:"MASTER_UPDATE_TRIAL_MODULES",actorUid:decoded.uid,modules:normalized,createdAt:now});
+        await batch.commit();
+        return res.status(200).json({ok:true});
+      }
       if(action==="createPlan"){
         if(!validId(planId)||planId==="trial"||typeof name!=="string"||name.trim().length<3||name.length>80||!Number.isSafeInteger(priceCents)||priceCents<0||priceCents>100000000)return res.status(400).json({error:"invalid_plan"});
         const ref=db.collection("plans").doc(planId);
         if((await ref.get()).exists)return res.status(409).json({error:"plan_exists"});
-        await ref.create({name:name.trim(),priceCents,active:true,createdAt:now,updatedAt:now});
+        await ref.create({name:name.trim(),priceCents,active:true,...(modules!==undefined?{modules:normalizePlanModules(modules)}:{}),createdAt:now,updatedAt:now});
         return res.status(201).json({ok:true});
       }
       if(action==="updatePlan"){
@@ -455,7 +494,7 @@ export default async function handler(req,res){
         const ref=db.collection("plans").doc(planId);
         if(!(await ref.get()).exists)return res.status(404).json({error:"plan_not_found"});
         const batch=db.batch();
-        batch.update(ref,{name:name.trim(),priceCents,updatedAt:now});
+        batch.update(ref,{name:name.trim(),priceCents,...(modules!==undefined?{modules:normalizePlanModules(modules)}:{}),updatedAt:now});
         batch.create(db.collection("platformAudit").doc(),{action:"MASTER_UPDATE_PLAN",planId,actorUid:decoded.uid,createdAt:now});
         await batch.commit();
         return res.status(200).json({ok:true});
