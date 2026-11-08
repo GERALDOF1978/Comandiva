@@ -25,7 +25,7 @@ Contato: ${issuer.issuerEmail}
 Contratante: ${client} — Documento: ${clientDoc}
 Estabelecimento: ${restaurant.name}
 E-mail cadastrado: ${customer.email}
-Data e horário da manifestação de aceite: ${when} (Brasília)
+Documento preparado em: ${when} (horário de Brasília)
 
 1. OBJETO. O prestador identificado acima disponibiliza ao contratante, enquanto vigente a assinatura, acesso não exclusivo ao software Dishy para gestão do estabelecimento e aos módulos correspondentes ao plano contratado.
 
@@ -49,6 +49,6 @@ Data e horário da manifestação de aceite: ${when} (Brasília)
 
 11. LEGISLAÇÃO E DISPOSIÇÕES GERAIS. Aplicam-se as normas brasileiras pertinentes. As partes buscarão solução amigável para divergências, respeitadas as regras legais de competência e proteção do consumidor quando aplicáveis.
 
-Este documento reflete as condições aceitas pelo contratante. A versão integral e seu resumo criptográfico deverão ser preservados pelo Dishy. Redigido como minuta inicial, sujeito à revisão jurídica antes da ativação comercial.`;
+O aceite eletrônico da versão integral deste documento, acompanhado de registro da conta autenticada, horário e resumo criptográfico, será preservado pelo Dishy. O aceite isoladamente não gera cobrança nem ativa assinatura.`;
 }
 export function contractHash(text){return createHash("sha256").update(text,"utf8").digest("hex")}
