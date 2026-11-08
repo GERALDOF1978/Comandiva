@@ -30,7 +30,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const body = $input.first().json.body ?? $input.first().json;\nif(body.eventType !== \"CONTRACT_ACCEPTED\") throw Error(\"Evento incorreto\");\nif(!/^[a-f0-9]{40}$/i.test(String(body.eventId||\"\"))) throw Error(\"Identificador inválido\");\nif(!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(String(body.toEmail||\"\"))) throw Error(\"E-mail inválido\");\nconst phone=String(body.toWhatsApp||\"\").replace(/\\D/g,\"\");\nif(phone.length<10||phone.length>13||!String(body.contractText||\"\").trim()) throw Error(\"Destinatário ou contrato ausente\");\nconst whatsappNumber=phone.startsWith(\"55\")?phone:\"55\"+phone;\nconst subject=\"Seu contrato Dishy — \"+String(body.planName||\"Plano\");\nconst message=\"Olá! Seu aceite do contrato do Dishy foi registrado.\\n\\nPlano: \"+String(body.planName||\"\")+\n\"\\nProtocolo: \"+body.eventId+\"\\nSHA-256: \"+String(body.sha256||\"\")+\n\"\\n\\nO documento integral foi enviado para o seu e-mail cadastrado. Para consultar sua assinatura, entre no seu painel em https://dishy.com.br/login e abra Meu plano.\\n\\nNenhum pagamento é cobrado por esta mensagem.\";\nreturn [{json:{eventId:body.eventId,toEmail:body.toEmail,toWhatsApp:whatsappNumber,subject,emailText:String(body.contractText),whatsappText:message,planId:body.planId,sha256:body.sha256}}];"
+        "jsCode": "const body = $input.first().json.body ?? $input.first().json;\nif(body.eventType !== \"CONTRACT_ACCEPTED\") throw Error(\"Evento incorreto\");\nif(!/^[a-f0-9]{40}$/i.test(String(body.eventId||\"\"))) throw Error(\"Identificador inválido\");\nif(!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(String(body.toEmail||\"\"))) throw Error(\"E-mail inválido\");\nconst phone=String(body.toWhatsApp||\"\").replace(/\\D/g,\"\");\nif(phone.length<10||phone.length>13||!String(body.contractText||\"\").trim()) throw Error(\"Destinatário ou contrato ausente\");\nconst whatsappNumber=phone.startsWith(\"55\")?phone:\"55\"+phone;\nconst subject=\"Seu contrato Dishy — \"+String(body.planName||\"Plano\");\nconst message=\"Olá! Seu aceite do contrato do Dishy foi registrado.\\n\\nPlano: \"+String(body.planName||\"\")+\n\"\\nProtocolo: \"+body.eventId+\"\\nSHA-256: \"+String(body.sha256||\"\")+\n\"\\n\\nO documento integral também será enviado por este WhatsApp em partes e para seu e-mail cadastrado. Para consultar sua assinatura, entre no seu painel em https://dishy.com.br/login e abra Meu plano.\\n\\nNenhum pagamento é cobrado por esta mensagem.\";\nreturn [{json:{eventId:body.eventId,toEmail:body.toEmail,toWhatsApp:whatsappNumber,subject,emailText:String(body.contractText),whatsappText:message,planId:body.planId,sha256:body.sha256}}];"
       }
     },
     {
@@ -63,7 +63,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        790,
+        1060,
         430
       ],
       "parameters": {
@@ -76,10 +76,25 @@
         "jsonBody": "={{ JSON.stringify({ number: $json.toWhatsApp, text: $json.whatsappText }) }}",
         "options": {}
       },
-      "notes": "Configurar a URL da Evolution API e credencial HTTP Header Auth com nome apikey e chave da instância. O WhatsApp recebe confirmação + referência; e-mail recebe texto integral.",
+      "notes": "Configurar URL e credencial HTTP Header Auth (apikey). O contrato completo será enviado em partes pelo WhatsApp.",
       "retryOnFail": true,
       "maxTries": 3,
       "waitBetweenTries": 3000
+    },
+    {
+      "id": "f6d2ce70-0005-4000-9000-000000000005",
+      "name": "Separar contrato para WhatsApp",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        790,
+        430
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const v=$input.first().json;\nconst full=\"📄 CONTRATO DISHY — \"+String(v.subject||\"\")+\n\"\\nIdentificador: \"+v.eventId+\n\"\\n\\n\"+String(v.emailText||\"\");\nif(!String(v.emailText||\"\").trim())throw Error(\"Contrato vazio\");\nconst chunks=[];\nfor(let pos=0;pos<full.length;pos+=2800)chunks.push(full.slice(pos,pos+2800));\nreturn chunks.map((part,i)=>({json:{eventId:v.eventId,toWhatsApp:v.toWhatsApp,whatsappText:\"Parte \"+(i+1)+\"/\"+chunks.length+\"\\n\"+part}}));"
+      },
+      "notes": "O contrato integral é enviado em partes (máximo 2800 caracteres cada) para não ultrapassar o tamanho da mensagem na Evolution API. Confirme a entrega no n8n."
     }
   ],
   "connections": {
@@ -102,6 +117,17 @@
             "type": "main",
             "index": 0
           },
+          {
+            "node": "Separar contrato para WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar contrato para WhatsApp": {
+      "main": [
+        [
           {
             "node": "Avisar no WhatsApp (Evolution)",
             "type": "main",
