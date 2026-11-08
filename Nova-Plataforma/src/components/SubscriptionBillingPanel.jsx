@@ -27,7 +27,7 @@ export default function SubscriptionBillingPanel({user,membership}){
   {loading?<p>Consultando mensalidades...</p>:invoices.length===0?<p>{enabled?"Nenhuma mensalidade emitida. Escolha um plano, leia e aceite o contrato.":"As cobranças serão liberadas depois da configuração comercial da conta responsável."}</p>:
   <div style={{display:"grid",gap:10}}>
    {invoices.map(invoice=><article key={invoice.id} style={{border:"1px solid #42516a",borderRadius:12,padding:14,display:"flex",gap:12,alignItems:"center",justifyContent:"space-between",flexWrap:"wrap"}}>
-    <div><strong>{invoice.planName} · {format(invoice.priceCents)}</strong><p style={{margin:"4px 0",fontSize:13}}>{statuses[invoice.status]||invoice.status}</p>
+    <div><strong>{invoice.planName} · {format(invoice.priceCents)}</strong><p style={{margin:"4px 0",fontSize:13}}>{statuses[invoice.status]||invoice.status} · {invoice.paymentMethod==="pix"?"PIX":invoice.paymentMethod==="credit_card"?"Cartão de crédito":"Forma a confirmar"}</p>
      {invoice.status==="paid"&&invoice.periodEndAt&&<small>Próximo vencimento: {new Date(invoice.periodEndAt).toLocaleDateString("pt-BR")}</small>}
     </div>
     {invoice.status==="pending"&&invoice.checkoutUrl&&invoice.expiresAtMs>Date.now()&&<a href={invoice.checkoutUrl} target="_blank" rel="noreferrer" style={{background:"#ff8200",color:"#1b1b1b",fontWeight:800,padding:"11px 14px",borderRadius:9}}>Abrir pagamento</a>}
