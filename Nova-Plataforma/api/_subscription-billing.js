@@ -45,7 +45,7 @@ export async function notifyBillingEvent(db,eventId){
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),8000);
  let sent=false;
  try{
-  const response=await fetch(process.env.N8N_BILLING_WEBHOOK_URL,{method:"POST",signal:controller.signal,headers:{"Content-Type":"application/json","X-Dishy-Billing-Key":process.env.N8N_BILLING_WEBHOOK_TOKEN},body:JSON.stringify({eventId,eventType:event.eventType,restaurantId:event.restaurantId,contractId:event.contractId,invoiceId:event.invoiceId,planName:event.planName,priceCents:event.priceCents,toEmail:event.toEmail,toWhatsApp:event.toWhatsApp,paymentUrl:event.paymentUrl||null,receiptUrl:event.receiptUrl||null,periodEndAt:event.periodEndAt?.toDate?.()?.toISOString?.()||null})});
+  const response=await fetch(process.env.N8N_BILLING_WEBHOOK_URL,{method:"POST",signal:controller.signal,headers:{"Content-Type":"application/json","X-Dishy-Billing-Key":process.env.N8N_BILLING_WEBHOOK_TOKEN},body:JSON.stringify({eventId,eventType:event.eventType,restaurantId:event.restaurantId,contractId:event.contractId,invoiceId:event.invoiceId,planName:event.planName,priceCents:event.priceCents,toEmail:event.toEmail,toWhatsApp:event.toWhatsApp,paymentUrl:event.paymentUrl||null,receiptUrl:event.receiptUrl||null,daysToDue:event.daysToDue??null,dueAtMs:event.dueAtMs??null,periodEndAt:event.periodEndAt?.toDate?.()?.toISOString?.()||null})});
   sent=response.ok;
  }catch{/* a entrega deve ser reconciliada na fila; não alterar assinatura por erro do n8n */}
  finally{clearTimeout(timer)}
