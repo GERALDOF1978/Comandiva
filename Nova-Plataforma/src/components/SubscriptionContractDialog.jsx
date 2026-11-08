@@ -13,6 +13,7 @@ export default function SubscriptionContractDialog({user,membership,plan,onClose
  const [billingEnabled,setBillingEnabled]=useState(false);
  const [checkoutBusy,setCheckoutBusy]=useState(false);
  const [checkoutUrl,setCheckoutUrl]=useState("");
+ const [paymentMethod,setPaymentMethod]=useState("");
  const rid=membership.restaurantId;
  useEffect(()=>{let mounted=true;user.getIdToken().then(token=>fetch("/api/subscription-contract?action=billingStatus&restaurantId="+encodeURIComponent(rid),{headers:{Authorization:"Bearer "+token}})).then(r=>r.ok?r.json():{enabled:false}).then(data=>{if(mounted)setBillingEnabled(data.enabled===true)}).catch(()=>{});return()=>{mounted=false}},[rid,user.uid]);
  function change(setter,value){setter(value);setPreview(null);setAccepted(false);setAllowWhatsapp(false);setError("")}
@@ -39,12 +40,13 @@ export default function SubscriptionContractDialog({user,membership,plan,onClose
  }
  async function openCheckout(){
   if(!success?.id||!billingEnabled||checkoutBusy)return;
-  if(!window.confirm("Abrir pagamento pela InfinitePay? A mensalidade é avulsa, por PIX ou cartão, sem débito recorrente automático. Se você ainda estiver no período gratuito, a mensalidade paga será acrescida após o fim do teste."))return;
+  if(!["pix","credit_card"].includes(paymentMethod)){setError("Escolha PIX ou cartão de crédito para continuar.");return;}
+  if(!window.confirm("Abrir pagamento por "+(paymentMethod==="pix"?"PIX":"cartão de crédito")+" na InfinitePay? Esta cobrança é avulsa, sem débito recorrente automático. Se o teste gratuito estiver vigente, a mensalidade paga começará ao final do teste."))return;
   setCheckoutBusy(true);setError("");
   try{
-   const token=await user.getIdToken(),response=await fetch("/api/subscription-contract?action=billingCheckout",{method:"POST",headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({action:"checkout",restaurantId:rid,contractId:success.id})});
+   const token=await user.getIdToken(),response=await fetch("/api/subscription-contract?action=billingCheckout",{method:"POST",headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({action:"checkout",restaurantId:rid,contractId:success.id,paymentMethod})});
    const data=await response.json().catch(()=>({}));
-   if(!response.ok)throw Error(({payment_not_due_yet:"O pagamento ficará disponível a partir de 7 dias antes do fim do teste ou do período pago.",another_invoice_exists_for_cycle:"Já existe uma cobrança para esse período. Consulte seu histórico.",plan_change_requires_master:"A mudança de plano durante uma assinatura ativa precisa ser aprovada no Master.",contract_plan_changed:"O plano mudou desde o aceite. Confira um novo contrato."})[data.error]||data.error||"Falha ao gerar cobrança.");
+   if(!response.ok)throw Error(({payment_not_due_yet:"O pagamento ficará disponível a partir de 7 dias antes do fim do teste ou do período pago.",another_invoice_exists_for_cycle:"Já existe uma cobrança para esse período. Consulte seu histórico.",plan_change_requires_master:"A mudança de plano durante uma assinatura ativa precisa ser aprovada no Master.",contract_plan_changed:"O plano mudou desde o aceite. Confira um novo contrato.",invoice_payment_method_locked:"Esta mensalidade já possui um link com outra forma de pagamento. Para evitar cobrança duplicada, consulte o suporte.",select_payment_method:"Selecione PIX ou cartão de crédito."})[data.error]||data.error||"Falha ao gerar cobrança.");
    if(!/^https:\/\//.test(data.checkoutUrl))throw Error("Link de checkout inválido.");
    setCheckoutUrl(data.checkoutUrl);window.location.assign(data.checkoutUrl);
   }catch(e){setError(e.message)}finally{setCheckoutBusy(false)}
@@ -53,6 +55,20 @@ export default function SubscriptionContractDialog({user,membership,plan,onClose
  return <div role="presentation" style={{position:"fixed",inset:0,zIndex:20000,background:"rgba(0,0,0,.8)",overflowY:"auto",padding:"20px 12px"}} onClick={e=>{if(e.target===e.currentTarget)onClose()}}>
   <section role="dialog" aria-modal="true" aria-label="Minuta do contrato Dishy" style={{maxWidth:780,margin:"auto",borderRadius:18,background:"#202938",color:"#fff",padding:"20px",boxShadow:"0 20px 70px #0009"}}>
    <div style={{display:"flex",justifyContent:"space-between",gap:15,alignItems:"center",marginBottom:14}}><div><small style={{color:"#f9a75e"}}>DISHY • CONTRATO DIGITAL</small><h2 style={{margin:"4px 0"}}>{plan.name}</h2><p style={{color:"#bfccda",margin:0}}>Confira o contrato antes de qualquer contratação.</p></div><button type="button" aria-label="Fechar contrato" onClick={onClose} style={{...style,width:"auto"}}>✕</button></div>
+   <div role="group" aria-label="Escolha a forma de pagamento" style={{display:"grid",gap:9,marginBottom:18,padding:14,border:"1px solid #52617a",borderRadius:12,background:"#182332"}}>
+    <strong>Como deseja pagar a mensalidade?</strong>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,240px),1fr))",gap:10}}>
+     <label style={{display:"flex",gap:10,alignItems:"flex-start",padding:12,border:"1px solid "+(paymentMethod==="pix"?"#ff8200":"#53657d"),background:paymentMethod==="pix"?"#302519":"#223045",borderRadius:10,cursor:"pointer"}}>
+      <input type="radio" name="dishy_subscription_payment_method" value="pix" checked={paymentMethod==="pix"} onChange={()=>setPaymentMethod("pix")}/>
+      <span><strong>PIX</strong><small style={{display:"block",marginTop:4,color:"#c3cfdd"}}>A cada mês, pague um novo link ou QR Code.</small></span>
+     </label>
+     <label style={{display:"flex",gap:10,alignItems:"flex-start",padding:12,border:"1px solid "+(paymentMethod==="credit_card"?"#ff8200":"#53657d"),background:paymentMethod==="credit_card"?"#302519":"#223045",borderRadius:10,cursor:"pointer"}}>
+      <input type="radio" name="dishy_subscription_payment_method" value="credit_card" checked={paymentMethod==="credit_card"} onChange={()=>setPaymentMethod("credit_card")}/>
+      <span><strong>Cartão de crédito</strong><small style={{display:"block",marginTop:4,color:"#c3cfdd"}}>Pagamento mensal no cartão; sem débito automático nesta versão.</small></span>
+     </label>
+    </div>
+    <small style={{color:"#d6dce8"}}>A escolha é sua. A cobrança automática no cartão exige outra modalidade da InfinitePay e ainda não está integrada ao Dishy.</small>
+   </div>
    {!success&&<div style={{display:"grid",gap:11,marginBottom:15}}>
     <label style={{display:"grid",gap:5}}>Nome do titular ou razão social<input style={style} value={name} maxLength={120} onChange={e=>change(setName,e.target.value)} placeholder="Nome completo ou razão social"/></label>
     <label style={{display:"grid",gap:5}}>CPF ou CNPJ do contratante<input style={style} value={document} maxLength={18} inputMode="numeric" onChange={e=>change(setDocument,e.target.value)} placeholder="Somente números"/></label>
@@ -70,7 +86,7 @@ export default function SubscriptionContractDialog({user,membership,plan,onClose
     </>}
    </div>}
    {success&&<div role="status" style={{padding:15,borderRadius:10,background:"#183e2d",lineHeight:1.6}}><strong>Aceite registrado.</strong><p style={{margin:"5px 0"}}>ID do contrato: {success.id}</p><p style={{margin:"5px 0"}}>{success.status==="handed_off_to_n8n"?"Evento recebido pelo n8n. A entrega dos dois canais deve ser verificada no workflow.":"Envio pendente de confirmação. O aceite foi preservado."}</p><p>Esse registro não efetua cobrança nem altera sua assinatura.</p>
-     {billingEnabled?<button type="button" disabled={checkoutBusy} onClick={openCheckout} style={{background:"#ff8200",border:0,padding:13,borderRadius:9,fontWeight:800,color:"#1b1b1b",cursor:"pointer"}}>{checkoutBusy?"Abrindo InfinitePay...":"Pagar mensalidade por PIX ou cartão"}</button>:<p style={{fontSize:13}}>A etapa de pagamento está em preparação e só será liberada quando o prestador responsável e a conta InfinitePay estiverem configurados.</p>}
+     {billingEnabled?<button type="button" disabled={checkoutBusy||!paymentMethod} onClick={openCheckout} style={{background:"#ff8200",border:0,padding:13,borderRadius:9,fontWeight:800,color:"#1b1b1b",cursor:"pointer"}}>{checkoutBusy?"Abrindo InfinitePay...":paymentMethod==="pix"?"Pagar mensalidade com PIX":paymentMethod==="credit_card"?"Pagar mensalidade com cartão":"Escolha PIX ou cartão"}</button>:<p style={{fontSize:13}}>A etapa de pagamento está em preparação e só será liberada quando o prestador responsável e a conta InfinitePay estiverem configurados.</p>}
      {checkoutUrl&&<a href={checkoutUrl} target="_blank" rel="noreferrer" style={{display:"block",color:"#fff"}}>Abrir link de pagamento</a>}
     </div>}
    {error&&<p role="alert" style={{color:"#ffc1a6"}}>{error}</p>}
