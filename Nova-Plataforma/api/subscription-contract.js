@@ -1,7 +1,10 @@
 import {cert,getApps,initializeApp} from "firebase-admin/app";
 import {getAuth} from "firebase-admin/auth";
 import {getFirestore,FieldValue} from "firebase-admin/firestore";
-import {DISHY_CONTRACT_VERSION,createSubscriptionContractText,contractHash,cleanContractContact} from "./_subscription-contract.js";
+import {DISHY_CONTRACT_VERSION,createSubscriptionContractText,contractHash,cleanContractContact} from "../server-api/_subscription-contract.js";
+import billingHandler from "../server-api/subscription-billing.js";
+import reminderHandler from "../server-api/subscription-reminders.js";
+import {getBillingDb,confirmBillingPayment} from "../server-api/_subscription-billing.js";
 import {normalizePlanModules} from "../src/lib/planModules.js";
 
 function admin(){
@@ -18,6 +21,22 @@ function signingReady(v){
 }
 const idPattern=/^[a-zA-Z0-9_-]{5,128}$/;
 export default async function handler(req,res){
+ const route=String(req.query?.action||"");
+ // Um único ponto de entrada: Vercel Hobby tem limite de funções.
+ if(route==="billingStatus"||route==="billingCheckout")return billingHandler(req,res);
+ if(route==="billingReminders")return reminderHandler(req,res);
+ if(route==="billingWebhook"){
+  if(req.method!=="POST")return res.status(405).json({error:"method_not_allowed"});
+  res.setHeader("Cache-Control","no-store");
+  try{
+   const body=req.body&&typeof req.body==="object"?req.body:{},payment=body.data&&typeof body.data==="object"?body.data:body;
+   const orderNsu=String(payment.order_nsu||""),slug=String(payment.invoice_slug||payment.slug||""),transactionNsu=String(payment.transaction_nsu||"");
+   if(!orderNsu.startsWith("dishy-sub-")||!slug||!transactionNsu)return res.status(400).json({error:"invalid_payment_event"});
+   const result=await confirmBillingPayment(getBillingDb(),{orderNsu,slug,transactionNsu});
+   if(!result.ok)return res.status(result.code==="payment_not_verified"?409:400).json({error:result.code});
+   return res.status(200).json({ok:true,invoiceId:result.invoiceId,activated:result.activated===true,reviewRequired:result.needsReview===true});
+  }catch{return res.status(503).json({error:"verification_unavailable"})}
+ }
  res.setHeader("Cache-Control","private, no-store");
  if(!["GET","POST"].includes(req.method))return res.status(405).json({error:"method_not_allowed"});
  try{
