@@ -409,7 +409,7 @@ export default async function handler(req,res){
     if(req.method==="GET"){
         const restaurantId=String(req.query.restaurantId||"");if(!/^[a-zA-Z0-9_-]{5,128}$/.test(restaurantId))return res.status(400).json({error:"invalid_restaurant"});
   const db=getFirestore();const access=await db.collection("userRestaurantAccess").doc(decoded.uid).collection("restaurants").doc(restaurantId).get();
-  if(!access.exists||access.data().active!==true)return res.status(403).json({error:"access_denied"});
+  if(!access.exists||access.data().active!==true||access.data().role!=="owner")return res.status(403).json({error:"owner_only"});
   const [subscription,restaurant,planCatalog]=await Promise.all([db.collection("subscriptions").doc(restaurantId).get(),db.collection("restaurants").doc(restaurantId).get(),db.collection("plans").get()]);
   if(!restaurant.exists)return res.status(404).json({error:"restaurant_not_found"});
   let raw=subscription.exists?subscription.data():null;
