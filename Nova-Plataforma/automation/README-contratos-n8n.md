@@ -89,3 +89,10 @@ O n8n **apenas notifica e agenda lembretes**. **Nunca** ativa planos, altera ass
 A InfinitePay informa não ter sandbox para Checkout Integrado. Um checkout real gera cobrança verdadeira. **Não testar valores usando a conta pessoal ou de clientes** antes de definir o responsável legal pela venda e obter as autorizações necessárias.
 
 A emissão fiscal integra uma etapa futura da implementação, mas a ausência da função de NFS-e no Dishy não elimina obrigações legais do prestador.
+
+
+### Escolha de pagamento pelo proprietário (Meu plano)
+- Na janela do contrato, o próprio proprietário escolhe **PIX** ou **cartão de crédito**, antes de gerar a cobrança. Nenhum método é selecionado por padrão.
+- O servidor valida `paymentMethod: "pix" | "credit_card"`, registra a escolha na mensalidade e configura `payment_methods_enabled` na InfinitePay para **somente o método escolhido**.
+- A escolha é apresentada no histórico. Se já existe link ativo para aquela competência, a forma fica travada para impedir dois links pagáveis simultaneamente; suporte precisa intervir para trocar uma cobrança em aberto.
+- **Cartão nesta versão significa pagamento avulso mensal**. Recorrência automática autorizada no cartão existe nos recursos nativos da InfinitePay, mas **não é oferecida pela API Checkout Integrado**. Não prometer renovação automática enquanto não houver conciliação com a modalidade nativa ou outra integração apropriada.
