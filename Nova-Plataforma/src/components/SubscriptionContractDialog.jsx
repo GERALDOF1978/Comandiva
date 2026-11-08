@@ -1,4 +1,4 @@
-import React,{useState} from "react";
+import React,{useEffect,useState} from "react";
 
 export default function SubscriptionContractDialog({user,membership,plan,onClose}){
  const [name,setName]=useState(membership.restaurantName||membership.name||"");
@@ -10,7 +10,11 @@ export default function SubscriptionContractDialog({user,membership,plan,onClose
  const [error,setError]=useState("");
  const [busy,setBusy]=useState(false);
  const [success,setSuccess]=useState(null);
+ const [billingEnabled,setBillingEnabled]=useState(false);
+ const [checkoutBusy,setCheckoutBusy]=useState(false);
+ const [checkoutUrl,setCheckoutUrl]=useState("");
  const rid=membership.restaurantId;
+ useEffect(()=>{let mounted=true;user.getIdToken().then(token=>fetch("/api/subscription-billing?restaurantId="+encodeURIComponent(rid),{headers:{Authorization:"Bearer "+token}})).then(r=>r.ok?r.json():{enabled:false}).then(data=>{if(mounted)setBillingEnabled(data.enabled===true)}).catch(()=>{});return()=>{mounted=false}},[rid,user.uid]);
  function change(setter,value){setter(value);setPreview(null);setAccepted(false);setAllowWhatsapp(false);setError("")}
  async function prepare(){
   setBusy(true);setError("");setSuccess(null);
@@ -33,6 +37,18 @@ export default function SubscriptionContractDialog({user,membership,plan,onClose
    setSuccess({id:body.contractId,status:body.deliveryStatus});
   }catch(e){setError(e.message)}finally{setBusy(false)}
  }
+ async function openCheckout(){
+  if(!success?.id||!billingEnabled||checkoutBusy)return;
+  if(!window.confirm("Abrir pagamento pela InfinitePay? A mensalidade é avulsa, por PIX ou cartão, sem débito recorrente automático. Se você ainda estiver no período gratuito, a mensalidade paga será acrescida após o fim do teste."))return;
+  setCheckoutBusy(true);setError("");
+  try{
+   const token=await user.getIdToken(),response=await fetch("/api/subscription-billing",{method:"POST",headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({action:"checkout",restaurantId:rid,contractId:success.id})});
+   const data=await response.json().catch(()=>({}));
+   if(!response.ok)throw Error(({payment_not_due_yet:"O pagamento ficará disponível a partir de 7 dias antes do fim do teste ou do período pago.",another_invoice_exists_for_cycle:"Já existe uma cobrança para esse período. Consulte seu histórico.",plan_change_requires_master:"A mudança de plano durante uma assinatura ativa precisa ser aprovada no Master.",contract_plan_changed:"O plano mudou desde o aceite. Confira um novo contrato."})[data.error]||data.error||"Falha ao gerar cobrança.");
+   if(!/^https:\/\//.test(data.checkoutUrl))throw Error("Link de checkout inválido.");
+   setCheckoutUrl(data.checkoutUrl);window.location.assign(data.checkoutUrl);
+  }catch(e){setError(e.message)}finally{setCheckoutBusy(false)}
+ }
  const style={background:"#151d29",border:"1px solid #41516a",color:"#fff",borderRadius:10,padding:12,width:"100%",boxSizing:"border-box"};
  return <div role="presentation" style={{position:"fixed",inset:0,zIndex:20000,background:"rgba(0,0,0,.8)",overflowY:"auto",padding:"20px 12px"}} onClick={e=>{if(e.target===e.currentTarget)onClose()}}>
   <section role="dialog" aria-modal="true" aria-label="Minuta do contrato Dishy" style={{maxWidth:780,margin:"auto",borderRadius:18,background:"#202938",color:"#fff",padding:"20px",boxShadow:"0 20px 70px #0009"}}>
@@ -53,7 +69,10 @@ export default function SubscriptionContractDialog({user,membership,plan,onClose
      <button type="button" disabled={busy||!accepted||!allowWhatsapp} onClick={sign} style={{...style,background:accepted&&allowWhatsapp?"#ff8200":"#384453",color:accepted&&allowWhatsapp?"#171717":"#bcc8d5",fontWeight:800,cursor:"pointer"}}>{busy?"Registrando...":"Aceitar contrato e solicitar envio pelo n8n"}</button>
     </>}
    </div>}
-   {success&&<div role="status" style={{padding:15,borderRadius:10,background:"#183e2d",lineHeight:1.6}}><strong>Aceite registrado.</strong><p style={{margin:"5px 0"}}>ID do contrato: {success.id}</p><p style={{margin:"5px 0"}}>{success.status==="handed_off_to_n8n"?"Evento recebido pelo n8n. A entrega dos dois canais deve ser verificada no workflow.":"Envio pendente de confirmação. O aceite foi preservado."}</p><p>Esse registro não efetua cobrança nem altera sua assinatura.</p></div>}
+   {success&&<div role="status" style={{padding:15,borderRadius:10,background:"#183e2d",lineHeight:1.6}}><strong>Aceite registrado.</strong><p style={{margin:"5px 0"}}>ID do contrato: {success.id}</p><p style={{margin:"5px 0"}}>{success.status==="handed_off_to_n8n"?"Evento recebido pelo n8n. A entrega dos dois canais deve ser verificada no workflow.":"Envio pendente de confirmação. O aceite foi preservado."}</p><p>Esse registro não efetua cobrança nem altera sua assinatura.</p>
+     {billingEnabled?<button type="button" disabled={checkoutBusy} onClick={openCheckout} style={{background:"#ff8200",border:0,padding:13,borderRadius:9,fontWeight:800,color:"#1b1b1b",cursor:"pointer"}}>{checkoutBusy?"Abrindo InfinitePay...":"Pagar mensalidade por PIX ou cartão"}</button>:<p style={{fontSize:13}}>A etapa de pagamento está em preparação e só será liberada quando o prestador responsável e a conta InfinitePay estiverem configurados.</p>}
+     {checkoutUrl&&<a href={checkoutUrl} target="_blank" rel="noreferrer" style={{display:"block",color:"#fff"}}>Abrir link de pagamento</a>}
+    </div>}
    {error&&<p role="alert" style={{color:"#ffc1a6"}}>{error}</p>}
   </section>
  </div>;
