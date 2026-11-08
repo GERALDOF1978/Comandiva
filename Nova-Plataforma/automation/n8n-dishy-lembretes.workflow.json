@@ -34,7 +34,7 @@
       ],
       "parameters": {
         "method": "POST",
-        "url": "https://dishy.com.br/api/subscription-reminders",
+        "url": "https://dishy.com.br/api/subscription-contract?action=billingReminders",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": false,
