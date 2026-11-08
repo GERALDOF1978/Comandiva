@@ -15,7 +15,7 @@ test("contrato inclui preço, partes, módulos, data e dispensa cobrança autom�
  assert.match(c,/Titular de Teste/);
  assert.match(c,/Cardápio, Pedidos/);
  assert.match(c,/não ativa um plano pago/);
- assert.equal(DISHY_CONTRACT_VERSION,"2026-11-08-draft-1");
+ assert.equal(DISHY_CONTRACT_VERSION,"2026-11-08-draft-2");
 });
 test("hash é reproduzível e impede modificação silenciosa",()=>{
  const source=createSubscriptionContractText(args);
