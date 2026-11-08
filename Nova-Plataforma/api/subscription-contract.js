@@ -37,7 +37,7 @@ export default async function handler(req,res){
   const provider=issuer(),ready=signingReady(provider);
   const previewIssuer=ready?provider:{issuerName:"[PRESTADOR RESPONSÁVEL A INFORMAR]",issuerDocument:"[DOCUMENTO DO PRESTADOR]",issuerAddress:"[ENDEREÇO]",issuerEmail:"[E-MAIL]"};
   if(req.method==="GET"){
-   const customer={name:String(req.query?.customerName||"").trim().slice(0,120)||"[CONTRATANTE]",document:String(req.query?.customerDocument||"").replace(/\\D/g,"").slice(0,14)||"[CPF/CNPJ DO CONTRATANTE]",email:user.email};
+   const customer={name:String(req.query?.customerName||"").trim().slice(0,120)||"[CONTRATANTE]",document:String(req.query?.customerDocument||"").replace(/\D/g,"").slice(0,14)||"[CPF/CNPJ DO CONTRATANTE]",email:user.email};
    const draftTimestamp=Date.now();
    const text=createSubscriptionContractText({issuer:previewIssuer,customer,restaurant:{name:rs.data().name||"Estabelecimento"},plan,acceptedAt:draftTimestamp});
    return res.status(200).json({ready,version:DISHY_CONTRACT_VERSION,planId,name:plan.name,priceCents:plan.priceCents,text,draftTimestamp,draftHash:contractHash(text),reason:ready?null:"O fornecedor legal, a revisão do contrato e o webhook n8n precisam estar configurados antes do aceite.",channels:["email","whatsapp"]});
