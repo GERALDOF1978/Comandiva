@@ -1,0 +1,120 @@
+{
+  "name": "Dishy | Mensalidades | Notificações n8n (CONFIGURAR)",
+  "nodes": [
+    {
+      "id": "5a005965-a000-4000-8000-000000000001",
+      "name": "Eventos de mensalidade",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        180,
+        280
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dishy-assinatura-evento",
+        "authentication": "headerAuth",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "notes": "Exigir credencial Header Auth: X-Dishy-Billing-Key com o mesmo valor de N8N_BILLING_WEBHOOK_TOKEN. Workflow inativo até configuração."
+    },
+    {
+      "id": "5a005965-a000-4000-8000-000000000002",
+      "name": "Montar avisos e validar evento",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        470,
+        280
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const body=$input.first().json.body??$input.first().json;\nif(![\"SUBSCRIPTION_INVOICE_CREATED\",\"SUBSCRIPTION_PAYMENT_CONFIRMED\",\"SUBSCRIPTION_REMINDER\"].includes(body.eventType))throw Error(\"Evento desconhecido\");\nif(!/^[a-zA-Z0-9_-]{8,200}$/.test(String(body.eventId||\"\")))throw Error(\"ID inválido\");\nconst email=String(body.toEmail||\"\").trim(),phone=String(body.toWhatsApp||\"\").replace(/\\D/g,\"\");\nif(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)||phone.length<10||phone.length>13)throw Error(\"Destino inválido\");\nconst name=String(body.planName||\"Plano Dishy\").slice(0,80),value=(Number(body.priceCents||0)/100).toLocaleString(\"pt-BR\",{style:\"currency\",currency:\"BRL\"});\nconst paid=body.eventType===\"SUBSCRIPTION_PAYMENT_CONFIRMED\";\nconst due=typeof body.dueAtMs===\"number\"?new Date(body.dueAtMs).toLocaleDateString(\"pt-BR\",{timeZone:\"America/Sao_Paulo\"}):\"\";\nconst renew=body.periodEndAt?new Date(body.periodEndAt).toLocaleDateString(\"pt-BR\",{timeZone:\"America/Sao_Paulo\"}):\"\";\nlet title=\"\",message=\"\";\nif(paid){title=\"Pagamento confirmado — Dishy\";message=\"Recebemos o pagamento de \"+value+\" do plano \"+name+\". Seu acesso foi atualizado. Próximo vencimento: \"+renew+\".\";}\nelse if(body.eventType===\"SUBSCRIPTION_REMINDER\"){\n const day=Number(body.daysToDue);\n const label=day>0?\"faltam \"+day+\" dias para vencer\":day===0?\"vence hoje\":\"está em atraso há \"+Math.abs(day)+\" dia(s)\";\n title=\"Aviso de mensalidade — Dishy\";\n message=\"Sua mensalidade do plano \"+name+\" (\"+value+\") \"+label+\". Vencimento: \"+due+\". Pagamento por PIX ou cartão: \"+String(body.paymentUrl||\"\");\n}else{\n title=\"Mensalidade disponível — Dishy\";\n message=\"Sua mensalidade do plano \"+name+\" (\"+value+\") está disponível. Pague com PIX ou cartão pelo link: \"+String(body.paymentUrl||\"\")+\". Não há débito automático.\";\n}\nmessage+=\"\\n\\nAcompanhe seu contrato e pagamentos em https://dishy.com.br/login (Meu plano).\\nSe já pagou, aguarde a confirmação automática.\";\nreturn [{json:{eventId:body.eventId,toEmail:email,toWhatsApp:phone.startsWith(\"55\")?phone:\"55\"+phone,subject:title,emailText:message,whatsappText:message}}];"
+      }
+    },
+    {
+      "id": "5a005965-a000-4000-8000-000000000003",
+      "name": "Enviar e-mail da assinatura",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        800,
+        130
+      ],
+      "parameters": {
+        "fromEmail": "CONFIGURAR_REMETENTE@exemplo.com",
+        "toEmail": "={{ $json.toEmail }}",
+        "subject": "={{ $json.subject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.emailText }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "notes": "Configurar SMTP. Não inserir credenciais no JSON.",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000
+    },
+    {
+      "id": "5a005965-a000-4000-8000-000000000004",
+      "name": "Enviar WhatsApp assinatura",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        800,
+        440
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://CONFIGURAR_EVOLUTION/message/sendText/CONFIGURAR_INSTANCIA",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ number: $json.toWhatsApp, text: $json.whatsappText }) }}",
+        "options": {}
+      },
+      "notes": "Configurar URL e credencial Evolution (header apikey). Confirme entrega em execuções e implemente deduplicação por eventId.",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000
+    }
+  ],
+  "connections": {
+    "Eventos de mensalidade": {
+      "main": [
+        [
+          {
+            "node": "Montar avisos e validar evento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar avisos e validar evento": {
+      "main": [
+        [
+          {
+            "node": "Enviar e-mail da assinatura",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Enviar WhatsApp assinatura",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "tags": []
+}

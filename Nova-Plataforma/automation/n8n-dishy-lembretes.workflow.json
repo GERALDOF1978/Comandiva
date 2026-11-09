@@ -1,0 +1,66 @@
+{
+  "name": "Dishy | Lembretes diários de mensalidade (CONFIGURAR)",
+  "nodes": [
+    {
+      "id": "5a005965-b000-4000-8000-000000000001",
+      "name": "Diariamente às 09h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        200,
+        220
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 9,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "notes": "Definir timezone do workflow para America/Sao_Paulo."
+    },
+    {
+      "id": "5a005965-b000-4000-8000-000000000002",
+      "name": "Solicitar lembretes ao Dishy",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        500,
+        220
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://dishy.com.br/api/subscription-contract?action=billingReminders",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": false,
+        "options": {}
+      },
+      "notes": "Configurar Header Auth X-Dishy-Billing-Cron-Key correspondente a DISHY_BILLING_CRON_TOKEN. O servidor gera eventos e os entrega ao workflow principal, sem que o cron conheça credenciais InfinitePay."
+    }
+  ],
+  "connections": {
+    "Diariamente às 09h": {
+      "main": [
+        [
+          {
+            "node": "Solicitar lembretes ao Dishy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo"
+  },
+  "pinData": {},
+  "tags": []
+}
