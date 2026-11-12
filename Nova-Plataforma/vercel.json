@@ -37,6 +37,14 @@
       "destination": "/"
     },
     {
+      "source": "/demonstracao",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/demonstracao/",
+      "destination": "/index.html"
+    },
+    {
       "source": "/anuncio",
       "destination": "/index.html"
     },

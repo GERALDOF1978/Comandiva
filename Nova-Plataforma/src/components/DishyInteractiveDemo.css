@@ -1,0 +1,112 @@
+.dishyTry{background:#f7f8fa;color:#20252e;min-height:100vh;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px}
+.dishyTry *{box-sizing:border-box}
+.dishyTry button,.dishyTry a{transition:background .16s,color .16s,transform .16s;cursor:pointer}
+.dishyTry button{font:inherit}
+.dishyTryTop{background:#101820;color:white;min-height:68px;padding:12px max(20px,calc((100vw - 1280px)/2));display:flex;gap:16px;justify-content:space-between;align-items:center}
+.dishyTryBrand img{width:124px;max-height:40px;object-fit:contain}
+.dishyTryTag{font-size:10px;font-weight:800;letter-spacing:.12em;color:#ffd080;background:#3a2915;border:1px solid #745326;border-radius:99px;padding:8px 13px}
+.dishyTrySign{display:inline-flex;align-items:center;gap:7px;border-radius:99px;background:#f47719;color:white;text-decoration:none;padding:10px 16px;font-weight:800}
+.dishyTrySign:hover,.dishyTryFinal a:hover,.dishyTrySubmit:hover{background:#d45b04}
+.dishyTryMain{max-width:1320px;margin:0 auto;padding:28px 20px 60px}
+.dishyTryBack{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:#566170;font-weight:700;font-size:13px}
+.dishyTryBack:hover{color:#e5680c}
+.dishyTryIntro{text-align:center;margin:0 auto 27px;max-width:780px}
+.dishyTryIntro .dishyTryBack{display:flex;justify-content:center;margin-bottom:21px}
+.dishyTryIntro h1{font-size:clamp(27px,4vw,43px);line-height:1.14;letter-spacing:-.035em;margin:0 0 13px;font-weight:850}
+.dishyTryIntro h1 span{color:#ea6a0a}
+.dishyTryIntro p{color:#5b6672;font-size:16px;line-height:1.6;margin:0 auto 15px}
+.dishyTryFacts{display:flex;flex-wrap:wrap;justify-content:center;gap:9px 20px;font-weight:650;color:#3b7446}
+.dishyTryFacts span{display:flex;align-items:center;gap:5px;font-size:12px}
+.dishyTryShell{display:grid;grid-template-columns:220px minmax(0,1fr) 270px;align-items:stretch;gap:14px}
+.dishyTrySidebar,.dishyTryWorkspace,.dishyTryCart{background:#fff;border:1px solid #e6e8ec;border-radius:18px;box-shadow:0 6px 24px #161e2910}
+.dishyTrySidebar{padding:17px;display:flex;flex-direction:column;gap:14px}
+.dishyTrySample{display:flex;align-items:center;gap:10px;padding-bottom:16px;border-bottom:1px solid #e8eaf0}
+.dishyTrySampleIcon{width:42px;height:42px;display:grid;place-items:center;border-radius:13px;background:#fff3e9;font-size:24px}
+.dishyTrySample b,.dishyTrySample small{display:block}
+.dishyTrySample small{color:#718091;font-size:11px;margin-top:3px}
+.dishyTryNav{display:flex;flex-direction:column;gap:7px}
+.dishyTryNav button{border:0;background:transparent;text-align:left;color:#4a5968;border-radius:11px;padding:13px;display:flex;gap:12px;align-items:center;font-weight:730}
+.dishyTryNav button:hover{background:#fff1e4;color:#a74a00}
+.dishyTryNav button.active{background:#fff0e1;color:#ca5704;box-shadow:inset 3px 0 #f67d1e}
+.dishyTryHint{font-size:12px;line-height:1.5;background:#faf7f1;border:1px dashed #f3d5b5;padding:12px;border-radius:10px;color:#795a3c;margin-top:auto}
+.dishyTryReset{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid #e1e5ec;background:white;border-radius:9px;padding:9px;color:#515e6f;font-weight:650}
+.dishyTryWorkspace{padding:24px;min-height:620px}
+.dishyTrySectionHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:21px;gap:12px;color:#f17519}
+.dishyTrySectionHead small{display:block;font-size:10px;letter-spacing:.12em;color:#a96532;font-weight:800;margin-bottom:5px}
+.dishyTrySectionHead h2{font-size:24px;color:#212832;margin:0 0 5px}
+.dishyTrySectionHead p{margin:0;color:#687787;line-height:1.45}
+.dishyTryBanner{background:linear-gradient(112deg,#ad0a13,#e03526);border-radius:15px;display:flex;align-items:center;gap:14px;padding:18px;color:white;margin-bottom:16px}
+.dishyTryBanner>span{font-size:42px}
+.dishyTryBanner strong,.dishyTryBanner small{display:block}
+.dishyTryBanner strong{font-size:19px}
+.dishyTryBanner small{margin-top:6px;opacity:.91}
+.dishyTryChoice,.dishyTryCategories{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 19px}
+.dishyTryChoice button,.dishyTryCategories button{border:1px solid #e4e5e9;border-radius:99px;background:white;color:#5a6370;padding:9px 13px;font-weight:700;font-size:12px}
+.dishyTryChoice button:hover,.dishyTryCategories button:hover{border-color:#f4ac73;color:#cd620e}
+.dishyTryChoice button.selected,.dishyTryCategories button.selected{background:#fff0e2;border-color:#f27716;color:#b84d00}
+.dishyTryProducts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.dishyTryProduct{border:1px solid #e8e8eb;border-radius:15px;padding:13px;display:flex;gap:11px;min-width:0}
+.dishyTryProductEmoji{background:#fff3e6;min-width:55px;width:55px;height:60px;display:grid;place-items:center;border-radius:11px;font-size:28px}
+.dishyTryProductInfo{min-width:0;flex:1}
+.dishyTryProductInfo h3{margin:0;font-size:14px}
+.dishyTryProductInfo p{margin:5px 0 10px;line-height:1.4;color:#73808e;font-size:12px;min-height:32px}
+.dishyTryProductInfo>div{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap}
+.dishyTryProductInfo strong{color:#b85108}
+.dishyTryProductInfo button{display:inline-flex;align-items:center;gap:4px;border:0;border-radius:8px;background:#ef771f;color:white;padding:7px 9px;font-weight:800;font-size:11px}
+.dishyTryProductInfo button:hover{background:#ce5404}
+.dishyTryCart{padding:18px;position:sticky;top:16px;height:fit-content;min-height:270px}
+.dishyTryCart h3{display:flex;align-items:center;gap:9px;font-size:17px;margin:0 0 19px;padding-bottom:15px;border-bottom:1px solid #e8e8e8}
+.dishyTryCart ul{list-style:none;margin:0;padding:0}
+.dishyTryCart li{display:flex;gap:10px;padding:12px 0;border-bottom:1px solid #f0f1f4}
+.dishyTryCart li>div{flex:1;min-width:0}
+.dishyTryCart li b,.dishyTryCart li small{display:block}
+.dishyTryCart li small{margin:6px 0;color:#a8510d}
+.dishyTryCartEmoji{font-size:26px}
+.dishyTryQty{display:flex;gap:12px;align-items:center}
+.dishyTryQty button{width:25px;height:25px;display:grid;place-items:center;border:1px solid #e1e4e8;border-radius:7px;background:#fff}
+.dishyTryQty button:hover{background:#ffeada}
+.dishyTryTotal{display:flex;justify-content:space-between;gap:8px;align-items:center;margin:17px 0}
+.dishyTryTotal strong{font-size:19px;color:#a94e0c}
+.dishyTrySubmit{display:flex;align-items:center;justify-content:center;gap:8px;border:0;background:#f17b24;color:white;padding:13px 8px;width:100%;font-weight:800;border-radius:10px}
+.dishyTryEmpty{display:grid;place-items:center;color:#94a0ad;text-align:center;padding:25px 3px}
+.dishyTryEmpty p{font-size:12px;line-height:1.6}
+.dishyTrySafety{font-size:11px;line-height:1.5;color:#85909c;margin:17px 0 0}
+.dishyTryNotice{display:flex;align-items:center;gap:10px;background:#ecf9ed;color:#287c37;border:1px solid #bee5c4;border-radius:10px;padding:13px;margin-bottom:17px;font-weight:700}
+.dishyTryStats{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:17px}
+.dishyTryStats>span{background:#f6f7f9;border-radius:10px;padding:12px 15px;display:flex;align-items:center;gap:8px;font-size:12px;color:#64717f}
+.dishyTryStats b{font-size:18px;color:#252d36}
+.dishyTryOrderGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.dishyTryOrder{border:1px solid #e1e6eb;border-radius:13px;padding:15px}
+.dishyTryOrderHead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.dishyTryOrder>small{color:#798591}
+.dishyTryStatus{border-radius:99px;padding:6px 9px;font-size:10px;font-weight:800}
+.dishyTryStatus.status-0{background:#fff1dc;color:#ac6900}
+.dishyTryStatus.status-1,.dishyTryStatus.status-2{background:#e9f3ff;color:#2168b1}
+.dishyTryStatus.status-3{background:#e8f8e7;color:#297d32}
+.dishyTryStatus.status-4{background:#edf0f4;color:#606c78}
+.dishyTryOrderItems{list-style:none;margin:15px 0;padding:0}
+.dishyTryOrderItems li{display:flex;justify-content:space-between;gap:10px;font-size:12px;padding:5px 0;color:#64707b}
+.dishyTryOrderFoot{border-top:1px solid #eee;padding-top:11px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.dishyTryOrderFoot strong{font-size:15px}
+.dishyTryOrderFoot button,.dishyTryInline{display:flex;align-items:center;gap:5px;border:0;border-radius:8px;background:#ef7925;color:#fff;padding:10px 11px;font-size:12px;font-weight:800}
+.dishyTryOrderFoot button:hover,.dishyTryInline:hover{background:#ce5a0a}
+.dishyTryInline{margin-top:17px}
+.dishyTryTables{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
+.dishyTryTables button{display:flex;flex-direction:column;align-items:center;gap:6px;border:1px solid #e5e9ed;border-radius:12px;background:white;padding:18px 6px;color:#54616e}
+.dishyTryTables button.selected{border-color:#ed7926;background:#fff3e6;color:#c65a08}
+.dishyTryTables small{font-size:11px}
+.dishyTryTableProducts{margin-top:23px}
+.dishyTryTableProducts h3{font-size:17px;margin:0 0 6px}
+.dishyTryTableProducts p{margin:0 0 15px;font-size:12px;color:#677482}
+.dishyTryTableProducts>div{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.dishyTryTableProducts button{display:flex;align-items:center;gap:9px;border:1px solid #e6e7eb;background:white;border-radius:10px;padding:10px;text-align:left;font-size:12px}
+.dishyTryTableProducts button:hover{border-color:#f0ac73;background:#fffaf7}
+.dishyTryTableProducts button span{font-size:24px}
+.dishyTryTableProducts button b{flex:1}
+.dishyTryTableProducts button small{white-space:nowrap;font-size:11px;color:#bc5906}
+.dishyTryFinal{margin-top:30px;text-align:center;border-radius:18px;background:#151c26;color:#fff;padding:33px 20px}
+.dishyTryFinal h2{font-size:28px;margin:0 0 8px}
+.dishyTryFinal p{font-size:14px;color:#c6cbd3;margin:0 0 20px}
+.dishyTryFinal a{display:inline-flex;align-items:center;gap:8px;text-decoration:none;border-radius:10px;padding:13px 21px;background:#f47c1d;color:white;font-weight:800}
+@media(max-width:1150px){.dishyTryShell{grid-template-columns:190px minmax(0,1fr)}.dishyTryCart{grid-column:2;position:static;min-height:0}.dishyTryProducts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:740px){.dishyTryTop{padding:12px 14px;gap:9px}.dishyTryTag{display:none}.dishyTryBrand img{width:103px}.dishyTryMain{padding:20px 12px 40px}.dishyTryIntro p{font-size:14px}.dishyTryShell{display:flex;flex-direction:column;gap:10px}.dishyTrySidebar{padding:12px}.dishyTrySample,.dishyTryHint,.dishyTryReset{display:none}.dishyTryNav{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}.dishyTryNav button{flex-direction:column;justify-content:center;text-align:center;gap:5px;font-size:10px;padding:9px 2px}.dishyTryWorkspace{padding:16px;min-height:0}.dishyTrySectionHead h2{font-size:20px}.dishyTrySectionHead p{font-size:12px}.dishyTryProducts{grid-template-columns:1fr}.dishyTryOrderGrid{grid-template-columns:1fr}.dishyTryCart{position:static;min-height:0}.dishyTryTableProducts>div{grid-template-columns:1fr}.dishyTryTables{grid-template-columns:repeat(3,1fr)}.dishyTryFacts{gap:6px 12px}.dishyTryFacts span{font-size:11px}}
