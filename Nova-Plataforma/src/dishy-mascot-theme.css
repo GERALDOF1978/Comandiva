@@ -1,0 +1,43 @@
+/* Identidade unificada das páginas públicas Dishy: comercial, anúncio e cadastro.
+   O fluxo de autenticação, checkout e atendimento permanece inalterado. */
+:root{--dishy-royal:#1045b7;--dishy-royal-dark:#082a77;--dishy-orange:#ff7807;--dishy-cream:#f6f9ff}
+.dishySite{background:linear-gradient(145deg,#0b3593 0%,#091d52 63%,#12245f 100%);color:#fff}
+.dishySite .dishyTop{border-color:#ffffff35}
+.dishySite .dishyHero{gap:28px;padding-top:55px;padding-bottom:70px}
+.dishySite .dishyHero h1{font-size:clamp(38px,4.9vw,69px);line-height:1.09}
+.dishySite .dishyHero h1 em{color:#ffae32}
+.dishySite .dishyHeroText>p{color:#e4ebff}
+.dishySite .dishyHeroBenefits span{background:#ffffff14;border:1px solid #ffffff2b}
+.dishySite .dishyPrimary,.dishySite .dishyTopCta{background:linear-gradient(110deg,#ff9a08,#ff6508);color:#fff;box-shadow:0 12px 28px #ff760055}
+.dishySite .dishyHeroRealPreview{position:relative;max-width:560px;margin-inline:auto}
+.dishySite .dishyHeroRealPreview .dishy-mascot-home{display:block;width:min(57%,255px);max-height:360px;object-fit:contain;object-position:center bottom;margin:0 auto -12px;position:relative;z-index:2;filter:drop-shadow(0 15px 22px #07113d75);border-radius:16px}
+.dishySite .dishyHeroRealPreview>img:not(.dishy-mascot-home){max-height:275px;object-fit:contain}
+.dishySite .dishyHeroRealPreview:before{content:'';position:absolute;left:9%;right:9%;top:6%;height:72%;background:radial-gradient(circle,#4c82ff95,transparent 70%);pointer-events:none}
+.dm-page{--dm-orange:#ff7d0b;--dm-gold:#ffc037;--dm-ink:#10244c;--dm-muted:#60718d;background:#f7faff}
+.dm-header{background:#0c3388}
+.dm-hero{background:radial-gradient(ellipse at 79% 30%,#1f68c9 0%,#1043a6 48%,#092962 100%)}
+.dm-hero-glow{background:radial-gradient(circle at 72% 38%,#ffac1330,transparent 49%)}
+.dm-hero h1 em{color:#ffc04e}
+.dm-hero-copy>p{color:#edf2ff}
+.dm-hero .dm-cta,.dm-header-cta,.dm-mobile-cta{background:linear-gradient(100deg,#ff9b0f,#ff710b);color:#fff;box-shadow:0 9px 24px #b84b153a}
+.dm-stage{display:flex;align-items:center;justify-content:center;flex-direction:column}
+.dm-stage .dm-hero-poster{display:none}
+.dm-stage .dm-official-mascot{display:block;position:relative;z-index:3;width:min(74%,320px);max-height:465px;object-fit:contain;border-radius:18px;filter:drop-shadow(0 24px 28px #08205785)}
+.dm-stage .dm-mascot-caption{position:relative;z-index:3;background:#fff;color:#0d397e;border-radius:14px;padding:12px 18px;font-weight:850;box-shadow:0 10px 30px #001e5a40;text-align:center}
+.dm-strip{background:#0c388c}
+.dm-final{background:linear-gradient(135deg,#082968,#104cb3);color:#fff}
+.dm-local-banner{background:linear-gradient(112deg,#0e3fa0,#1a57b6)}
+.dar-page{background:linear-gradient(135deg,#0a2b79,#0d49b7 58%,#082461);color:#fff}
+.dar-presentation:before{background:radial-gradient(ellipse at 38% 50%,#ffbb2e28,transparent 60%)}
+.dar-presentation h1 em{background:linear-gradient(105deg,#ffcd3a,#ff8618);background-clip:text;-webkit-background-clip:text}
+.dar-offer>strong{color:#ffae23}
+.dar-highlights--cards span{background:#ffffff18;border-color:#ffffff35}
+.dar-nfc-validated{background:#ffffff16;border-color:#ffffff5c}
+.dar-card{box-shadow:0 24px 80px #061d6470;border:2px solid #ffffffa8}
+.dar-submit{background:linear-gradient(110deg,#ff9712,#ff6e10)}
+.dar-visual.dar-mascot-box{max-width:445px;gap:15px;align-items:center}
+.dar-visual.dar-mascot-box img{width:135px;height:195px;object-fit:contain;object-position:center;border-radius:16px;background:#ffffffeb;box-shadow:0 12px 28px #02184355}
+.dar-visual.dar-mascot-box span{font-size:16px;color:#fff}
+@media(max-width:940px){.dishySite .dishyHero{padding-top:40px}.dishySite .dishyHeroRealPreview .dishy-mascot-home{width:200px;max-height:255px;margin-bottom:7px}.dm-stage .dm-official-mascot{max-height:340px;width:65%}}
+@media(max-width:640px){.dishySite .dishyHero{padding-top:26px;padding-bottom:35px;gap:14px}.dishySite .dishyHero h1{font-size:clamp(35px,9.5vw,44px)}.dishySite .dishyHeroRealPreview .dishy-mascot-home{width:148px;height:210px;margin-bottom:0}.dishySite .dishyHeroRealPreview>img:not(.dishy-mascot-home){max-height:210px}.dm-stage{height:auto!important;min-height:290px;transform:none!important;margin:0!important}.dm-stage .dm-official-mascot{max-height:280px;width:190px}.dm-stage .dm-mascot-caption{font-size:12px}.dar-visual.dar-mascot-box{display:flex;margin-top:10px}.dar-visual.dar-mascot-box img{width:90px;height:128px}.dar-visual.dar-mascot-box span{font-size:12px}}
+@media(prefers-reduced-motion:reduce){.dishy-mascot-home,.dm-official-mascot{animation:none!important}}
