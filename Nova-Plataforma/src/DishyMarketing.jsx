@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { ArrowRight, Check, ChefHat, CreditCard, MapPin, Menu as MenuIcon, QrCode, ShieldCheck, Smartphone, Store, Truck, Utensils, Wallet, X } from "lucide-react";
 import "./dishy-marketing.css";
+import "./dishy-mascot-theme.css";
 import DishyGallery from "./DishyGallery.jsx";
 
 const SIGNUP_PATH = "/cadastro-anuncio";
@@ -66,7 +67,7 @@ export default function DishyAdsLanding() {
             <a className="dm-cta" href={signupUrl}>Criar minha conta grátis <ArrowRight size={20}/></a>
             <small className="dm-hero-fine">Teste sem cobrança automática ao final. Taxas de serviços financeiros, quando aplicáveis, dependem do provedor.</small>
           </div>
-          <div className="dm-stage" aria-label="Arte publicitária com cardápio digital e alimentos"><img className="dm-hero-poster" src="/marketing/poster-apresentacao.webp" alt="Dishy: restaurante mais digital e lucrativo, com cardápio pelo celular" width="600" height="750" decoding="async" fetchPriority="high"/>
+          <div className="dm-stage" aria-label="Arte publicitária com cardápio digital e alimentos"><img className="dm-official-mascot" src="/marketing/mascote-dishy-oficial.webp" alt="Mascote oficial do Dishy apresentando o sistema" width="290" height="440" decoding="async" fetchPriority="high"/><span className="dm-mascot-caption">Seu parceiro digital para vender e organizar pedidos</span>
             <div className="dm-stage-shape" aria-hidden="true"/>
             <div className="dm-phone"><div className="dm-phone-screen"><div className="dm-phone-brand"><img src="/dishy-logo-oficial.png" alt="Dishy"/><span>Cardápio digital</span></div><div className="dm-food-art">🍔</div><div className="dm-phone-title">Seu pedido, do seu jeito</div><div className="dm-phone-row"><span>🍕 Pizza personalizada</span><b>›</b></div><div className="dm-phone-row"><span>🥗 Marmitas e pratos</span><b>›</b></div><div className="dm-phone-row"><span>🥤 Bebidas e adicionais</span><b>›</b></div><div className="dm-phone-pay">Finalizar pedido</div></div></div>
             <div className="dm-floating dm-floating-pix"><Wallet size={21}/><span><strong>PIX integrado</strong><small>Pagamento no pedido</small></span></div>

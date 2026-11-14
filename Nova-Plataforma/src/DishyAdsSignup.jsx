@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ArrowRight, Check, ChevronLeft, CreditCard, Eye, EyeOff, LockKeyhole, Mail, MapPin, ShieldCheck, Utensils, Wallet } from "lucide-react";
 import "./dishy-ads-signup.css";
+import "./dishy-mascot-theme.css";
 import {trackMetaRegistrationStart} from "./DishyMetaPixel.jsx";
 
 const TRACK_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "fbclid"];
@@ -55,9 +56,9 @@ export default function DishyAdsSignup({
           <span><Utensils size={17}/> Cliente fecha a conta na mesa</span>
           <span><Check size={17}/> Cardápio, delivery, PDV e comanda</span>
         </div>
-        <div className="dar-visual">
-          <img src="/marketing/real-mesas.webp" alt="Captura real da tela de mesas e comandas do Dishy" loading="lazy" />
-          <span>Um sistema completo para seu restaurante</span>
+        <div className="dar-visual dar-mascot-box">
+          <img src="/marketing/mascote-dishy-oficial.webp" alt="Mascote oficial Dishy, seu assistente digital" loading="lazy" />
+          <span>Bem-vindo ao Dishy! Crie sua conta e comece a conhecer seu novo sistema.</span>
         </div>
       </aside>
 
