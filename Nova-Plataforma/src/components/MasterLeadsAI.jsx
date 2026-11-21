@@ -193,35 +193,46 @@ export default function MasterLeadsAI({ user }) {
     </>}
     {view === "funnel" && <div style={{ ...box, display: "grid", gap: 12 }}>
       <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
-        <h3 style={{ margin: 0 }}>Oportunidades salvas</h3>
+        <h3 style={{ margin: 0 }}>Funil de oportunidades</h3>
         <button type="button" style={button} onClick={refresh} disabled={loading}>Atualizar</button>
       </div>
+      <p style={{ ...muted, margin: 0 }}>Prioridades consideram somente sinais conhecidos. Verifique os canais digitais antes de classificar uma ausência. Lembretes aparecem aqui, sem envio automático.</p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        {[[ "all", "Todos (" + leads.length + ")" ], [ "followups", "Retornos pendentes (" + counts.followups + ")" ], [ "priority", "Alta prioridade" ]].map(([key,text]) =>
+          <button key={key} type="button" onClick={() => setPipelineFilter(key)} style={pipelineFilter === key ? primary : button}>{text}</button>
+        )}
+      </div>
       <input value={filter} onChange={e => setFilter(e.target.value)} style={input} placeholder="Filtrar por estabelecimento, cidade ou status" aria-label="Filtrar contatos" />
-      {loading ? <p>Carregando…</p> : filtered.length === 0 ? <p style={muted}>Nenhum contato encontrado. Pesquise empresas ou cadastre uma oportunidade.</p> :
+      {loading ? <p>Carregando…</p> : filtered.length === 0 ? <p style={muted}>Nenhum contato encontrado com os filtros atuais. Pesquise empresas ou cadastre uma oportunidade.</p> :
         filtered.map(item => <article key={item.id} style={{ borderTop: "1px solid #3f4d62", paddingTop: 14 }}>
           <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 12 }}>
-            <div><strong>{item.name}</strong><p style={{ ...muted, margin: "5px 0" }}>{item.city}/{item.state} · {item.segment} · Prioridade {item.score}/100</p></div>
+            <div>
+              <strong>{item.name}</strong>
+              <p style={{ ...muted, margin: "5px 0" }}>{item.city}/{item.state} · {item.segment} · Prioridade {analyzeOpportunity(item).score}/100 · {analyzeOpportunity(item).level}</p>
+              {item.followUpOn && <p style={{ margin: "4px 0", color: item.followUpOn <= today && !["cliente","nao_contatar"].includes(item.status) ? "#ffcb95" : "#b8cadf", fontSize: 13 }}>
+                {item.followUpOn <= today && !["cliente","nao_contatar"].includes(item.status) ? "⏰ Retorno pendente: " : "📅 Próximo retorno: "}{item.followUpOn.split("-").reverse().join("/")}
+              </p>}
+            </div>
             <select aria-label={"Status de " + item.name} value={item.status} onChange={e => update(item, e.target.value, item.notes || "")} disabled={Boolean(pending)} style={{ ...input, width: "auto" }}>
               {Object.entries(statusLabels).map(([id, label]) => <option key={id} value={id}>{label}</option>)}
             </select>
           </div>
+          <p style={{ ...muted, margin: "4px 0 8px" }}>Sugestão: {analyzeOpportunity(item).recommendation}</p>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
+            <button style={{ ...primary }} type="button" disabled={Boolean(pending)} onClick={() => setEditing(editing?.id === item.id ? null : item)}>
+              {editing?.id === item.id ? "Fechar análise" : "Analisar presença digital"}
+            </button>
             <button style={{ ...button, opacity: item.status === "nao_contatar" ? 0.45 : 1 }} type="button" disabled={item.status === "nao_contatar"} onClick={() => copyText(item)}>Copiar abordagem</button>
             {normalPhone(item.phone) && item.status !== "nao_contatar" && <a target="_blank" rel="noopener noreferrer" href={"https://wa.me/" + normalPhone(item.phone) + "?text=" + encodeURIComponent(salesMessage(item))} style={{ ...button, textDecoration: "none" }}>Abrir WhatsApp</a>}
-            <button style={button} type="button" onClick={() => setEditing(editing?.id === item.id ? null : item)}>Anotações</button>
           </div>
-          {editing?.id === item.id && <div style={{ display: "grid", gap: 8, marginTop: 10 }}>
-            <textarea aria-label="Anotações do contato" rows={3} style={input} value={editing.notes || ""} onChange={e => setEditing({ ...editing, notes: e.target.value })} maxLength={2000} />
-            {editing.showMessage && <textarea readOnly rows={4} style={input} value={salesMessage(item)} aria-label="Mensagem sugerida" />}
-            <button type="button" style={{ ...primary, justifySelf: "start" }} disabled={Boolean(pending)} onClick={() => update(item, item.status, editing.notes || "")}>Salvar observações</button>
-          </div>}
+          {editing?.id === item.id && <LeadOpportunityPanel key={item.id} lead={item} saving={Boolean(pending)} onSave={saveAssessment} onCancel={() => setEditing(null)}/>}
         </article>)
       }
     </div>}
     {view === "manual" && <form style={{ ...box, display: "grid", gap: 12 }} onSubmit={e => { e.preventDefault(); add(form).then(() => { /* Não apagar dados se a API falhar. */ }); }}>
       <h3 style={{ margin: 0 }}>Cadastrar estabelecimento</h3>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 10 }}>
-        {[["name", "Nome do estabelecimento"], ["city", "Cidade"], ["state", "UF"], ["address", "Endereço comercial"], ["phone", "Telefone comercial público"], ["website", "Site (https://)"]].map(([key, label]) => <label key={key}>{label}<input style={input} required={["name", "city", "state"].includes(key)} value={form[key]} onChange={e => setForm(x => ({ ...x, [key]: e.target.value }))} maxLength={key === "state" ? 2 : 250} /></label>)}
+        {[["name", "Nome do estabelecimento"], ["city", "Cidade"], ["state", "UF"], ["address", "Endereço comercial"], ["phone", "Telefone comercial público"], ["website", "Site (https://)"], ["menuUrl", "Link do cardápio (se conhecido)"], ["orderUrl", "Link para pedidos online (se conhecido)"], ["instagramUrl", "Instagram público (link)"]].map(([key, label]) => <label key={key}>{label}<input style={input} required={["name", "city", "state"].includes(key)} value={form[key]} onChange={e => setForm(x => ({ ...x, [key]: e.target.value }))} maxLength={key === "state" ? 2 : 250} /></label>)}
         <label>Segmento<select style={input} value={form.segment} onChange={e => setForm(x => ({ ...x, segment: e.target.value }))}>{Object.entries(categoryLabels).filter(([key]) => key !== "todos").map(([key, name]) => <option value={key} key={key}>{name}</option>)}</select></label>
       </div>
       <label>Observações<textarea style={input} rows={3} maxLength={2000} value={form.notes} onChange={e => setForm(x => ({ ...x, notes: e.target.value }))} /></label>
