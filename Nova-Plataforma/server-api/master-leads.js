@@ -3,6 +3,7 @@ import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { leadScore } from "../src/lib/leadScoring.js";
+import { analyzeOpportunity, normalizeDigitalAudit, safePublicUrl, validFollowUpDate } from "../src/lib/leadIntelligence.js";
 import { getKnownCityCenter, geocodeCity, discoverFromOsm } from "./leads-discovery.js";
 
 // Endpoint exclusivo do Master. Nunca usar SDK cliente para ler ou gravar prospects.
@@ -31,6 +32,10 @@ function normalizeLead(raw) {
     address: safe(raw?.address, 250),
     phone: safe(raw?.phone, 40),
     website: urlText(raw?.website),
+    menuUrl: safePublicUrl(raw?.menuUrl),
+    orderUrl: safePublicUrl(raw?.orderUrl),
+    instagramUrl: safePublicUrl(raw?.instagramUrl),
+    facebookUrl: safePublicUrl(raw?.facebookUrl),
     sourceUrl: urlText(raw?.sourceUrl),
     sourceId: safe(raw?.sourceId, 100),
     notes: safe(raw?.notes, 2000),
@@ -61,7 +66,7 @@ export default async function handler(req, res) {
     const collection = db.collection("platformLeads");
     if (req.method === "GET" && action === "list") {
       const snap = await collection.orderBy("updatedAt", "desc").limit(250).get();
-      return res.status(200).json({ items: snap.docs.map(doc => ({ id: doc.id, ...doc.data() })) });
+      return res.status(200).json({ items: snap.docs.map(doc => { const data = doc.data(); return { id: doc.id, ...data, ...analyzeOpportunity(data) }; }) });
     }
     if (req.method === "POST" && action === "discover") {
       const city = safe(body.city, 64), state = safe(body.state || "SP", 2).toUpperCase();
@@ -128,9 +133,33 @@ export default async function handler(req, res) {
       if (!lead) return res.status(400).json({ error: "invalid_lead" });
       const ref = collection.doc(idFor(lead));
       const now = Date.now();
-      const doc = { ...lead, ...leadScore(lead), status: "novo", createdAt: now, updatedAt: now, createdBy: decoded.uid };
+      const doc = { ...lead, ...analyzeOpportunity(lead), digitalAudit: normalizeDigitalAudit({}, lead), status: "novo", followUpOn: "", createdAt: now, updatedAt: now, createdBy: decoded.uid };
       try { await ref.create(doc); } catch (e) { if (e?.code === 6 || String(e?.message).includes("ALREADY_EXISTS")) return res.status(409).json({ error: "lead_already_exists" }); throw e; }
       return res.status(201).json({ item: { id: ref.id, ...doc } });
+    }
+    if (req.method === "POST" && action === "assess") {
+      const id = safe(body.id, 64);
+      const rawAudit = body.digitalAudit;
+      if (!/^[a-f0-9]{40}$/.test(id) || !rawAudit || typeof rawAudit !== "object" || Array.isArray(rawAudit)) {
+        return res.status(400).json({ error: "invalid_assessment" });
+      }
+      if (Object.keys(rawAudit).some(key => !["site", "menu", "orders"].includes(key)) ||
+        ["site", "menu", "orders"].some(key => !["sim", "nao", "desconhecido"].includes(rawAudit[key])) ||
+        !validFollowUpDate(body.followUpOn) || typeof body.notes !== "string" || body.notes.length > 2000) {
+        return res.status(400).json({ error: "invalid_assessment" });
+      }
+      const ref = collection.doc(id);
+      const existing = await ref.get();
+      if (!existing.exists) return res.status(404).json({ error: "lead_not_found" });
+      const current = existing.data() || {};
+      const digitalAudit = normalizeDigitalAudit(rawAudit, current);
+      const next = {
+        digitalAudit, auditUpdatedAt: Date.now(), auditUpdatedBy: decoded.uid,
+        followUpOn: body.followUpOn || "", notes: body.notes, updatedAt: Date.now(), updatedBy: decoded.uid,
+      };
+      const analysis = analyzeOpportunity({ ...current, ...next });
+      await ref.update({ ...next, score: analysis.score, reasons: analysis.reasons });
+      return res.status(200).json({ ok: true, analysis });
     }
     if (req.method === "POST" && action === "update") {
       const id = safe(body.id, 64), status = safe(body.status, 30), notes = safe(body.notes, 2000);
