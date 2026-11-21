@@ -3,6 +3,7 @@ import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { leadScore } from "../src/lib/leadScoring.js";
+import { getKnownCityCenter, geocodeCity, discoverFromOsm } from "./leads-discovery.js";
 
 // Endpoint exclusivo do Master. Nunca usar SDK cliente para ler ou gravar prospects.
 function setupAdmin() {
@@ -41,68 +42,6 @@ function idFor(lead) {
   const origin = lead.sourceId || [lead.name, lead.city, lead.state, lead.address].join("|");
   return createHash("sha256").update(origin.toLocaleLowerCase("pt-BR")).digest("hex").slice(0, 40);
 }
-function determineSegment(tags = {}) {
-  const amenity = tags.amenity || "";
-  const shop = tags.shop || "";
-  const name = String(tags.name || "");
-  if (/pizz/i.test(name) && ["restaurant", "fast_food"].includes(amenity)) return "pizzaria";
-  if (/burger|hamb[uú]rg/i.test(name) && ["restaurant", "fast_food"].includes(amenity)) return "hamburgueria";
-  if (/marmit/i.test(name) && ["restaurant", "fast_food"].includes(amenity)) return "marmitaria";
-  if (amenity === "restaurant") return "restaurante";
-  if (amenity === "fast_food") return "lanchonete";
-  if (amenity === "cafe") return "cafeteria";
-  if (shop === "bakery") return "padaria";
-  if (shop === "confectionery" || shop === "pastry") return "cafeteria";
-  if (amenity === "ice_cream") return /a[çc]a[ií]/i.test(name) ? "acaiteria" : "sorveteria";
-  return "outro";
-}
-function kmBetween(a, b, c, d) {
-  const rad = x => x * Math.PI / 180;
-  const p = rad(c - a), q = rad(d - b);
-  const h = Math.sin(p / 2) ** 2 + Math.cos(rad(a)) * Math.cos(rad(c)) * Math.sin(q / 2) ** 2;
-  return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
-}
-async function getJson(url, options = {}) {
-  const response = await fetch(url, {
-    ...options,
-    headers: { "User-Agent": "DishyLeadsAI/0.1 (https://dishy.com.br; business discovery)", "Accept": "application/json", ...options.headers },
-    signal: AbortSignal.timeout(12000),
-  });
-  if (!response.ok) throw Error("data_provider_unavailable");
-  return response.json();
-}
-async function discover({ city, state, radiusKm, segment }) {
-  const query = city + ", " + state + ", Brasil";
-  const geocodes = await getJson("https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=1&countrycodes=br&q=" + encodeURIComponent(query));
-  if (!Array.isArray(geocodes) || !geocodes[0]) return [];
-  const lat = Number(geocodes[0].lat), lon = Number(geocodes[0].lon);
-  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return [];
-  const radius = Math.round(radiusKm * 1000);
-  const q = '[out:json][timeout:12];(nwr(around:' + radius + ',' + lat + ',' + lon + ')["amenity"~"^(restaurant|fast_food|cafe|food_court|ice_cream)$"];nwr(around:' + radius + ',' + lat + ',' + lon + ')["shop"~"^(bakery|pastry|confectionery)$"];);out center 130;';
-  const data = await getJson("https://overpass.kumi.systems/api/interpreter", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ data: q }),
-  });
-  const seen = new Set();
-  const leads = [];
-  for (const item of data?.elements || []) {
-    const tags = item.tags || {};
-    if (!tags.name) continue;
-    const type = determineSegment(tags);
-    const name = safe(tags.name, 120);
-    if (segment !== "todos" && type !== segment && !(segment === "pizzaria" && /pizza/i.test(name)) && !(segment === "hamburgueria" && /burger|hamb[uú]rg/i.test(name)) && !(segment === "marmitaria" && /marmit/i.test(name))) continue;
-    const la = Number(item.lat ?? item.center?.lat), lo = Number(item.lon ?? item.center?.lon);
-    if (!Number.isFinite(la) || !Number.isFinite(lo) || kmBetween(lat, lon, la, lo) > radiusKm) continue;
-    const sourceId = "osm:" + item.type + ":" + item.id;
-    if (seen.has(sourceId)) continue;
-    seen.add(sourceId);
-    const address = [tags["addr:street"], tags["addr:housenumber"], tags["addr:suburb"]].filter(Boolean).join(", ");
-    const lead = normalizeLead({ name, city, state, address, segment: type, phone: tags["contact:phone"] || tags.phone, website: tags["contact:website"] || tags.website, sourceUrl: "https://www.openstreetmap.org/" + item.type + "/" + item.id, sourceId });
-    if (lead) leads.push({ ...lead, ...leadScore(lead), distanceKm: Math.round(kmBetween(lat, lon, la, lo) * 10) / 10 });
-  }
-  return leads.sort((a, b) => a.distanceKm - b.distanceKm).slice(0, 50);
-}
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "private, no-store");
   if (!["GET", "POST"].includes(req.method)) return res.status(405).json({ error: "method_not_allowed" });
@@ -128,8 +67,16 @@ export default async function handler(req, res) {
       const city = safe(body.city, 64), state = safe(body.state || "SP", 2).toUpperCase();
       const radiusKm = Number(body.radiusKm || 10), segment = safe(body.segment || "todos", 30);
       if (!/^[\p{L}\s.'-]{2,64}$/u.test(city) || !/^[A-Z]{2}$/.test(state) || ![5, 10, 20, 30].includes(radiusKm) || !segments.has(segment)) return res.status(400).json({ error: "invalid_search" });
-      const rateRef = db.collection("platformLeadSearchLimits").doc(decoded.uid);
       const now = Date.now();
+      const key = createHash("sha256").update(JSON.stringify([city.toLocaleLowerCase("pt-BR"), state, radiusKm, segment])).digest("hex").slice(0, 40);
+      const cacheRef = db.collection("platformLeadSearchCache").doc(key);
+      const cacheSnap = await cacheRef.get();
+      const cache = cacheSnap.data() || {};
+      const attribution = "© OpenStreetMap contributors — ODbL";
+      if (Array.isArray(cache.items) && Number(cache.expiresAt) > now) {
+        return res.status(200).json({ items: cache.items, attribution, cached: true });
+      }
+      const rateRef = db.collection("platformLeadSearchLimits").doc(decoded.uid);
       const allowed = await db.runTransaction(async tx => {
         const previous = await tx.get(rateRef);
         if (now - Number(previous.data()?.lastSearchAt || 0) < 30000) return false;
@@ -137,8 +84,44 @@ export default async function handler(req, res) {
         return true;
       });
       if (!allowed) return res.status(429).json({ error: "too_many_requests" });
-      try { return res.status(200).json({ items: await discover({ city, state, radiusKm, segment }), attribution: "© OpenStreetMap contributors — ODbL" }); }
-      catch (e) { console.error("master-leads discovery provider", e?.message); return res.status(502).json({ error: "search_provider_unavailable" }); }
+      try {
+        // Cidades comuns da região são resolvidas localmente para evitar timeout
+        // e requisições desnecessárias ao serviço público de geocodificação.
+        let center = getKnownCityCenter(city, state);
+        if (!center) {
+          const geoKey = createHash("sha256").update(city.toLocaleLowerCase("pt-BR") + "|" + state).digest("hex").slice(0, 40);
+          const geoRef = db.collection("platformLeadGeocodes").doc(geoKey);
+          const geoSnap = await geoRef.get(), geo = geoSnap.data();
+          if (geo && Number(geo.expiresAt) > now && Array.isArray(geo.center)) {
+            center = geo.center;
+          } else {
+            // Nominatim público: uma única geocodificação sob demanda por segundo
+            // em toda a plataforma, com cache persistente por 30 dias.
+            const globalRef = db.collection("platformLeadSearchLimits").doc("nominatim-global");
+            const canGeocode = await db.runTransaction(async tx => {
+              const previous = await tx.get(globalRef);
+              if (now - Number(previous.data()?.lastRequestAt || 0) < 1200) return false;
+              tx.set(globalRef, { lastRequestAt: now });
+              return true;
+            });
+            if (!canGeocode) return res.status(429).json({ error: "geocoder_busy" });
+            center = await geocodeCity(city, state);
+            if (center) await geoRef.set({ center, expiresAt: now + 30 * 86400000 });
+          }
+        }
+        if (!center) return res.status(404).json({ error: "city_not_found" });
+        const items = await discoverFromOsm({ city, state, radiusKm, segment, center });
+        // OpenStreetMap recomenda reutilizar resultados; cache apenas da busca
+        // pública de empresas (nunca de credenciais ou dados de clientes).
+        await cacheRef.set({ items, lastFetchedAt: Date.now(), expiresAt: Date.now() + 3 * 3600000 });
+        return res.status(200).json({ items, attribution });
+      } catch (e) {
+        console.error("master-leads discovery provider", e?.message || "unknown");
+        if (Array.isArray(cache.items)) {
+          return res.status(200).json({ items: cache.items, attribution, cached: true, stale: true });
+        }
+        return res.status(502).json({ error: "search_provider_unavailable" });
+      }
     }
     if (req.method === "POST" && action === "create") {
       const lead = normalizeLead(body.lead);
