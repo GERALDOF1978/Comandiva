@@ -1,3 +1,4 @@
+import { leadScore } from "../src/lib/leadScoring.js";
 // Busca pública de pequenos lotes no OpenStreetMap. Nenhum dado é inventado.
 // O modo automático usa somente localidades já conhecidas ou geocodificadas sob demanda.
 // Overpass é um serviço comunitário: disponibilidade não é garantida.
@@ -60,14 +61,6 @@ function distanceKm(a, b, c, d) {
   const h = Math.sin(dl / 2) ** 2 + Math.cos(rad(a)) * Math.cos(rad(c)) * Math.sin(dn / 2) ** 2;
   return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }
-function localScore(lead) {
-  const reasons = ["Estabelecimento identificado no setor de alimentação."];
-  let score = 30;
-  if (lead.phone) { score += 15; reasons.push("Contato comercial público disponível."); }
-  if (lead.website) { score += 5; reasons.push("Site comercial identificado."); }
-  if (lead.segment !== "outro") { score += 10; reasons.push("Segmento atendido pelo Dishy."); }
-  return { score, reasons };
-}
 export function buildOverpassQuery(center, radiusKm) {
   const radius = Math.round(Number(radiusKm) * 1000);
   const [lat, lon] = center;
@@ -97,7 +90,7 @@ export function parseOsmElements(elements, { city, state, center, radiusKm, segm
       address: [tags["addr:street"], tags["addr:housenumber"], tags["addr:suburb"]].filter(Boolean).join(", ").slice(0, 250),
       distanceKm: Math.round(km * 10) / 10,
     };
-    found.push({ ...lead, ...localScore(lead) });
+    found.push({ ...lead, ...leadScore(lead) });
   }
   return found.sort((a, b) => a.distanceKm - b.distanceKm).slice(0, 50);
 }
