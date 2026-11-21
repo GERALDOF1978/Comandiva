@@ -8,6 +8,7 @@ NÃO usar `Master/`, que é outro painel do monorepo.
 ## Segurança e isolamento
 - Branch de desenvolvimento: `feat/dishy-leads-ai-nova-master`, criada a partir do commit de produção identificado na Vercel `c70028db...`.
 - Somente o Master autenticado vê o módulo. Todas as operações de dados revalidam Firebase ID Token revogável e `platformAdmins/{uid}.active === true` no backend.
+- Endpoint: `api/create-restaurant.js` encaminha somente ações `lead_*` ao módulo `server-api/master-leads.js`, evitando exceder o limite de funções Vercel Hobby. O handler revalida o token e o documento do Master.
 - Coleções próprias `platformLeads` e `platformLeadSearchLimits`, acessadas apenas com Admin SDK; não criam regras de escrita para o cliente.
 - Nenhuma alteração em pedidos, restaurantes, licenciamento, planos, pagamentos, webhook ou login.
 - Sem n8n, sem disparos em massa, sem cron e sem qualquer envio automático.
