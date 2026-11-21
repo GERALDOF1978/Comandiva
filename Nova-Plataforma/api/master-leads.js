@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
+import { leadScore } from "../src/lib/leadScoring.js";
 
 // Endpoint exclusivo do Master. Nunca usar SDK cliente para ler ou gravar prospects.
 function setupAdmin() {
@@ -20,14 +21,6 @@ const urlText = value => {
   if (!candidate) return "";
   try { const u = new URL(candidate); return ["https:", "http:"].includes(u.protocol) ? u.toString() : ""; } catch { return ""; }
 };
-function leadScore(input) {
-  let score = 30;
-  const reasons = ["Estabelecimento identificado no setor de alimentação."];
-  if (input.phone) { score += 15; reasons.push("Contato comercial público disponível."); }
-  if (input.website) { score += 5; reasons.push("Site comercial identificado."); }
-  if (input.segment !== "outro") { score += 10; reasons.push("Segmento atendido pelo Dishy."); }
-  return { score, reasons };
-}
 function normalizeLead(raw) {
   const lead = {
     name: safe(raw?.name, 120),
