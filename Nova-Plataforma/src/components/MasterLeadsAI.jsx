@@ -75,7 +75,9 @@ export default function MasterLeadsAI({ user }) {
         unauthorized: "Sua sessão expirou. Entre novamente no Master.",
         master_only: "Sua conta não tem permissão de Master.",
         too_many_requests: "Aguarde 30 segundos entre as pesquisas.",
-        search_provider_unavailable: "A fonte de empresas está temporariamente indisponível. Tente novamente mais tarde.",
+        search_provider_unavailable: "Os serviços de busca pública estão demorando para responder. Tente com raio de 5 km ou novamente mais tarde. O cadastro manual continua disponível.",
+        geocoder_busy: "O serviço de localização está ocupado. Faça uma nova pesquisa em instantes.",
+        city_not_found: "Não encontramos essa cidade e UF na fonte de localização. Confira o nome e tente novamente.",
         lead_already_exists: "Este estabelecimento já consta no funil.",
         invalid_search: "Revise a cidade, o estado e os filtros.",
       };
@@ -105,7 +107,11 @@ export default function MasterLeadsAI({ user }) {
     try {
       const result = await request("discover", { city, state, radiusKm: Number(radiusKm), segment });
       setFound(result.items || []);
-      setMessage(result.items?.length ? result.items.length + " estabelecimentos encontrados na fonte OpenStreetMap." : "Nenhum estabelecimento encontrado com estes filtros. Amplie o raio ou tente outra cidade.");
+      setMessage(result.stale
+        ? "A fonte está instável; exibindo o último resultado salvo da pesquisa, que pode estar desatualizado."
+        : result.items?.length
+          ? result.items.length + " estabelecimentos encontrados na fonte OpenStreetMap." + (result.cached ? " Resultado reutilizado do cache." : "")
+          : "Nenhum estabelecimento encontrado com estes filtros. Amplie o raio ou tente outra cidade.");
     } catch (e) { setError(e.message); }
     finally { setPending(""); }
   }
