@@ -51,3 +51,23 @@ test("Falha nas duas fontes não inventa dados", async () => {
     await assert.rejects(discoverFromOsm(base, { fetcher, endpoints: ["https://falha1.test", "https://falha2.test"] }), /search_provider_unavailable/);
   } finally { console.error = oldError; }
 });
+
+test("captura somente URLs de cardápio e pedidos explicitamente informadas no OSM", () => {
+  const tagged = {
+    ...restaurant, id: 221,
+    tags: {
+      amenity: "restaurant", name: "Restaurante com canais",
+      "contact:website": "https://restaurante.exemplo",
+      "website:menu": "https://restaurante.exemplo/cardapio",
+      "website:orders": "https://restaurante.exemplo/pedir",
+      "contact:instagram": "https://instagram.com/restaurante",
+    },
+  };
+  const [lead] = parseOsmElements([tagged], base);
+  assert.equal(lead.menuUrl, "https://restaurante.exemplo/cardapio");
+  assert.equal(lead.orderUrl, "https://restaurante.exemplo/pedir");
+  assert.equal(lead.instagramUrl, "https://instagram.com/restaurante");
+  const [withoutTags] = parseOsmElements([restaurant], base);
+  assert.equal(withoutTags.menuUrl, "");
+  assert.equal(withoutTags.orderUrl, "");
+});
