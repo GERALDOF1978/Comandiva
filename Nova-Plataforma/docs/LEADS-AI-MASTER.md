@@ -32,3 +32,13 @@ Menu `Leads AI` dentro da aba Master.
 - Confirmar regras de dados/licença, LGPD e opt-out `nao_contatar`.
 - Testar em preview isolado e conferir diferenças da branch atual de produção.
 - Pedir autorização expressa antes de qualquer deploy / migração de produção.
+
+## Correção de 21/11/2026 — busca e experiência Master
+- O erro `search_provider_unavailable` foi observado em logs Vercel como timeout de fonte OSM, não como erro de permissão ou de cidade.
+- As cidades Rio Claro, Limeira, Piracicaba e Araras (SP) utilizam coordenadas de referência, evitando consultar o geocodificador externo a cada pesquisa. Outras cidades têm cache persistente de geocodificação.
+- A consulta OpenStreetMap usa um provedor principal e outro alternativo de Overpass, com filtros e limites de resposta, sem scraping de websites ou envio automático de mensagens.
+- Buscas concluídas são armazenadas por até três horas; quando uma fonte cai, resultados anteriores podem ser mostrados como desatualizados.
+- Nominatim é usado somente sob demanda para cidades não mapeadas, com cache e limite global de chamadas para respeitar as políticas do serviço.
+- `/master` não mostra mais o botão flutuante de instalação PWA. Todos os demais lugares mantêm o comportamento original.
+- Contas não autorizadas recebem orientação para entrar com a conta Master correta; nenhuma permissão é concedida automaticamente.
+- `npm run build` executa primeiro testes unitários de busca e pontuação; aplicar correções somente após compilação.
