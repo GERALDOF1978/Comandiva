@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node --test src/lib/leadScoring.test.js server-api/leads-discovery.test.js && vite build",
+    "build": "node --test src/lib/leadScoring.test.js src/lib/leadIntelligence.test.js server-api/leads-discovery.test.js && vite build",
     "preview": "vite preview",
     "test": "node --test src/lib/*.test.js server-api/*.test.js",
     "start": "node server.js"
