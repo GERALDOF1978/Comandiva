@@ -44,12 +44,16 @@ function idFor(lead) {
 function determineSegment(tags = {}) {
   const amenity = tags.amenity || "";
   const shop = tags.shop || "";
+  const name = String(tags.name || "");
+  if (/pizz/i.test(name) && ["restaurant", "fast_food"].includes(amenity)) return "pizzaria";
+  if (/burger|hamb[uú]rg/i.test(name) && ["restaurant", "fast_food"].includes(amenity)) return "hamburgueria";
+  if (/marmit/i.test(name) && ["restaurant", "fast_food"].includes(amenity)) return "marmitaria";
   if (amenity === "restaurant") return "restaurante";
-  if (amenity === "fast_food") return /pizza/i.test(tags.name || "") ? "pizzaria" : "lanchonete";
+  if (amenity === "fast_food") return "lanchonete";
   if (amenity === "cafe") return "cafeteria";
   if (shop === "bakery") return "padaria";
   if (shop === "confectionery" || shop === "pastry") return "cafeteria";
-  if (amenity === "ice_cream") return "acaiteria";
+  if (amenity === "ice_cream") return /a[çc]a[ií]/i.test(name) ? "acaiteria" : "sorveteria";
   return "outro";
 }
 function kmBetween(a, b, c, d) {
