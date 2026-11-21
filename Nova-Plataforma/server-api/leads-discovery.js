@@ -90,6 +90,11 @@ export function parseOsmElements(elements, { city, state, center, radiusKm, segm
       name, city, state, segment: kind, sourceId, sourceUrl: link,
       phone: String(tags["contact:phone"] || tags.phone || "").slice(0, 40),
       website: String(tags["contact:website"] || tags.website || "").slice(0, 500),
+      // Somente links explícitos da fonte; ausência de tag não significa que falta o serviço.
+      menuUrl: String(tags["website:menu"] || tags["menu:website"] || tags["menu:url"] || tags["contact:website:menu"] || "").slice(0, 500),
+      orderUrl: String(tags["website:orders"] || tags["contact:website:orders"] || tags["orders:website"] || "").slice(0, 500),
+      instagramUrl: String(tags["contact:instagram"] || tags.instagram || "").slice(0, 500),
+      facebookUrl: String(tags["contact:facebook"] || tags.facebook || "").slice(0, 500),
       address: [tags["addr:street"], tags["addr:housenumber"], tags["addr:suburb"]].filter(Boolean).join(", ").slice(0, 250),
       distanceKm: Math.round(km * 10) / 10,
     };
