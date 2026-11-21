@@ -60,7 +60,8 @@ function DishyInstallButton(){
   return()=>{window.removeEventListener("beforeinstallprompt",onPrompt);window.removeEventListener("appinstalled",onInstalled)}
  },[]);
  if(installed)return null;
- if(["/anuncio","/cadastro-anuncio","/demonstracao"].includes(window.location.pathname.replace(/\/$/,"")))return null;
+ // A tela Master é administrativa e não oferece instalação PWA; os demais botões permanecem.
+ if(["/master","/anuncio","/cadastro-anuncio","/demonstracao"].includes(window.location.pathname.replace(/\/$/,"")))return null;
  const path=window.location.pathname,params=new URLSearchParams(window.location.search);
  const isMenu=params.has("loja"),isMaster=path.startsWith("/master"),isPanel=path.startsWith("/login")||path.startsWith("/cadastro")||(!isMenu&&!params.has("entregador")&&path==="/");
  const label=isMenu?"Instalar cardápio":isMaster?"Instalar painel Master":isPanel?"Instalar painel Dishy":"Instalar Dishy";
@@ -268,7 +269,7 @@ function DishyMasterGate({user}){
  }
  const panel={background:"#20242c",padding:20,borderRadius:16,border:"1px solid #343944"},muted={color:"#b8bfcb"},btn={background:"#ff7900",color:"#161616",padding:"10px 16px",border:0,borderRadius:10,fontWeight:700,cursor:"pointer"};
  if(status==="loading")return <div className="loading">Validando acesso Master...</div>;
- if(status!=="allowed")return <div className="loginPage"><div className="loginBox"><h1>Acesso restrito</h1><p>{status==="error"?error:"Sua conta ainda não está ativa na coleção platformAdmins do Firebase."}</p><p>Solicite ao administrador do Firebase o documento platformAdmins/{user.uid} com active: true.</p><button className="loginButton" onClick={()=>location.reload()}>Verificar novamente</button><a href="/login">Voltar ao painel</a></div></div>;
+ if(status!=="allowed")return <div className="loginPage"><div className="loginBox"><h1>Acesso restrito</h1><p>{status==="error"?error:"Esta conta não tem acesso autorizado ao Master do Dishy."}</p><p>Conta atual: <strong>{user.email||"Conta não identificada"}</strong></p><p>Se você abriu o link em outro navegador, entre com a mesma conta que já utiliza no Master. O acesso é protegido e não será habilitado automaticamente.</p><button className="loginButton" type="button" onClick={()=>signOut(auth).then(()=>{window.location.href="/master"}).catch(()=>setError("Não foi possível sair. Feche esta aba e tente novamente."))}>Sair e entrar com outra conta</button><button type="button" style={{marginTop:10}} onClick={()=>location.reload()}>Verificar novamente</button><a href="/login">Voltar ao painel</a></div></div>;
  const tabs=[["restaurants","Estabelecimentos"],["plans","Planos"],["subscriptions","Assinaturas"],["support","Suporte"]],planRows=[data.plans.find(p=>p.id==="trial")||{id:"trial",name:"Teste gratuito (37 dias)",priceCents:0,active:true},...data.plans.filter(p=>p.id!=="trial")],filtered=(tab==="plans"?planRows:(data[tab]||[])).filter(item=>JSON.stringify({id:item.id,name:item.name,slug:item.slug,status:item.status,restaurantId:item.restaurantId}).toLowerCase().includes(search.toLowerCase()));
  return <div style={{minHeight:"100vh",background:"#101319",color:"#fff",padding:"28px 16px"}}><div style={{maxWidth:1100,margin:"auto"}}>
  <header style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,flexWrap:"wrap"}}><div><h1 style={{marginBottom:4}}>Dishy Master</h1><p style={muted}>Administração da plataforma</p></div><div style={{display:"flex",gap:12,alignItems:"center"}}><a href="/login" style={{color:"#ff9d56"}}>Painel do restaurante</a><button style={btn} onClick={()=>signOut(auth)}>Sair</button></div></header>
