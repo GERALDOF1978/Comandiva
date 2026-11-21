@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import LeadOpportunityPanel from "./LeadOpportunityPanel.jsx";
+import { analyzeOpportunity, messageForLead, safePublicUrl } from "../lib/leadIntelligence.js";
 
 const box = { background: "#18202e", border: "1px solid #364252", borderRadius: 14, padding: 16 };
 const input = { background: "#101722", color: "#fff", border: "1px solid #566174", padding: "10px 12px", borderRadius: 8, width: "100%", minWidth: 0 };
@@ -7,12 +9,9 @@ const primary = { ...button, background: "#ff7900", color: "#161616", border: "1
 const muted = { color: "#bdc8d8", fontSize: 13 };
 const statusLabels = { novo: "Novo", contatado: "Contatado", interessado: "Interessado", demonstracao: "Demonstração", cliente: "Cliente", nao_contatar: "Não contatar" };
 const categoryLabels = { todos: "Todos", restaurante: "Restaurantes", pizzaria: "Pizzarias", hamburgueria: "Hamburguerias", lanchonete: "Lanchonetes", acaiteria: "Açaíterias", marmitaria: "Marmitarias", cafeteria: "Cafeterias", padaria: "Padarias" };
-const emptyLead = { name: "", city: "Rio Claro", state: "SP", segment: "restaurante", address: "", phone: "", website: "", notes: "" };
+const emptyLead = { name: "", city: "Rio Claro", state: "SP", segment: "restaurante", address: "", phone: "", website: "", menuUrl: "", orderUrl: "", instagramUrl: "", notes: "" };
 
-function salesMessage(lead) {
-  const intro = "Olá! Tudo bem? Sou da Dishy e encontrei o estabelecimento " + lead.name + ".";
-  return intro + " Trabalhamos com cardápio digital, pedidos online, PDV, delivery e PIX para negócios de alimentação. Posso lhe mostrar uma demonstração do sistema? https://dishy.com.br";
-}
+function salesMessage(lead) { return messageForLead(lead); }
 function getHttpUrl(text) {
   try { const u = new URL(text); return ["https:", "http:"].includes(u.protocol) ? u.href : null; } catch { return null; }
 }
@@ -24,21 +23,28 @@ function normalPhone(phone) {
 function BusinessCard({ lead, saved, saving, onAdd }) {
   const sourceUrl = getHttpUrl(lead.sourceUrl);
   const website = getHttpUrl(lead.website);
+  const menuUrl = safePublicUrl(lead.menuUrl);
+  const orderUrl = safePublicUrl(lead.orderUrl);
+  const instagramUrl = safePublicUrl(lead.instagramUrl);
+  const analysis = analyzeOpportunity(lead);
   return <article style={{ ...box, display: "grid", gap: 8 }}>
     <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
       <div>
         <strong style={{ fontSize: 16 }}>{lead.name}</strong>
         <p style={{ ...muted, margin: "4px 0 0" }}>{categoryLabels[lead.segment] || lead.segment} · {lead.city} / {lead.state}{lead.distanceKm !== undefined ? " · " + lead.distanceKm + " km" : ""}</p>
       </div>
-      <span style={{ color: "#ffc282", fontWeight: 700 }}>Prioridade {lead.score ?? "—"}/100</span>
+      <span style={{ color: "#ffc282", fontWeight: 700 }}>Prioridade preliminar {analysis.score}/100</span>
     </div>
     {lead.address && <p style={{ margin: 0, fontSize: 13 }}>📍 {lead.address}</p>}
     {lead.phone && <p style={{ margin: 0, fontSize: 13 }}>☎ {lead.phone}</p>}
     <div style={{ display: "flex", gap: 12, flexWrap: "wrap", fontSize: 13 }}>
-      {website && <a href={website} target="_blank" rel="noopener noreferrer" style={{ color: "#9dd0ff" }}>Site comercial</a>}
-      {sourceUrl && <a href={sourceUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#9dd0ff" }}>Ver fonte</a>}
+      {website && <a href={website} target="_blank" rel="noopener noreferrer" style={{ color: "#9dd0ff" }}>Site informado</a>}
+      {menuUrl && <a href={menuUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#9dd0ff" }}>Cardápio informado</a>}
+      {orderUrl && <a href={orderUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#9dd0ff" }}>Pedidos online informados</a>}
+      {instagramUrl && <a href={instagramUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#9dd0ff" }}>Instagram informado</a>}
+      {sourceUrl && <a href={sourceUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#9dd0ff" }}>Ver fonte OSM</a>}
     </div>
-    <p style={{ ...muted, margin: 0 }}>A pontuação indica apenas sinais públicos encontrados, não comprova que o negócio precisa do Dishy.</p>
+    <p style={{ ...muted, margin: 0 }}>Ainda não verificado: {analysis.unknown.length ? analysis.unknown.join(", ") : "nenhum dos três itens"}. A pontuação não comprova necessidade de contratar.</p>
     <button type="button" disabled={saving || saved} onClick={() => onAdd(lead)} style={{ ...primary, justifySelf: "start", opacity: saving || saved ? 0.55 : 1 }}>
       {saved ? "Adicionado ao funil" : saving ? "Adicionando…" : "+ Adicionar ao funil"}
     </button>
@@ -47,6 +53,7 @@ function BusinessCard({ lead, saved, saving, onAdd }) {
 
 export default function MasterLeadsAI({ user }) {
   const [view, setView] = useState("search");
+  const [pipelineFilter, setPipelineFilter] = useState("all");
   const [city, setCity] = useState("Rio Claro");
   const [state, setState] = useState("SP");
   const [radiusKm, setRadiusKm] = useState("10");
@@ -80,6 +87,7 @@ export default function MasterLeadsAI({ user }) {
         city_not_found: "Não encontramos essa cidade e UF na fonte de localização. Confira o nome e tente novamente.",
         lead_already_exists: "Este estabelecimento já consta no funil.",
         invalid_search: "Revise a cidade, o estado e os filtros.",
+        invalid_assessment: "Confira os dados da análise e a data de retorno.",
       };
       throw Error(messages[data.error] || "Não foi possível concluir a operação (" + res.status + ").");
     }
@@ -94,13 +102,19 @@ export default function MasterLeadsAI({ user }) {
   }, [request]);
   useEffect(() => { refresh(); }, [refresh]);
 
+  const today = new Date().toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
   const counts = useMemo(() => {
     const total = { all: leads.length };
     Object.keys(statusLabels).forEach(key => total[key] = leads.filter(x => x.status === key).length);
+    total.followups = leads.filter(item => item.followUpOn && item.followUpOn <= today && !["cliente","nao_contatar"].includes(item.status)).length;
     return total;
-  }, [leads]);
+  }, [leads, today]);
   const savedKeys = useMemo(() => new Set(leads.map(x => x.sourceId).filter(Boolean)), [leads]);
-  const filtered = useMemo(() => leads.filter(lead => (lead.name + " " + lead.city + " " + lead.segment + " " + lead.status).toLocaleLowerCase("pt-BR").includes(filter.toLocaleLowerCase("pt-BR"))), [leads, filter]);
+  const filtered = useMemo(() => leads.filter(lead =>
+    (lead.name + " " + lead.city + " " + lead.segment + " " + lead.status).toLocaleLowerCase("pt-BR").includes(filter.toLocaleLowerCase("pt-BR"))
+    && (pipelineFilter !== "followups" || (lead.followUpOn && lead.followUpOn <= today && !["cliente","nao_contatar"].includes(lead.status)))
+    && (pipelineFilter !== "priority" || analyzeOpportunity(lead).score >= 70)
+  ).sort((a,b) => analyzeOpportunity(b).score - analyzeOpportunity(a).score), [leads, filter, pipelineFilter, today]);
 
   async function search() {
     setPending("search"); setError(""); setMessage(""); setFound([]);
@@ -130,6 +144,16 @@ export default function MasterLeadsAI({ user }) {
     catch (e) { setError(e.message); }
     finally { setPending(""); }
   }
+  async function saveAssessment(item, values) {
+    setPending("assess:" + item.id); setError(""); setMessage("");
+    try {
+      await request("assess", { id: item.id, ...values });
+      await refresh();
+      setEditing(null);
+      setMessage("Análise e data de retorno salvas.");
+    } catch (e) { setError(e.message); }
+    finally { setPending(""); }
+  }
   async function copyText(item) {
     try { await navigator.clipboard.writeText(salesMessage(item)); setMessage("Mensagem copiada. Revise e envie manualmente."); }
     catch { setMessage("Não foi possível copiar. Selecione a mensagem no campo e copie manualmente."); setEditing({ ...item, showMessage: true }); }
@@ -141,11 +165,11 @@ export default function MasterLeadsAI({ user }) {
       <p style={{ ...muted, marginBottom: 0 }}>Prospecção comercial exclusiva do Master. Busca sob demanda, funil de contatos e mensagens para revisão. Sem disparos automáticos e sem n8n.</p>
     </div>
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))", gap: 10 }}>
-      {[["Empresas salvas", counts.all], ["Novas", counts.novo], ["Interessadas", counts.interessado], ["Clientes", counts.cliente]].map(([title, value]) => <div key={title} style={box}><small style={muted}>{title}</small><div style={{ fontWeight: 800, fontSize: 26, marginTop: 4 }}>{loading ? "…" : value}</div></div>)}
+      {[["Empresas salvas", counts.all], ["Novas", counts.novo], ["Interessadas", counts.interessado], ["Clientes", counts.cliente], ["Retornos pendentes", counts.followups]].map(([title, value]) => <div key={title} style={box}><small style={muted}>{title}</small><div style={{ fontWeight: 800, fontSize: 26, marginTop: 4 }}>{loading ? "…" : value}</div></div>)}
     </div>
     <nav aria-label="Seções Leads AI" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-      {[["search", "Encontrar empresas"], ["funnel", "Funil de vendas"], ["manual", "Cadastro manual"]].map(([id, label]) =>
-        <button key={id} type="button" onClick={() => { setView(id); setError(""); setMessage(""); }} style={view === id ? primary : button}>{label}</button>
+      {[["search", "Encontrar empresas"], ["funnel", "Funil de vendas"], ["followups", "Retornos pendentes"], ["manual", "Cadastro manual"]].map(([id, label]) =>
+        <button key={id} type="button" onClick={() => { setView(id === "followups" ? "funnel" : id); setPipelineFilter(id === "followups" ? "followups" : "all"); setError(""); setMessage(""); }} style={(view === id || (id === "followups" && view === "funnel" && pipelineFilter === "followups")) ? primary : button}>{label}</button>
       )}
     </nav>
     {error && <p role="alert" style={{ color: "#fecaca", background: "#51232c", padding: 12, borderRadius: 8, margin: 0 }}>{error}</p>}
