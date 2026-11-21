@@ -63,10 +63,11 @@ export default function MasterLeadsAI({ user }) {
 
   const request = useCallback(async (action, payload = null) => {
     const token = await user.getIdToken();
-    const res = await fetch("/api/master-leads" + (payload ? "" : "?action=" + encodeURIComponent(action)), {
+    const endpointAction = "lead_" + action;
+    const res = await fetch("/api/create-restaurant" + (payload ? "" : "?action=" + encodeURIComponent(endpointAction)), {
       method: payload ? "POST" : "GET",
       headers: { Authorization: "Bearer " + token, ...(payload ? { "Content-Type": "application/json" } : {}) },
-      ...(payload ? { body: JSON.stringify({ action, ...payload }) } : {}),
+      ...(payload ? { body: JSON.stringify({ action: endpointAction, ...payload }) } : {}),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
