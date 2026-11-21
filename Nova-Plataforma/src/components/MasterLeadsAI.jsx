@@ -175,7 +175,7 @@ export default function MasterLeadsAI({ user }) {
             </select>
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 10 }}>
-            <button style={button} type="button" onClick={() => copyText(item)}>Copiar abordagem</button>
+            <button style={{ ...button, opacity: item.status === "nao_contatar" ? 0.45 : 1 }} type="button" disabled={item.status === "nao_contatar"} onClick={() => copyText(item)}>Copiar abordagem</button>
             {normalPhone(item.phone) && item.status !== "nao_contatar" && <a target="_blank" rel="noopener noreferrer" href={"https://wa.me/" + normalPhone(item.phone) + "?text=" + encodeURIComponent(salesMessage(item))} style={{ ...button, textDecoration: "none" }}>Abrir WhatsApp</a>}
             <button style={button} type="button" onClick={() => setEditing(editing?.id === item.id ? null : item)}>Anotações</button>
           </div>
