@@ -9,8 +9,11 @@ export const CITY_CENTERS_SP = Object.freeze({
   "araras": [-22.35694, -47.38417],
 });
 const OVERPASS_ENDPOINTS = [
+  // Fonte regional com dados do Brasil: evita varrer o planeta inteiro.
+  "https://ovp.dresel.systems/api-sa/interpreter",
+  // Domínio atual do antigo overpass.kumi.systems.
+  "https://overpass.private.coffee/api/interpreter",
   "https://overpass-api.de/api/interpreter",
-  "https://overpass.kumi.systems/api/interpreter",
 ];
 const HEADERS = {
   "User-Agent": "DishyLeads/0.2 (https://dishy.com.br; uso administrativo sob demanda)",
