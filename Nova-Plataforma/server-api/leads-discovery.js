@@ -1,4 +1,5 @@
 import { leadScore } from "../src/lib/leadScoring.js";
+import { collectPublicHandles } from "../src/lib/instagramHandles.js";
 // Busca pública de pequenos lotes no OpenStreetMap. Nenhum dado é inventado.
 // O modo automático usa somente localidades já conhecidas ou geocodificadas sob demanda.
 // Overpass é um serviço comunitário: disponibilidade não é garantida.
@@ -8,7 +9,7 @@ export const CITY_CENTERS_SP = Object.freeze({
   "piracicaba": [-22.70833, -47.63361],
   "araras": [-22.35694, -47.38417],
 });
-const OVERPASS_ENDPOINTS = [
+export const OVERPASS_ENDPOINTS = [
   // Fonte regional com dados do Brasil: evita varrer o planeta inteiro.
   "https://ovp.dresel.systems/api-sa/interpreter",
   // Domínio atual do antigo overpass.kumi.systems.
@@ -70,7 +71,7 @@ export function buildOverpassQuery(center, radiusKm) {
   // Filtro por name antes do out evita resposta gigante e reduz custos do serviço público.
   return '[out:json][timeout:10];(nwr(around:' + radius + ',' + lat + ',' + lon + ')["amenity"~"^(restaurant|fast_food|cafe|food_court|ice_cream)$"]["name"];nwr(around:' + radius + ',' + lat + ',' + lon + ')["shop"~"^(bakery|pastry|confectionery)$"]["name"];);out center 100;';
 }
-export function parseOsmElements(elements, { city, state, center, radiusKm, segment }) {
+export function parseOsmElements(elements, { city, state, center, radiusKm, segment, limit = 50 }) {
   const [lat, lon] = center, seen = new Set(), found = [];
   for (const item of Array.isArray(elements) ? elements : []) {
     const tags = item.tags || {};
@@ -93,14 +94,14 @@ export function parseOsmElements(elements, { city, state, center, radiusKm, segm
       // Somente links explícitos da fonte; ausência de tag não significa que falta o serviço.
       menuUrl: String(tags["website:menu"] || tags["menu:website"] || tags["menu:url"] || tags["contact:website:menu"] || "").slice(0, 500),
       orderUrl: String(tags["website:orders"] || tags["contact:website:orders"] || tags["orders:website"] || "").slice(0, 500),
-      instagramUrl: String(tags["contact:instagram"] || tags.instagram || "").slice(0, 500),
+      instagramUrl: String(tags["contact:instagram"] || tags.instagram || tags["social_media:instagram"] || tags["website:instagram"] || "").slice(0, 500),
       facebookUrl: String(tags["contact:facebook"] || tags.facebook || "").slice(0, 500),
       address: [tags["addr:street"], tags["addr:housenumber"], tags["addr:suburb"]].filter(Boolean).join(", ").slice(0, 250),
       distanceKm: Math.round(km * 10) / 10,
     };
     found.push({ ...lead, ...leadScore(lead) });
   }
-  return found.sort((a, b) => a.distanceKm - b.distanceKm).slice(0, 50);
+  return found.sort((a, b) => a.distanceKm - b.distanceKm).slice(0, Math.min(150, Math.max(1, Number(limit) || 50)));
 }
 export async function discoverFromOsm({ city, state, radiusKm, segment, center }, { fetcher = fetch, endpoints = OVERPASS_ENDPOINTS } = {}) {
   if (!center || center.length !== 2) throw Error("city_not_found");
@@ -116,5 +117,42 @@ export async function discoverFromOsm({ city, state, radiusKm, segment, center }
     }
   }
   console.error("master-leads upstream exhausted", errors.join(" | "));
+  throw Error("search_provider_unavailable");
+}
+
+export function buildInstagramOverpassQuery(center, radiusKm) {
+  const radius = Math.round(Number(radiusKm) * 1000);
+  const [lat, lon] = center;
+  const around = "(around:" + radius + "," + lat + "," + lon + ")";
+  const food = '["amenity"~"^(restaurant|fast_food|cafe|food_court|ice_cream)$"]';
+  const shops = '["shop"~"^(bakery|pastry|confectionery)$"]';
+  const instagram = ['["contact:instagram"]','["instagram"]','["social_media:instagram"]'];
+  let query = "[out:json][timeout:12];(";
+  for (const type of [food, shops]) {
+    for (const tag of instagram) {
+      query += "nwr" + around + type + '["name"]' + tag + ";";
+    }
+  }
+  return query + ");out center 200;";
+}
+export async function discoverInstagramFromOsm({ city, state, radiusKm, segment, center },
+  { fetcher = fetch, endpoints = OVERPASS_ENDPOINTS } = {}) {
+  if (!center || center.length !== 2) throw Error("city_not_found");
+  const body = new URLSearchParams({ data: buildInstagramOverpassQuery(center, radiusKm) });
+  const errors = [];
+  for (const endpoint of endpoints) {
+    try {
+      const data = await requestJson(endpoint, {
+        method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body
+      }, { fetcher, timeoutMs: 11000 });
+      if (!Array.isArray(data?.elements)) throw Error("invalid_osm_response");
+      return collectPublicHandles(parseOsmElements(data.elements, {
+        city, state, center, radiusKm, segment, limit: 150
+      }));
+    } catch (error) {
+      errors.push((new URL(endpoint)).hostname + ": " + (error?.message || "failure"));
+    }
+  }
+  console.error("master-leads instagram upstream exhausted", errors.join(" | "));
   throw Error("search_provider_unavailable");
 }
