@@ -10,9 +10,10 @@ para postagens do Dishy.
 - Dentro de `Nova-Plataforma/src/components/MasterLeadsAI.jsx` na aba `📸 @ Instagram`.
 - Busca por cidade e nicho reutiliza a consulta OpenStreetMap do Leads AI.
 - A origem principal é `contact:instagram` ou `instagram` dos estabelecimentos públicos no OSM; empresas salvas podem oferecer links adicionais.
+- A aba possui pesquisa própria de @ públicas por cidade, UF, raio e segmento: `lead_handle_discover`, consultas OSM por tags Instagram, limite de 150 perfis por busca, cache de 4 horas e intervalo mínimo de 60 segundos entre buscas novas por Master.
 - Uma inclusão manual exige estabelecimento, cidade, segmento e perfil informado.
 - Coleção isolada `platformSocialHandles`, apenas API Admin, já protegida pela autenticação de Master ativo.
-- Ações `lead_handles`, `lead_handle_import`, `lead_handle_add`, `lead_handle_review` roteadas na mesma função serverless existente `api/create-restaurant.js`.
+- Ações `lead_handles`, `lead_handle_discover`, `lead_handle_import`, `lead_handle_add`, `lead_handle_review` roteadas na mesma função serverless existente `api/create-restaurant.js`.
 - Registros com @ duplicadas são deduplicados pelo username em minúsculas.
 - Status: `sugerida`, `revisada`, `nao_mencionar`.
 - Os perfis **não são verificados pela API do Instagram**; “revisada” significa que o Master conferiu manualmente.
