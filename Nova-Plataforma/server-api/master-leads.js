@@ -5,6 +5,7 @@ import { getFirestore } from "firebase-admin/firestore";
 import { leadScore } from "../src/lib/leadScoring.js";
 import { analyzeOpportunity, normalizeDigitalAudit, safePublicUrl, validFollowUpDate } from "../src/lib/leadIntelligence.js";
 import { getKnownCityCenter, geocodeCity, discoverFromOsm } from "./leads-discovery.js";
+import { handleInstagramAction } from "./leads-handles.js";
 
 // Endpoint exclusivo do Master. Nunca usar SDK cliente para ler ou gravar prospects.
 function setupAdmin() {
@@ -63,6 +64,9 @@ export default async function handler(req, res) {
     const body = req.body && typeof req.body === "object" ? req.body : {};
     const providedAction = req.method === "GET" ? safe(req.query?.action || "lead_list", 30) : safe(body.action, 30);
     const action = providedAction.startsWith("lead_") ? providedAction.slice(5) : providedAction;
+    if (action === "handles" || action.startsWith("handle_")) {
+      return handleInstagramAction({ action, body, db, uid: decoded.uid, method: req.method, res });
+    }
     const collection = db.collection("platformLeads");
     if (req.method === "GET" && action === "list") {
       const snap = await collection.orderBy("updatedAt", "desc").limit(250).get();
