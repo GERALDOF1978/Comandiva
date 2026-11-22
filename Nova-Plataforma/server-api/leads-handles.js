@@ -26,7 +26,7 @@ export async function handleInstagramAction({ action, body, db, uid, method, res
     cleaned.forEach((item, i) => {
       if (existing[i].exists) return;
       batch.create(refs[i], {
-        ...item, status: "sugerida", origin: "openstreetmap",
+        ...item, status: "sugerida", origin: item.sourceUrl.includes("openstreetmap.org/") ? "openstreetmap" : "fonte_publica",
         addedAt: now, updatedAt: now, addedBy: uid
       });
       created++;
