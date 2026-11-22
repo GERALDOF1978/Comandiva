@@ -32,7 +32,7 @@ export default async function handler(req,res){
     // Leads AI integra o Master existente sem consumir uma função serverless extra
     // na Vercel Hobby. A autorização Master é revalidada dentro do handler.
     const leadsAction=String(req.method==="GET"?req.query?.action||"":req.body?.action||"");
-    if(["lead_list","lead_discover","lead_create","lead_update","lead_assess","lead_handles","lead_handle_import","lead_handle_add","lead_handle_review"].includes(leadsAction)){
+    if(["lead_list","lead_discover","lead_create","lead_update","lead_assess","lead_handles","lead_handle_discover","lead_handle_import","lead_handle_add","lead_handle_review"].includes(leadsAction)){
       const {default:handleLeads}=await import("../server-api/master-leads.js");
       return handleLeads(req,res);
     }
