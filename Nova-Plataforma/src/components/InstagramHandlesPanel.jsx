@@ -37,6 +37,8 @@ function downloadCsv(rows) {
 
 export default function InstagramHandlesPanel({ request, found, leads }) {
   const [items, setItems] = useState([]);
+  const [directFound, setDirectFound] = useState([]);
+  const [discoverParams, setDiscoverParams] = useState({ city: "Rio Claro", state: "SP", radiusKm: "10", segment: "todos" });
   const [selected, setSelected] = useState([]);
   const [form, setForm] = useState(initial);
   const [cityFilter, setCityFilter] = useState("todas");
@@ -63,8 +65,8 @@ export default function InstagramHandlesPanel({ request, found, leads }) {
   const leadHandles = useMemo(() => collectPublicHandles(leads), [leads]);
   const existing = useMemo(() => new Set(items.map(item => item.username)), [items]);
   const toImport = useMemo(() =>
-    collectPublicHandles([...searchHandles, ...leadHandles]).filter(item => !existing.has(item.username)).slice(0, 50),
-  [searchHandles, leadHandles, existing]);
+    collectPublicHandles([...directFound, ...searchHandles, ...leadHandles]).filter(item => !existing.has(item.username)).slice(0, 50),
+  [directFound, searchHandles, leadHandles, existing]);
   const cities = useMemo(() =>
     [...new Set(items.map(item => item.city).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR")),
   [items]);
@@ -83,6 +85,17 @@ export default function InstagramHandlesPanel({ request, found, leads }) {
     reviewedForCaption(items, selected, 5),
   [items, selected]);
 
+  async function discoverHandles() {
+    setPending("discover"); setError(""); setNotice(""); setDirectFound([]);
+    try {
+      const result = await request("handle_discover", { ...discoverParams, radiusKm: Number(discoverParams.radiusKm) });
+      setDirectFound(result.items || []);
+      setNotice(result.stale
+        ? "Serviço instável: estes são perfis públicos de uma consulta anterior."
+        : (result.items || []).length + " @ públicas localizadas nesta busca específica." + (result.cached ? " Resultado em cache." : ""));
+    } catch (e) { setError(e.message || "Não foi possível pesquisar @ da região."); }
+    finally { setPending(""); }
+  }
   async function importPublic() {
     if (!toImport.length) return;
     setPending("import"); setError(""); setNotice("");
@@ -142,7 +155,7 @@ export default function InstagramHandlesPanel({ request, found, leads }) {
 
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(145px,1fr))", gap: 10 }}>
       {[
-        ["@ encontradas na busca", searchHandles.length],
+        ["@ encontradas na busca", directFound.length + searchHandles.length],
         ["@ de empresas salvas", leadHandles.length],
         ["@ na minha lista", items.length],
         ["@ revisadas", items.filter(x => x.status === "revisada").length],
@@ -152,7 +165,29 @@ export default function InstagramHandlesPanel({ request, found, leads }) {
     </div>
     <div style={{ ...panel, display: "grid", gap: 10 }}>
       <h4 style={{ margin: 0 }}>Capturar @ de estabelecimentos encontrados</h4>
-      <p style={{ ...muted, margin: 0 }}>Use a aba “Encontrar empresas” para pesquisar uma cidade. Aqui serão aproveitadas as @ que a fonte OpenStreetMap realmente informar, além das que você cadastrou nos leads. Nem todas as empresas possuem @ nos dados públicos.</p>
+      <p style={{ ...muted, margin: 0 }}>Busque diretamente os estabelecimentos que informaram Instagram no OpenStreetMap. O sistema também aproveita as @ da aba “Encontrar empresas” e as dos leads salvos. A cobertura dos dados públicos varia por região.</p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(145px,1fr))", gap: 9 }}>
+        <label style={{ display: "grid", gap: 4 }}><span style={{ fontSize: 13 }}>Cidade</span>
+          <input style={input} value={discoverParams.city} onChange={e => setDiscoverParams(old => ({ ...old, city: e.target.value }))} maxLength={64}/>
+        </label>
+        <label style={{ display: "grid", gap: 4 }}><span style={{ fontSize: 13 }}>UF</span>
+          <input style={input} value={discoverParams.state} onChange={e => setDiscoverParams(old => ({ ...old, state: e.target.value.toUpperCase() }))} maxLength={2}/>
+        </label>
+        <label style={{ display: "grid", gap: 4 }}><span style={{ fontSize: 13 }}>Raio</span>
+          <select style={input} value={discoverParams.radiusKm} onChange={e => setDiscoverParams(old => ({ ...old, radiusKm: e.target.value }))}>
+            {[5,10,20,30].map(n => <option key={n} value={n}>{n} km</option>)}
+          </select>
+        </label>
+        <label style={{ display: "grid", gap: 4 }}><span style={{ fontSize: 13 }}>Ramo</span>
+          <select style={input} value={discoverParams.segment} onChange={e => setDiscoverParams(old => ({ ...old, segment: e.target.value }))}>
+            <option value="todos">Todos</option>
+            {Object.entries(categories).map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+          </select>
+        </label>
+      </div>
+      <button type="button" style={{ ...primary, justifySelf: "start" }} disabled={Boolean(pending)} onClick={discoverHandles}>
+        {pending === "discover" ? "Buscando @…" : "🔎 Buscar @ Instagram na região"}
+      </button>
       <button type="button" style={{ ...primary, justifySelf: "start", opacity: !toImport.length || pending ? 0.55 : 1 }} disabled={Boolean(pending) || !toImport.length} onClick={importPublic}>
         {pending === "import" ? "Importando…" : "Adicionar " + toImport.length + " @ disponíveis à lista"}
       </button>
