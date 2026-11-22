@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { getKnownCityCenter, geocodeCity, buildOverpassQuery, parseOsmElements, discoverFromOsm } from "./leads-discovery.js";
+import { getKnownCityCenter, geocodeCity, buildOverpassQuery, buildInstagramOverpassQuery, parseOsmElements, discoverFromOsm, discoverInstagramFromOsm } from "./leads-discovery.js";
 
 const base = { city: "Rio Claro", state: "SP", radiusKm: 10, segment: "todos", center: [-22.41139, -47.56139] };
 const restaurant = { type: "node", id: 123, lat: -22.412, lon: -47.562, tags: { amenity: "restaurant", name: "Exemplo Restaurante", phone: "19999990000" } };
@@ -70,4 +70,26 @@ test("captura somente URLs de cardápio e pedidos explicitamente informadas no O
   const [withoutTags] = parseOsmElements([restaurant], base);
   assert.equal(withoutTags.menuUrl, "");
   assert.equal(withoutTags.orderUrl, "");
+});
+
+test("consulta dedicada por @ usa tags comerciais e limita resultado", () => {
+  const q = buildInstagramOverpassQuery(base.center, 10);
+  assert.match(q, /contact:instagram/);
+  assert.match(q, /social_media:instagram/);
+  assert.match(q, /out center 200/);
+  assert.match(q, /around:10000/);
+});
+
+test("busca de @ retorna somente usernames válidos associados a empresas de alimentação", async () => {
+  const elements = [
+    { ...restaurant, id: 300, tags: { amenity: "restaurant", name: "Pizzaria Boa", "contact:instagram": "@pizzaria.boa" }},
+    { ...restaurant, id: 301, tags: { amenity: "cafe", name: "Café Bom", "social_media:instagram": "https://instagram.com/cafe.bom" }},
+    { ...restaurant, id: 302, tags: { amenity: "restaurant", name: "Sem Instagram" }},
+    { ...restaurant, id: 303, tags: { amenity: "fast_food", name: "Com Link Inválido", instagram: "https://instagram.com/p/foo" }}
+  ];
+  const fetcher = async () => ({ ok: true, json: async () => ({ elements }) });
+  const data = await discoverInstagramFromOsm(base, { fetcher, endpoints: ["https://ok.test/api"] });
+  assert.equal(data.length, 2);
+  assert.deepEqual(data.map(item => item.username).sort(), ["cafe.bom","pizzaria.boa"]);
+  assert.ok(data.every(item => item.sourceUrl.includes("openstreetmap.org")));
 });
