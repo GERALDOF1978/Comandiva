@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import LeadOpportunityPanel from "./LeadOpportunityPanel.jsx";
+import InstagramHandlesPanel from "./InstagramHandlesPanel.jsx";
+import { parseInstagram } from "../lib/instagramHandles.js";
 import { analyzeOpportunity, messageForLead, safePublicUrl } from "../lib/leadIntelligence.js";
 
 const box = { background: "#18202e", border: "1px solid #364252", borderRadius: 14, padding: 16 };
@@ -25,7 +27,7 @@ function BusinessCard({ lead, saved, saving, onAdd }) {
   const website = getHttpUrl(lead.website);
   const menuUrl = safePublicUrl(lead.menuUrl);
   const orderUrl = safePublicUrl(lead.orderUrl);
-  const instagramUrl = safePublicUrl(lead.instagramUrl);
+  const instagramUrl = parseInstagram(lead.instagramUrl)?.url;
   const analysis = analyzeOpportunity(lead);
   return <article style={{ ...box, display: "grid", gap: 8 }}>
     <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
@@ -168,7 +170,7 @@ export default function MasterLeadsAI({ user }) {
       {[["Empresas salvas", counts.all], ["Novas", counts.novo], ["Interessadas", counts.interessado], ["Clientes", counts.cliente], ["Retornos pendentes", counts.followups]].map(([title, value]) => <div key={title} style={box}><small style={muted}>{title}</small><div style={{ fontWeight: 800, fontSize: 26, marginTop: 4 }}>{loading ? "…" : value}</div></div>)}
     </div>
     <nav aria-label="Seções Leads AI" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-      {[["search", "Encontrar empresas"], ["funnel", "Funil de vendas"], ["followups", "Retornos pendentes"], ["manual", "Cadastro manual"]].map(([id, label]) =>
+      {[["search", "Encontrar empresas"], ["funnel", "Funil de vendas"], ["handles", "📸 @ Instagram"], ["followups", "Retornos pendentes"], ["manual", "Cadastro manual"]].map(([id, label]) =>
         <button key={id} type="button" onClick={() => { setView(id === "followups" ? "funnel" : id); setPipelineFilter(id === "followups" ? "followups" : "all"); setError(""); setMessage(""); }} style={(view === id || (id === "followups" && view === "funnel" && pipelineFilter === "followups")) ? primary : button}>{label}</button>
       )}
     </nav>
@@ -229,6 +231,7 @@ export default function MasterLeadsAI({ user }) {
         </article>)
       }
     </div>}
+    {view === "handles" && <InstagramHandlesPanel request={request} found={found} leads={leads}/>}
     {view === "manual" && <form style={{ ...box, display: "grid", gap: 12 }} onSubmit={e => { e.preventDefault(); add(form).then(() => { /* Não apagar dados se a API falhar. */ }); }}>
       <h3 style={{ margin: 0 }}>Cadastrar estabelecimento</h3>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 10 }}>
