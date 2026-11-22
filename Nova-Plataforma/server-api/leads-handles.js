@@ -11,7 +11,7 @@ export async function handleInstagramAction({ action, body, db, uid, method, res
     const radiusKm = Number(body.radiusKm || 10);
     const segment = String(body.segment || "todos").trim();
     const sectors = new Set(["todos","restaurante","pizzaria","hamburgueria","lanchonete","acaiteria","marmitaria","cafeteria","padaria"]);
-    if (!/^[\\p{L}\\s.'-]{2,64}$/u.test(city) || !/^[A-Z]{2}$/.test(state) ||
+    if (!/^[\p{L}\s.'-]{2,64}$/u.test(city) || !/^[A-Z]{2}$/.test(state) ||
       ![5,10,20,30].includes(radiusKm) || !sectors.has(segment)) {
       return res.status(400).json({ error: "invalid_search" });
     }
