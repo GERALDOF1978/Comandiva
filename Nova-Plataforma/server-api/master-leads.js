@@ -6,6 +6,7 @@ import { leadScore } from "../src/lib/leadScoring.js";
 import { analyzeOpportunity, normalizeDigitalAudit, safePublicUrl, validFollowUpDate } from "../src/lib/leadIntelligence.js";
 import { getKnownCityCenter, geocodeCity, discoverFromOsm } from "./leads-discovery.js";
 import { handleInstagramAction } from "./leads-handles.js";
+import { parseInstagram } from "../src/lib/instagramHandles.js";
 
 // Endpoint exclusivo do Master. Nunca usar SDK cliente para ler ou gravar prospects.
 function setupAdmin() {
@@ -35,7 +36,7 @@ function normalizeLead(raw) {
     website: urlText(raw?.website),
     menuUrl: safePublicUrl(raw?.menuUrl),
     orderUrl: safePublicUrl(raw?.orderUrl),
-    instagramUrl: safePublicUrl(raw?.instagramUrl),
+    instagramUrl: parseInstagram(raw?.instagramUrl)?.url || "",
     facebookUrl: safePublicUrl(raw?.facebookUrl),
     sourceUrl: urlText(raw?.sourceUrl),
     sourceId: safe(raw?.sourceId, 100),
