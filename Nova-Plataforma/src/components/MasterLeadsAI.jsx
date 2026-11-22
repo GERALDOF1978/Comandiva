@@ -90,6 +90,9 @@ export default function MasterLeadsAI({ user }) {
         lead_already_exists: "Este estabelecimento já consta no funil.",
         invalid_search: "Revise a cidade, o estado e os filtros.",
         invalid_assessment: "Confira os dados da análise e a data de retorno.",
+        invalid_handles: "Confira o perfil, estabelecimento, cidade, segmento e a fonte pública.",
+        handle_exists: "Essa @ já está cadastrada na lista.",
+        handle_not_found: "A @ selecionada não foi encontrada.",
       };
       throw Error(messages[data.error] || "Não foi possível concluir a operação (" + res.status + ").");
     }
