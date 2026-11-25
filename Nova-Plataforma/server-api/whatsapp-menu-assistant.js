@@ -9,6 +9,34 @@ function signature(key, purpose, value) {
  return createHmac("sha256", key).update(purpose + ":" + value).digest("hex");
 }
 
+function menuImage(value) {
+ if (typeof value !== "string" || value.length > 4096) return null;
+ let url;
+ try { url = new URL(value); } catch { return null; }
+ if (url.protocol !== "https:" || url.username || url.password || url.port || url.hash) return null;
+ const imgbb = url.hostname === "i.ibb.co" || url.hostname === "i.ibb.co.com";
+ const firebase = url.hostname === "firebasestorage.googleapis.com"
+  && url.pathname.startsWith("/v0/b/saas-delivery-551a4.firebasestorage.app/o/")
+  && url.searchParams.get("alt") === "media";
+ if (!imgbb && !firebase) return null;
+ const extension = /\.(png|jpe?g|webp)$/i.exec(url.pathname)?.[1]?.toLowerCase();
+ if (!extension) return null;
+ const format = extension === "jpg" ? "jpeg" : extension;
+ return {media:url.href, mimetype:"image/" + format, fileName:"cardapio." + extension};
+}
+
+export async function sendMenuLink({request, instance, number, menu, link}) {
+ const route = encodeURIComponent(instance);
+ const title = String(menu.name || "").trim().slice(0, 80);
+ const caption = "Olá! 👋 Aqui está o cardápio" + (title ? " de " + title : " digital") + ":\n" + link;
+ const image = menuImage(menu.bannerUrl) || menuImage(menu.logoUrl);
+ if (image) {
+  const result = await request("POST", "/message/sendMedia/" + route, {number, mediatype:"image", caption, ...image});
+  if (result.ok || ![400, 404, 415, 422].includes(result.status)) return result;
+ }
+ return request("POST", "/message/sendText/" + route, {number, text:caption});
+}
+
 export async function assistantEntitlement(db, restaurantId) {
  const subscription = (await db.collection("subscriptions").doc(restaurantId).get()).data();
  if (!subscriptionAccess(subscription).allowed) return false;
@@ -84,9 +112,7 @@ export async function handleAssistantEvent({db, restaurantId, token, payload, co
  if (!reply) return res.status(204).end();
  const link = new URL("/", webhookOrigin);
  link.searchParams.set("loja", restaurant.slug);
- const result = await request("POST", "/message/sendText/" + encodeURIComponent(instance), {
-  number, text:"Olá! 👋 Aqui está o nosso cardápio digital: " + link.href
- });
+ const result = await sendMenuLink({request, instance, number, menu, link:link.href});
  if (!result.ok) return res.status(502).end();
  return res.status(204).end();
 }
