@@ -3,6 +3,10 @@ import {Phone} from "lucide-react";
 import QRCode from "qrcode";
 import {auth} from "../lib/firebase.js";
 const errors={
+ assistant_plan_required:"O Assistente de WhatsApp precisa estar incluído no plano ativo.",
+ assistant_whatsapp_required:"Conecte o WhatsApp da loja antes de ativar o assistente.",
+ assistant_existing_webhook:"Esta instância já tem um webhook. A integração existente precisa ser ajustada antes de ligar o assistente.",
+ assistant_webhook_unavailable:"Não foi possível configurar o recebimento das mensagens na Evolution API.",
  evolution_not_configured:"A Evolution API ainda não foi conectada ao servidor. Configure EVOLUTION_API_URL e EVOLUTION_API_KEY no ambiente do Dishy.",
  evolution_connection_unavailable:"Não foi possível consultar a Evolution API. Confira a URL, a chave e a instância.",
  evolution_create_failed:"A Evolution API não permitiu criar a instância. Confira a integração.",
@@ -16,9 +20,9 @@ export default function WhatsAppConnection({membership}){
  const [qrImage,setQrImage]=useState(""),[pairCode,setPairCode]=useState(""),[phone,setPhone]=useState("");
  const [mode,setMode]=useState("qr");
  const restaurantId=membership.restaurantId;
- async function request(method,action){
+ async function request(method,action,enabled){
   const user=auth.currentUser;if(!user)throw Error("Faça login novamente.");
-  const body=method==="POST"?JSON.stringify({restaurantId,action,phone:phone.replace(/\D/g,"")}):undefined;
+  const body=method==="POST"?JSON.stringify({restaurantId,action,enabled,phone:phone.replace(/\D/g,"")}):undefined;
   const res=await fetch("/api/whatsapp-connection"+(method==="GET"?"?restaurantId="+encodeURIComponent(restaurantId):""),{method,headers:{Authorization:"Bearer "+await user.getIdToken(),...(body?{"Content-Type":"application/json"}:{})},...(body?{body}:{})});
   const data=await res.json().catch(()=>({}));
   if(!res.ok)throw Error(errors[data.error]||"Não foi possível se comunicar com a Evolution API.");
@@ -31,6 +35,13 @@ export default function WhatsAppConnection({membership}){
  useEffect(()=>{let active=true;(async()=>{try{const user=auth.currentUser;if(!user)return;const res=await fetch("/api/whatsapp-connection?restaurantId="+encodeURIComponent(restaurantId),{headers:{Authorization:"Bearer "+await user.getIdToken()}});const data=await res.json().catch(()=>({}));if(!active)return;if(res.ok)setInfo(data);else setError(errors[data.error]||"Não foi possível consultar a integração.")}catch(e){if(active)setError("Não foi possível consultar o WhatsApp.")}})();return()=>{active=false}},[restaurantId]);
  useEffect(()=>{if(info?.connected||(!qrImage&&!pairCode))return;const poll=setInterval(()=>refresh(true),10000);return()=>clearInterval(poll)},[info?.connected,qrImage,pairCode,restaurantId]);
  async function connect(action){setBusy(true);setError("");setMessage("");setQrImage("");setPairCode("");try{const data=await request("POST",action);setInfo(data);if(action==="pair"){if(data.pairingCode){setPairCode(data.pairingCode);setMessage("Abra o WhatsApp do número informado e digite o código de pareamento.")}else setError("A Evolution API não retornou um código de pareamento. Tente gerar o QR em outra tela.")}else if(data.qrImage){setQrImage(data.qrImage);setMessage("Escaneie com o WhatsApp em Aparelhos conectados.")}else if(data.qrCode){const img=await QRCode.toDataURL(data.qrCode,{width:300,margin:2});setQrImage(img);setMessage("Escaneie o QR Code no WhatsApp.")}else{setMessage("Conexão iniciada, mas ainda não há QR Code. Consulte o status e tente novamente.")}}catch(e){setError(e.message)}finally{setBusy(false)}}
+ async function toggleAssistant(){
+  setBusy(true);setError("");setMessage("");
+  try{
+   const data=await request("POST","assistant",!info.assistantEnabled);
+   setInfo(current=>({...current,assistantEnabled:data.assistantEnabled}));
+  }catch(e){setError(e.message)}finally{setBusy(false)}
+ }
  return <section className="panel big dishyIntegrationPanel"><div className="moduleIntro"><div className="moduleIcon"><Phone/></div><div><h2>WhatsApp para notificações</h2><p>Conecte o WhatsApp do restaurante à Evolution API para que os fluxos de avisos do n8n possam enviar mensagens sobre pedidos.</p></div></div>
  <p className="integrationStatus"><b>Status:</b> {info?.connected?"Conectado":info?.configured?"Aguardando conexão":"Integração não configurada"} {info?.instance&&<small>Instância: {info.instance}</small>}</p>
  <div className="integrationModeTabs"><button type="button" className={mode==="qr"?"active":""} onClick={()=>setMode("qr")}>Conectar por QR Code</button><button type="button" className={mode==="pair"?"active":""} onClick={()=>setMode("pair")}>Mesmo celular: usar código</button></div>
@@ -39,6 +50,13 @@ export default function WhatsAppConnection({membership}){
  <><p>Se o QR Code aparecer no <b>mesmo celular</b> em que está o WhatsApp, não será possível escanear a própria tela. Use o código de pareamento.</p><label>WhatsApp do restaurante, com DDD<input value={phone} inputMode="tel" placeholder="5511999999999" onChange={e=>setPhone(e.target.value)} autoComplete="tel"/></label><button className="integrationPrimaryButton" type="button" disabled={busy||phone.replace(/\D/g,"").length<12} onClick={()=>connect("pair")}>{busy?"Gerando...":"Gerar código de pareamento"}</button>{pairCode&&<div className="integrationPairCode"><small>Código de pareamento</small><strong>{pairCode}</strong><button type="button" onClick={()=>navigator.clipboard.writeText(pairCode)}>Copiar código</button></div>}<p>No WhatsApp do próprio celular: <b>Configurações / ⋮ → Aparelhos conectados → Conectar aparelho → Conectar com número de telefone</b>. Digite o código exibido aqui. Os nomes podem variar conforme a versão do WhatsApp.</p></>}
  </div>}
  <button type="button" className="integrationSecondaryButton" onClick={()=>refresh(false)} disabled={busy}>{busy?"Verificando...":"Verificar status da conexão"}</button>
+ <div className="integrationConnect">
+  <h3>Assistente de WhatsApp</h3>
+  <p>Envia o link do cardápio na primeira mensagem do cliente, mesmo se for só “oi”. Responde de novo após 24 horas sem mensagens do cliente.</p>
+  {info&&(info.assistantIncluded||info.assistantEnabled)
+   ?<button type="button" className="integrationSecondaryButton" onClick={toggleAssistant} disabled={busy||(!info.assistantEnabled&&!info.connected)}>{info.assistantEnabled?"Desativar assistente":"Ativar assistente"}</button>
+   :info&&<p>Disponível em planos com o Assistente de WhatsApp.</p>}
+ </div>
  <details className="integrationTutorial"><summary>Passo a passo e orientações</summary><ol><li>Use um número do estabelecimento autorizado para receber e enviar notificações.</li><li>Tenha uma instância da Evolution API configurada no servidor Dishy.</li><li>Escolha QR Code para conectar por outra tela ou código de pareamento para usar o mesmo celular.</li><li>No WhatsApp, entre em Aparelhos conectados e confirme a conexão.</li><li>Use Verificar status até aparecer Conectado. Depois valide os eventos de notificação no n8n.</li></ol><p>O QR Code é temporário e deve ser gerado novamente se expirar. Conectar o número não publica automaticamente os fluxos de mensagens.</p><p>Envie apenas notificações esperadas pelos clientes, com respeito às regras e à privacidade do WhatsApp.</p></details>
  {error&&<p className="integrationError" role="alert">{error}</p>}{message&&<p className="integrationSuccess" role="status">{message}</p>}
  </section>

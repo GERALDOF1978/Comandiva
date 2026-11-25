@@ -1,10 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {PLAN_MODULES,PLAN_ALWAYS_AVAILABLE,normalizePlanModules,validPlanModules} from "./planModules.js";
+import {PLAN_MODULES,WHATSAPP_ASSISTANT_MODULE,PLAN_ALWAYS_AVAILABLE,normalizePlanModules,validPlanModules} from "./planModules.js";
 
 test("planos antigos e teste sem configuração preservam todos os módulos",()=>{
- assert.deepEqual(normalizePlanModules(undefined),PLAN_MODULES);
- assert.deepEqual(normalizePlanModules(null),PLAN_MODULES);
+ assert.deepEqual(normalizePlanModules(undefined),PLAN_MODULES.filter(module=>module!==WHATSAPP_ASSISTANT_MODULE));
+ assert.deepEqual(normalizePlanModules(null),PLAN_MODULES.filter(module=>module!==WHATSAPP_ASSISTANT_MODULE));
 });
 test("um plano pode liberar apenas um conjunto escolhido, mantendo as telas essenciais",()=>{
  const modules=normalizePlanModules(["PDV","Pedidos"]);
@@ -21,4 +21,9 @@ test("não aceita módulos desconhecidos, repetidos ou dados malformados",()=>{
  assert.equal(validPlanModules(["Área administrativa Master"]),false);
  assert.equal(validPlanModules("PDV"),false);
  assert.equal(validPlanModules(null),false);
+});
+
+test("assistente exige seleção explícita no plano",()=>{
+ assert.ok(validPlanModules([WHATSAPP_ASSISTANT_MODULE]));
+ assert.ok(normalizePlanModules([WHATSAPP_ASSISTANT_MODULE]).includes(WHATSAPP_ASSISTANT_MODULE));
 });

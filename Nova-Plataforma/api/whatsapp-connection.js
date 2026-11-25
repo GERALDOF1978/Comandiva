@@ -2,6 +2,8 @@ import {cert,getApps,initializeApp} from "firebase-admin/app";
 import {getAuth} from "firebase-admin/auth";
 import {FieldValue,getFirestore} from "firebase-admin/firestore";
 
+import {assistantEntitlement, configureAssistant, handleAssistantEvent} from "../server-api/whatsapp-menu-assistant.js";
+
 function init(){
  if(getApps().length)return;
  const {FIREBASE_PROJECT_ID,FIREBASE_CLIENT_EMAIL,FIREBASE_PRIVATE_KEY}=process.env;
@@ -38,12 +40,20 @@ export default async function handler(req,res){
  if(!["GET","POST"].includes(req.method))return res.status(405).json({error:"method_not_allowed"});
  try{
   init();
+  const db=getFirestore();
+  if(req.method==="POST"&&req.query?.assistantRestaurant){
+   const restaurantId=String(req.query.assistantRestaurant);
+   const config=evolutionConfig();
+   if(!config||!safeId(restaurantId))return res.status(400).end();
+   return await handleAssistantEvent({db,restaurantId,token:String(req.query.signature||""),payload:req.body,config,
+    request:(method,path,body)=>evolution(config,method,path,body),res});
+  }
   const header=String(req.headers.authorization||"");
   if(!header.startsWith("Bearer "))return res.status(401).json({error:"unauthorized"});
   const user=await getAuth().verifyIdToken(header.slice(7),true);
   const restaurantId=String(req.method==="GET"?req.query?.restaurantId:req.body?.restaurantId||"");
   if(!safeId(restaurantId))return res.status(400).json({error:"invalid_restaurant"});
-  const base=getFirestore().collection("restaurants").doc(restaurantId);
+  const base=db.collection("restaurants").doc(restaurantId);
   const [restaurant,member]=await Promise.all([base.get(),base.collection("members").doc(user.uid).get()]);
   if(!restaurant.exists)return res.status(404).json({error:"restaurant_not_found"});
   if(restaurant.data().ownerUid!==user.uid&&!(member.exists&&member.data().active===true&&member.data().role==="owner"))return res.status(403).json({error:"owner_only"});
@@ -53,13 +63,21 @@ export default async function handler(req,res){
   const instance=/^[a-zA-Z0-9_-]{1,80}$/.test(previous)?previous:"dishy"+restaurantId.toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,50);
   const path=encodeURIComponent(instance);
   const action=req.method==="GET"?"status":String(req.body?.action||"");
+  if(action==="assistant"){
+   if(typeof req.body?.enabled!=="boolean")return res.status(400).json({error:"invalid_action"});
+   const result=await configureAssistant({db,base,restaurant:restaurant.data(),instance,enabled:req.body.enabled,config,
+    request:(method,path,body)=>evolution(config,method,path,body)});
+   if(result.error)return res.status(result.status).json({error:result.error});
+   return res.status(200).json({assistantEnabled:req.body.enabled});
+  }
+  const assistant={assistantEnabled:restaurant.data().whatsappMenuAssistantEnabled===true,assistantIncluded:await assistantEntitlement(db,restaurantId)};
   if(!["status","connect","pair"].includes(action))return res.status(400).json({error:"invalid_action"});
   const probe=await evolution(config,"GET","/instance/connectionState/"+path);
   if(probe.ok&&getState(probe.data)==="open"){
    if(previous!==instance)await base.update({whatsappInstance:instance,whatsappConnectedAt:FieldValue.serverTimestamp()});
-   return res.status(200).json({configured:true,connected:true,state:"open",instance});
+   return res.status(200).json({configured:true,connected:true,state:"open",instance,...assistant});
   }
-  if(action==="status")return res.status(200).json({configured:true,connected:false,state:probe.ok?getState(probe.data):"close",instance});
+  if(action==="status")return res.status(200).json({configured:true,connected:false,state:probe.ok?getState(probe.data):"close",instance,...assistant});
   const phone=String(req.body?.phone||"").replace(/\D/g,"");
   if(action==="pair"&&!/^55\d{10,11}$/.test(phone))return res.status(400).json({error:"invalid_phone"});
   let created=null;
