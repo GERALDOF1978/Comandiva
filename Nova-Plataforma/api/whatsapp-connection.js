@@ -1,3 +1,4 @@
+import {normalizeWhatsappPhone} from "../src/lib/whatsappPhone.js";
 import {cert,getApps,initializeApp} from "firebase-admin/app";
 import {getAuth} from "firebase-admin/auth";
 import {FieldValue,getFirestore} from "firebase-admin/firestore";
@@ -57,12 +58,20 @@ export default async function handler(req,res){
   const [restaurant,member]=await Promise.all([base.get(),base.collection("members").doc(user.uid).get()]);
   if(!restaurant.exists)return res.status(404).json({error:"restaurant_not_found"});
   if(restaurant.data().ownerUid!==user.uid&&!(member.exists&&member.data().active===true&&member.data().role==="owner"))return res.status(403).json({error:"owner_only"});
+  const action=req.method==="GET"?"status":String(req.body?.action||"");
+  const savedPhone=normalizeWhatsappPhone(restaurant.data().whatsappPairingPhone);
+  if(action==="savePhone"){
+   const phone=normalizeWhatsappPhone(req.body?.phone);
+   if(!phone)return res.status(400).json({error:"invalid_phone"});
+   await base.update({whatsappPairingPhone:phone});
+   return res.status(200).json({pairingPhone:phone});
+  }
   const config=evolutionConfig();
+  if(!config && action==="status")return res.status(200).json({configured:false,connected:false,pairingPhone:savedPhone});
   if(!config)return res.status(503).json({error:"evolution_not_configured",configured:false});
   const previous=String(restaurant.data().whatsappInstance||"");
   const instance=/^[a-zA-Z0-9_-]{1,80}$/.test(previous)?previous:"dishy"+restaurantId.toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,50);
   const path=encodeURIComponent(instance);
-  const action=req.method==="GET"?"status":String(req.body?.action||"");
   if(action==="assistant"){
    if(typeof req.body?.enabled!=="boolean")return res.status(400).json({error:"invalid_action"});
    const result=await configureAssistant({db,base,restaurant:restaurant.data(),instance,enabled:req.body.enabled,config,
@@ -70,7 +79,7 @@ export default async function handler(req,res){
    if(result.error)return res.status(result.status).json({error:result.error});
    return res.status(200).json({assistantEnabled:req.body.enabled});
   }
-  const assistant={assistantEnabled:restaurant.data().whatsappMenuAssistantEnabled===true,assistantIncluded:await assistantEntitlement(db,restaurantId)};
+  const assistant={pairingPhone:savedPhone,assistantEnabled:restaurant.data().whatsappMenuAssistantEnabled===true,assistantIncluded:await assistantEntitlement(db,restaurantId)};
   if(!["status","connect","pair"].includes(action))return res.status(400).json({error:"invalid_action"});
   const probe=await evolution(config,"GET","/instance/connectionState/"+path);
   if(probe.ok&&getState(probe.data)==="open"){
@@ -78,8 +87,8 @@ export default async function handler(req,res){
    return res.status(200).json({configured:true,connected:true,state:"open",instance,...assistant});
   }
   if(action==="status")return res.status(200).json({configured:true,connected:false,state:probe.ok?getState(probe.data):"close",instance,...assistant});
-  const phone=String(req.body?.phone||"").replace(/\D/g,"");
-  if(action==="pair"&&!/^55\d{10,11}$/.test(phone))return res.status(400).json({error:"invalid_phone"});
+  const phone=normalizeWhatsappPhone(req.body?.phone)||(!req.body?.phone?savedPhone:"");
+  if(action==="pair"&&!phone)return res.status(400).json({error:"invalid_phone"});
   let created=null;
   if(probe.status===404){
    const creation=await evolution(config,"POST","/instance/create",{instanceName:instance,integration:"WHATSAPP-BAILEYS",qrcode:true});
@@ -95,7 +104,7 @@ export default async function handler(req,res){
   if(!qr.image&&!qr.code&&created){
    const backup=normalizeQr(created);qr.image=backup.image;qr.code=backup.code;qr.pairingCode=qr.pairingCode||backup.pairingCode;
   }
-  return res.status(200).json({configured:true,connected:false,state:"connecting",instance,qrImage:action==="connect"?qr.image:null,qrCode:action==="connect"?qr.code:null,pairingCode:action==="pair"?qr.pairingCode:null});
+  return res.status(200).json({configured:true,connected:false,state:"connecting",instance,...assistant,qrImage:action==="connect"?qr.image:null,qrCode:action==="connect"?qr.code:null,pairingCode:action==="pair"?qr.pairingCode:null});
  }catch(e){
   console.error("dishy_whatsapp_connection",e?.name||"error");
   return res.status(503).json({error:"whatsapp_connection_unavailable"});
