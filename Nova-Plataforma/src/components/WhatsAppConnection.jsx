@@ -36,7 +36,9 @@ export default function WhatsAppConnection({membership}){
  useEffect(()=>{let active=true;(async()=>{try{const user=auth.currentUser;if(!user)return;const res=await fetch("/api/whatsapp-connection?restaurantId="+encodeURIComponent(restaurantId),{headers:{Authorization:"Bearer "+await user.getIdToken()}});const data=await res.json().catch(()=>({}));if(!active)return;if(res.ok){setInfo(data);setPhone(current=>current||data.pairingPhone||"")}else setError(errors[data.error]||"Não foi possível consultar a integração.")}catch(e){if(active)setError("Não foi possível consultar o WhatsApp.")}})();return()=>{active=false}},[restaurantId]);
  useEffect(()=>{if(info?.connected||(!qrImage&&!pairCode))return;const poll=setInterval(()=>refresh(true),10000);return()=>clearInterval(poll)},[info?.connected,qrImage,pairCode,restaurantId]);
  async function connect(action){setBusy(true);setError("");setMessage("");setQrImage("");setPairCode("");try{const data=await request("POST",action);setInfo(data);if(action==="pair"){if(data.pairingCode){setPairCode(data.pairingCode);setMessage("Abra o WhatsApp do número informado e digite o código de pareamento.")}else setError("A Evolution API não retornou um código de pareamento. Tente gerar o QR em outra tela.")}else if(data.qrImage){setQrImage(data.qrImage);setMessage("Escaneie com o WhatsApp em Aparelhos conectados.")}else if(data.qrCode){const img=await QRCode.toDataURL(data.qrCode,{width:300,margin:2});setQrImage(img);setMessage("Escaneie o QR Code no WhatsApp.")}else{setMessage("Conexão iniciada, mas ainda não há QR Code. Consulte o status e tente novamente.")}}catch(e){setError(e.message)}finally{setBusy(false)}}
- async function savePhone(){
+ async function savePhone(event){
+  event.preventDefault();
+  if(!normalizeWhatsappPhone(phone)){setError(errors.invalid_phone);setMessage("");return;}
   setBusy(true);setError("");setMessage("");
   try{
    const data=await request("POST","savePhone");
@@ -54,11 +56,12 @@ export default function WhatsAppConnection({membership}){
  }
  return <section className="panel big dishyIntegrationPanel"><div className="moduleIntro"><div className="moduleIcon"><Phone/></div><div><h2>WhatsApp para notificações</h2><p>Conecte o WhatsApp do restaurante à Evolution API para que os fluxos de avisos do n8n possam enviar mensagens sobre pedidos.</p></div></div>
  <p className="integrationStatus"><b>Status:</b> {info?.connected?"Conectado":info?.configured?"Aguardando conexão":"Integração não configurada"} {info?.instance&&<small>Instância: {info.instance}</small>}</p>
- <div className="integrationConnect">
-  <label>WhatsApp do restaurante, com DDD<input type="tel" value={phone} onChange={e=>setPhone(e.target.value)} autoComplete="tel" placeholder="(19) 99999-9999"/></label>
-  <button className="integrationSecondaryButton" type="button" onClick={savePhone} disabled={busy||!normalizeWhatsappPhone(phone)||normalizeWhatsappPhone(phone)===info?.pairingPhone}>Salvar número</button>
-  <small>Salvar o número guarda a configuração. Para conectar o WhatsApp, use o QR Code ou o código de pareamento.</small>
- </div>
+ <form className="integrationConnect" onSubmit={savePhone} style={{display:"grid",gap:10}}>
+  <label>WhatsApp do restaurante, com DDD<input type="tel" value={phone} onChange={e=>{setPhone(e.target.value);setError("");setMessage("")}} autoComplete="tel" placeholder="(19) 99999-9999"/></label>
+  <button className="integrationPrimaryButton" type="submit" disabled={busy} style={{width:"100%"}}>{busy?"Aguarde...":"Salvar WhatsApp"}</button>
+  {error&&<p className="integrationError" role="alert">{error}</p>}{message&&<p className="integrationSuccess" role="status">{message}</p>}
+  <small>Depois de salvar, conecte pelo QR Code ou pelo código de pareamento.</small>
+ </form>
  <div className="integrationModeTabs"><button type="button" className={mode==="qr"?"active":""} onClick={()=>setMode("qr")}>Conectar por QR Code</button><button type="button" className={mode==="pair"?"active":""} onClick={()=>setMode("pair")}>Mesmo celular: usar código</button></div>
  {!info?.connected&&<div className="integrationConnect">
  {mode==="qr"?<><p>Abra esta página no computador ou em outro aparelho. No celular que tem o WhatsApp, acesse <b>Aparelhos conectados → Conectar um aparelho</b> e escaneie o QR Code abaixo.</p><button className="integrationPrimaryButton" type="button" onClick={()=>connect("connect")} disabled={busy}>{busy?"Consultando...":"Gerar QR Code do WhatsApp"}</button>{qrImage&&<img className="integrationQrImage" src={qrImage} alt="QR Code para conectar o WhatsApp à Evolution API"/>}</>:
@@ -73,6 +76,6 @@ export default function WhatsAppConnection({membership}){
    :info&&<p>Disponível em planos com o Assistente de WhatsApp.</p>}
  </div>
  <details className="integrationTutorial"><summary>Passo a passo e orientações</summary><ol><li>Use um número do estabelecimento autorizado para receber e enviar notificações.</li><li>Tenha uma instância da Evolution API configurada no servidor Dishy.</li><li>Escolha QR Code para conectar por outra tela ou código de pareamento para usar o mesmo celular.</li><li>No WhatsApp, entre em Aparelhos conectados e confirme a conexão.</li><li>Use Verificar status até aparecer Conectado. Depois valide os eventos de notificação no n8n.</li></ol><p>O QR Code é temporário e deve ser gerado novamente se expirar. Conectar o número não publica automaticamente os fluxos de mensagens.</p><p>Envie apenas notificações esperadas pelos clientes, com respeito às regras e à privacidade do WhatsApp.</p></details>
- {error&&<p className="integrationError" role="alert">{error}</p>}{message&&<p className="integrationSuccess" role="status">{message}</p>}
+
  </section>
 }

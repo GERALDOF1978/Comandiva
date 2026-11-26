@@ -232,37 +232,42 @@ function Login(){const google=new GoogleAuthProvider();const[email,setEmail]=use
 
 function MasterRestaurantDetails({restaurant,subscription}){
  const [open,setOpen]=useState(false),[details,setDetails]=useState(null),[failed,setFailed]=useState(false);
+ const [owner,setOwner]=useState(null);
+ useEffect(()=>{
+  let live=true;
+  const lookup=restaurant.ownerUid?getDoc(doc(db,"restaurants",restaurant.id,"members",restaurant.ownerUid)):Promise.resolve(null);
+  lookup.then(snapshot=>{if(live)setOwner(snapshot?.data()||{})}).catch(()=>{if(live)setOwner({})});
+  return()=>{live=false};
+ },[restaurant.id,restaurant.ownerUid]);
  useEffect(()=>{
   if(!open)return;
   let live=true;
-  const base=doc(db,"restaurants",restaurant.id);
-  Promise.allSettled([
-   getDoc(doc(base,"settings","public")),
-   restaurant.ownerUid?getDoc(doc(base,"members",restaurant.ownerUid)):Promise.resolve(null)
-  ]).then(([store,owner])=>{
-   if(!live)return;
-   setDetails({store:store.value?.data()||{},owner:owner.value?.data()||{}});
-   setFailed(store.status==="rejected"||owner.status==="rejected");
-  });
+  getDoc(doc(db,"restaurants",restaurant.id,"settings","public"))
+   .then(store=>{if(live){setDetails(store.data()||{});setFailed(false)}})
+   .catch(()=>{if(live){setDetails({});setFailed(true)}});
   return()=>{live=false};
- },[open,restaurant.id,restaurant.ownerUid]);
- const store=details?.store||{},owner=details?.owner||{};
+ },[open,restaurant.id]);
+ const store=details||{};
  const date=value=>{const at=value?.toDate?.()??new Date(value??NaN);return Number.isFinite(at.getTime())?at.toLocaleDateString("pt-BR",{timeZone:"America/Sao_Paulo"}):""};
  const rows=[
-  ["Proprietário",owner.name],["E-mail do proprietário",owner.email],
   ["Telefone da loja",store.phone||restaurant.phone],["WhatsApp da Evolution",restaurant.whatsappPairingPhone],
   ["Segmento",store.type||restaurant.type],["Localização",[store.neighborhood,store.city,store.state].filter(Boolean).join(" · ")],
   ["Cadastro",date(restaurant.createdAt)],["Assinatura",({trial:"Em teste",active:"Ativa",pending_payment:"Aguardando pagamento",canceled:"Cancelada",expired:"Expirada"})[subscription?.status]||subscription?.status],
   ["Vencimento",date(subscription?.paidUntil||subscription?.trialEndsAt)],
  ];
- return <details onToggle={event=>setOpen(event.currentTarget.open)} style={{marginTop:10}}>
+ return <>
+  <div style={{display:"grid",gap:4,marginTop:7}}>
+   <div><b>Dono:</b> {owner?.name||restaurant.ownerName||(owner?"Não informado":"Carregando…")}</div>
+   <div><b>E-mail:</b> {owner?.email||restaurant.ownerEmail||(owner?"Não informado":"Carregando…")}</div>
+  </div>
+  <details onToggle={event=>setOpen(event.currentTarget.open)} style={{marginTop:10}}>
   <summary style={{cursor:"pointer"}}>Dados do lojista</summary>
   {open&&(!details?<p>Carregando dados do lojista…</p>:<>
    <dl style={{display:"grid",gap:8,marginBottom:8}}>{rows.map(([label,value])=><div key={label}><dt style={{fontSize:12,color:"#bdc5d1"}}>{label}</dt><dd style={{margin:0}}>{value||"Não informado"}</dd></div>)}</dl>
    {restaurant.slug&&<a style={{color:"#ffb48c"}} href={"/?loja="+encodeURIComponent(restaurant.slug)} target="_blank" rel="noreferrer">Abrir cardápio</a>}
    {failed&&<p role="status">Parte dos dados do lojista está indisponível.</p>}
   </>)}
- </details>;
+ </details></>;
 }
 
 function DishyMasterGate({user}){
