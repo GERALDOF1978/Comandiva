@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/menu-sheet-import",
+      "destination": "/api/index?route=menu-sheet-import"
+    },
+    {
       "source": "/api/lookup-cep",
       "destination": "/api/index?route=lookup-cep"
     },

@@ -3,11 +3,13 @@
 import lookupCep from "../server-api/lookup-cep.js";
 import deliveryRoute from "../server-api/delivery-route.js";
 import deliverySheet from "../server-api/delivery-sheet.js";
+import menuSheetImport from "../server-api/menu-sheet-import.js";
 
 const handlers=Object.freeze({
   "lookup-cep":lookupCep,
   "delivery-route":deliveryRoute,
-  "delivery-sheet":deliverySheet
+  "delivery-sheet":deliverySheet,
+  "menu-sheet-import":menuSheetImport
 });
 
 export default async function handler(req,res){
