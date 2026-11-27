@@ -1745,3 +1745,11 @@ body:has(.checkoutBackdrop) .dishyInstallFloating,body:has(.bairroModalBackdrop)
  .dashboardHeroAction svg{width:23px;height:23px;flex-shrink:0}
  .dashboardHeroAction .dashboardStatusIcon{font-size:27px}
 }
+
+.posCashChange{display:grid;gap:10px;margin-top:14px;padding:12px;background:#fff;border:1px solid #dbe5ef;border-radius:12px}
+.posCashChange label{display:grid;gap:6px;font-weight:700}
+.posCashChange input{width:100%;min-width:0}
+.posCashExact{min-height:44px;padding:10px 12px;border:1px solid #bdd0f3;border-radius:10px;background:#edf4ff;color:#174484;font:inherit;font-weight:700;cursor:pointer}
+.posCashExact:hover{background:#dceaff}
+.posCashResult{font-size:.9rem;color:#475569}
+.posCashResult.ready{padding:10px;border-radius:8px;background:#e8f8ee;color:#14532d;font-size:1.12rem}
