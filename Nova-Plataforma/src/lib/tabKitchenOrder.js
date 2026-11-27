@@ -36,3 +36,15 @@ export function tabPaymentByOrder(orders) {
  }
  return result;
 }
+
+export function orderPaymentBadge(order, tabPayment) {
+ const isTab = isTabKitchenOrder(order);
+ const payment = isTab ? tabPayment : order;
+ if (order.status === "CANCELLED") return {label:"Cancelado", style:"cancelled"};
+ if (payment?.paymentStatus === "PAID") return {label:"Pago", style:"completed"};
+ if (["FAILED","ERROR"].includes(payment?.paymentStatus)) return {label:"Pagamento não confirmado",style:"pending_payment"};
+ if (isTab ? Boolean(payment) : order.status === "PENDING_PAYMENT" || ["PIX","CARD_ONLINE","CREDIT_CARD_ONLINE","NFC_INFINITE_TAP"].includes(order.paymentMethod)) {
+  return {label:"Aguardando pagamento",style:"pending_payment"};
+ }
+ return {label:"Pagamento em aberto",style:"pending_payment"};
+}
