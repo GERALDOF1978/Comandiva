@@ -70,7 +70,8 @@ export async function configureAssistant({db, base, restaurant, instance, enable
  if (!webhook.ok && webhook.status !== 404) return {error:"assistant_webhook_unavailable", status:502};
  const existing = webhook.data?.webhook || webhook.data;
  if (existing?.url && existing.url !== url.href) return {error:"assistant_existing_webhook", status:409};
- if (!existing?.enabled) {
+ const events = Array.isArray(existing?.events) ? existing.events.map(event => String(event).toUpperCase().replace(/\./g, "_")) : [];
+ if (!existing?.enabled || !events.includes("MESSAGES_UPSERT") || existing.byEvents === true || existing.webhookByEvents === true) {
   const result = await request("POST", "/webhook/set/" + path, {webhook:{
    enabled:true, url:url.href, byEvents:false, base64:false, events:["MESSAGES_UPSERT"]
   }});
@@ -103,16 +104,35 @@ export async function handleAssistantEvent({db, restaurantId, token, payload, co
  if (menu?.published !== true) return res.status(204).end();
 
  const contact = base.collection("whatsappAssistantContacts").doc(signature(config.apiKey, "contact", restaurantId + ":" + number));
+ // Reserve the delivery atomically; a failed send must not consume the quiet period.
+ const attempt = now;
  const reply = await db.runTransaction(async tx => {
-  const last = (await tx.get(contact)).data()?.lastMessageAt ?? 0;
-  if (time <= last) return false;
-  tx.set(contact, {lastMessageAt:time});
-  return time - last >= quietPeriod;
+  const previous = (await tx.get(contact)).data() || {};
+  const last = previous.lastMessageAt ?? 0;
+  if (time < last || (time === last && !previous.deliveryPending)) return false;
+  const shouldReply = previous.deliveryPending === true || time - last >= quietPeriod;
+  if (previous.deliveryPending === true && Number(previous.attemptAt || 0) > now - 60000) {
+   if (time > last) tx.set(contact, {lastMessageAt:time}, {merge:true});
+   return false;
+  }
+  tx.set(contact, {lastMessageAt:Math.max(time,last), deliveryPending:shouldReply, attemptAt:shouldReply ? attempt : 0}, {merge:true});
+  return shouldReply;
  });
  if (!reply) return res.status(204).end();
  const link = new URL("/", webhookOrigin);
  link.searchParams.set("loja", restaurant.slug);
- const result = await sendMenuLink({request, instance, number, menu, link:link.href});
- if (!result.ok) return res.status(502).end();
- return res.status(204).end();
+ let delivered = false;
+ try {
+  const result = await sendMenuLink({request, instance, number, menu, link:link.href});
+  delivered = result.ok;
+  if (!delivered) console.warn("dishy_assistant_send_failed", result.status);
+ } catch (error) {
+  console.warn("dishy_assistant_send_failed", error?.name || "error");
+ }
+ await db.runTransaction(async tx => {
+  const current = (await tx.get(contact)).data();
+  if (current?.attemptAt !== attempt) return;
+  tx.set(contact, {deliveryPending:!delivered, attemptAt:0}, {merge:true});
+ });
+ return res.status(delivered ? 204 : 502).end();
 }
