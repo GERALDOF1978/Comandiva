@@ -220,10 +220,10 @@ export default async function handler(req,res){
       if(method==="PIX"){
         const selectedPixProvider=body.pixProvider==null?"":String(body.pixProvider);
         if(selectedPixProvider&&!["mercado_pago","infinitepay"].includes(selectedPixProvider))return res.status(400).json({error:"invalid_pix_provider"});
-        if(selectedPixProvider==="infinitepay")return res.status(400).json({error:"pix_infinitepay_no_qrcode_pdv"});const pixProvider="mercado_pago";
+        const pixProvider=selectedPixProvider||payCfg.data()?.paymentProviders?.PIX||"mercado_pago";
         if(pixProvider==="infinitepay"){
           try{
-            const payment=await createInfiniteCheckout({db,restaurantId:rid,orderId:ref.id,slug:"",number:"PDV-"+ref.id.slice(0,6).toUpperCase(),totalCents,name:String(body.customerName||"Balcão").trim()||"Balcão",returnTo:"pos"});
+            const payment=await createInfiniteCheckout({db,restaurantId:rid,orderId:ref.id,slug:"",number:"PDV-"+ref.id.slice(0,6).toUpperCase(),totalCents,name:String(body.customerName||"Balcão").trim()||"Balcão",returnTo:"pos",paymentMethods:["pix"]});
             await ref.update({provider:"infinitepay",providerOrderNsu:payment.orderNsu,updatedAt:FieldValue.serverTimestamp()});
             return res.status(201).json({ok:true,orderId:ref.id,code:"PDV-"+ref.id.slice(0,6).toUpperCase(),totalCents,payment:{type:"INFINITEPAY",checkoutUrl:payment.checkoutUrl}});
           }catch(e){

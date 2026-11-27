@@ -1,3 +1,4 @@
+import {startTabOnlineCheckout} from "../server/tab-online.js";
 import {startTabPix} from "../server/tab-pix.js";
 import {buildInfiniteTapLink} from "../src/lib/nfcTap.js";
 import {buildTableOrderLine} from "../src/lib/tableItemPricing.js";
@@ -21,7 +22,7 @@ export default async function handler(req,res){
  const db=getFirestore(),base=db.collection("restaurants").doc(restaurantId),member=await base.collection("members").doc(user.uid).get();
  if(!member.exists||!canAccessModule(member.data(),"Mesas e comandas"))return res.status(403).json({error:"forbidden"});
  const tabs=base.collection("tabs");
- if(req.method==="GET"){const [snap,calls,nfc,mpCfg]=await Promise.all([tabs.limit(300).get(),base.collection("serviceCalls").where("status","==","PENDING").limit(100).get(),base.collection("settings").doc("nfcTap").get(),base.collection("privateIntegrations").doc("mercadoPago").get()]);return res.status(200).json({tabs:snap.docs.map(d=>({id:d.id,...d.data(),createdAt:d.data().createdAt?.toDate?.()?.toISOString()||null,updatedAt:d.data().updatedAt?.toDate?.()?.toISOString()||null})),serviceCalls:calls.docs.map(d=>({id:d.id,...d.data(),createdAt:d.data().createdAt?.toDate?.()?.toISOString()||null})),nfcEnabled:nfc.data()?.enabled===true&&/^[A-Za-z0-9_.-]{2,64}$/.test(String(nfc.data()?.handle||"")),mpConfigured:!!mpCfg.data()?.encryptedAccessToken})}
+ if(req.method==="GET"){const [snap,calls,nfc,mpCfg,infCfg]=await Promise.all([tabs.limit(300).get(),base.collection("serviceCalls").where("status","==","PENDING").limit(100).get(),base.collection("settings").doc("nfcTap").get(),base.collection("privateIntegrations").doc("mercadoPago").get(),base.collection("privateIntegrations").doc("infinitepay").get()]);return res.status(200).json({tabs:snap.docs.map(d=>({id:d.id,...d.data(),createdAt:d.data().createdAt?.toDate?.()?.toISOString()||null,updatedAt:d.data().updatedAt?.toDate?.()?.toISOString()||null})),serviceCalls:calls.docs.map(d=>({id:d.id,...d.data(),createdAt:d.data().createdAt?.toDate?.()?.toISOString()||null})),nfcEnabled:nfc.data()?.enabled===true&&/^[A-Za-z0-9_.-]{2,64}$/.test(String(nfc.data()?.handle||"")),mpConfigured:!!mpCfg.data()?.encryptedAccessToken,infConfigured:!!infCfg.data()?.encryptedApiKey})}
  const action=String(body.action||""),id=String(body.tabId||"");
  if(["OPEN","ADD_BATCH","ADD"].includes(action)){
   const r=await base.get();if(!r.exists||r.data().status!=="active")return res.status(403).json({error:"restaurant_suspended"});
@@ -46,6 +47,13 @@ export default async function handler(req,res){
  if(!/^[\w-]{3,130}$/.test(id))return res.status(400).json({error:"invalid_tab"});
  const ref=tabs.doc(id);
  if(action==="CREATE_PIX"){const cfg=await base.collection("settings").doc("public").get();if(!enabledPaymentMethods(cfg.data()?.paymentMethods).includes("PIX"))return res.status(400).json({error:"payment_method_disabled"});if(cfg.data()?.paymentProviders?.PIX==="infinitepay")return res.status(409).json({error:"payment_provider_mismatch"});try{return res.status(200).json({ok:true,payment:await startTabPix(base,ref,restaurantId)})}catch(e){return res.status(409).json({error:e.message})}}
+ if(action==="CREATE_INFINITE_PIX"){
+  const [cfg,tab]=await Promise.all([base.collection("settings").doc("public").get(),ref.get()]);
+  if(!enabledPaymentMethods(cfg.data()?.paymentMethods).includes("PIX")||cfg.data()?.paymentProviders?.PIX!=="infinitepay")return res.status(403).json({error:"payment_method_disabled"});
+  if(tab.data()?.status!=="BILL_REQUESTED")return res.status(409).json({error:"invalid_status"});
+  try{return res.status(200).json({ok:true,payment:await startTabOnlineCheckout(base,ref,restaurantId,{name:"Balcão",paymentMethod:"PIX",staff:true})})}
+  catch(e){return res.status(409).json({error:e.message==="infinitepay_not_configured"?"infinitepay_not_configured":e.message==="payment_pending"?"payment_pending":"pix_creation_failed"})}
+ }
  if(action==="START_NFC"){
   const kind=String(body.paymentKind||"debit");
   if(!["debit","credit"].includes(kind))return res.status(400).json({error:"invalid_tap_method"});
@@ -57,7 +65,7 @@ export default async function handler(req,res){
     const snap=await tx.get(ref);
     if(!snap.exists)throw Error("not_found");
     const d=snap.data();
-    if(d.type!=="INDIVIDUAL")throw Error("nfc_only_individual");
+    if(!["TABLE","INDIVIDUAL"].includes(d.type))throw Error("invalid_tab_type");
     if(d.status!=="BILL_REQUESTED")throw Error("invalid_status");
     if(d.pixPayment?.paymentId||d.onlinePayment?.orderId)throw Error("payment_pending");
     if(d.nfcPayment?.orderId)return d.nfcPayment;
@@ -65,7 +73,7 @@ export default async function handler(req,res){
     if(!Number.isSafeInteger(amountCents)||amountCents<100)throw Error("invalid_total");
     const deeplink=buildInfiniteTapLink({amountCents,orderId:orderRef.id,handle:String(config.handle||""),paymentMethod:kind});
     const payment={orderId:orderRef.id,amountCents,paymentKind:kind,deeplink,status:"PENDING"};
-    tx.set(orderRef,{source:"TAB_NFC",channel:"TABLE",paymentPurpose:"TAB_CLOSE",tabId:id,table:"Comanda "+d.label,number:"C"+orderRef.id.slice(0,8).toUpperCase(),customerSnapshot:{name:"Comanda "+d.label},items:d.items||[],totalCents:amountCents,status:"PENDING_PAYMENT",paymentStatus:"PENDING",paymentMethod:"NFC_INFINITE_TAP",provider:"infinitepay_tap",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
+    tx.set(orderRef,{source:"TAB_NFC",channel:"TABLE",paymentPurpose:"TAB_CLOSE",tabId:id,table:(d.type==="TABLE"?"Mesa ":"Comanda ")+d.label,number:"C"+orderRef.id.slice(0,8).toUpperCase(),customerSnapshot:{name:"Comanda "+d.label},items:d.items||[],totalCents:amountCents,status:"PENDING_PAYMENT",paymentStatus:"PENDING",paymentMethod:"NFC_INFINITE_TAP",provider:"infinitepay_tap",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
     tx.update(ref,{nfcPayment:payment,updatedAt:FieldValue.serverTimestamp()});
     return payment;
    });
@@ -78,7 +86,7 @@ export default async function handler(req,res){
   try{
    await db.runTransaction(async tx=>{
     const tab=await tx.get(ref);
-    if(!tab.exists||tab.data().type!=="INDIVIDUAL"||tab.data().status!=="BILL_REQUESTED"||!tab.data().nfcPayment?.orderId||tab.data().nfcPayment.status!=="PENDING")throw Error("invalid_tap_order_state");
+    if(!tab.exists||!["TABLE","INDIVIDUAL"].includes(tab.data().type)||tab.data().status!=="BILL_REQUESTED"||!tab.data().nfcPayment?.orderId||tab.data().nfcPayment.status!=="PENDING")throw Error("invalid_tap_order_state");
     const d=tab.data(),payment=d.nfcPayment,orderRef=base.collection("orders").doc(payment.orderId),order=await tx.get(orderRef);
     if(!order.exists||order.data().tabId!==id||order.data().source!=="TAB_NFC"||order.data().paymentMethod!=="NFC_INFINITE_TAP"||order.data().paymentStatus!=="PENDING"||order.data().totalCents!==d.totalCents)throw Error("invalid_tap_order_state");
     tx.update(orderRef,{paymentStatus:"PAID",status:"COMPLETED",paidAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp(),nfcApprovalReference:nsu,nfcConfirmedBy:user.uid,nfcConfirmationMode:"MANUAL_MERCHANT_VERIFICATION"});

@@ -15,7 +15,7 @@ function paymentBaseUrl(){
  if(!base)throw Error("payment_callback_not_configured");
  return "https://"+String(base).replace(/^https?:\/\//,"").replace(/\/$/,"");
 }
-export async function createInfiniteCheckout({db,restaurantId,orderId,slug,number,totalCents,name,phone="",email="",returnTo="menu"}){
+export async function createInfiniteCheckout({db,restaurantId,orderId,slug,number,totalCents,name,phone="",email="",returnTo="menu",paymentMethods=["credit_card","pix"]}){
  const {handle,apiKey}=await infinitepayCredentials(db,restaurantId);
  if(!Number.isSafeInteger(totalCents)||totalCents<100)throw Error("infinitepay_minimum_R$1");
  const origin=paymentBaseUrl(),orderNsu=restaurantId+":"+orderId;
@@ -24,7 +24,7 @@ export async function createInfiniteCheckout({db,restaurantId,orderId,slug,numbe
  const national=digits.startsWith("55")&&digits.length>=12?digits.slice(2):digits;
  if(national.length===10||national.length===11)customer.phone_number="+55"+national;
  if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email||"").trim()))customer.email=String(email).trim().slice(0,120);
- const payload={handle,order_nsu:orderNsu,items:[{quantity:1,price:totalCents,description:"Pedido Dishy #"+number}],redirect_url:returnTo==="pos"?origin+"/login?ip_return=1":origin+"/?loja="+encodeURIComponent(slug)+"&pedido="+encodeURIComponent(orderId)+"&ip_return=1",webhook:{url:origin+"/api/create-order?action=infinitepay-webhook&restaurantId="+encodeURIComponent(restaurantId)+"&orderId="+encodeURIComponent(orderId),events:["paid"]},customer,options:{require_delivery_address:false,payment_methods_enabled:["credit_card","pix"],single_payment:true,valid_until:new Date(Date.now()+2*60*60*1000).toISOString()}};
+ const payload={handle,order_nsu:orderNsu,items:[{quantity:1,price:totalCents,description:"Pedido Dishy #"+number}],redirect_url:returnTo==="pos"?origin+"/login?ip_return=1":origin+"/?loja="+encodeURIComponent(slug)+"&pedido="+encodeURIComponent(orderId)+"&ip_return=1",webhook:{url:origin+"/api/create-order?action=infinitepay-webhook&restaurantId="+encodeURIComponent(restaurantId)+"&orderId="+encodeURIComponent(orderId),events:["paid"]},customer,options:{require_delivery_address:false,payment_methods_enabled:paymentMethods,single_payment:true,valid_until:new Date(Date.now()+2*60*60*1000).toISOString()}};
  const response=await fetch(host+"/links",{method:"POST",headers:{"Content-Type":"application/json","X-Api-Key":apiKey},body:JSON.stringify(payload),signal:AbortSignal.timeout(15000)});
  const result=await response.json().catch(()=>({}));
  const checkoutUrl=String(result.url||result.checkout_url||result.checkoutUrl||"");
@@ -54,7 +54,7 @@ export async function confirmInfinitePayment({db,restaurantId,orderId,orderNsu,t
   if(order.paymentPurpose==="TAB_CLOSE"){
    const tabRef=db.collection("restaurants").doc(restaurantId).collection("tabs").doc(String(order.tabId||""));
    const tab=await tx.get(tabRef);
-   if(!tab.exists||tab.data().type!=="TABLE"||tab.data().status!=="BILL_REQUESTED"||tab.data().onlinePayment?.orderId!==orderId||Number(tab.data().totalCents)!==result.amount)return;
+   if(!tab.exists||!["TABLE","INDIVIDUAL"].includes(tab.data().type)||tab.data().status!=="BILL_REQUESTED"||tab.data().onlinePayment?.orderId!==orderId||Number(tab.data().totalCents)!==result.amount)return;
    tx.update(tabRef,{status:"CLOSED",paymentMethod:method,paymentStatus:"PAID",onlinePayment:{...tab.data().onlinePayment,status:"PAID"},financeOrderId:orderId,closedAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
    closedTab=true;
   }
