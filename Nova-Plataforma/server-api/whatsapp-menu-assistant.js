@@ -4,6 +4,7 @@ import {subscriptionAccess} from "../src/lib/subscriptionAccess.js";
 
 const quietPeriod = 24 * 60 * 60 * 1000;
 const webhookOrigin = "https://dishy.com.br";
+const luLancheTestEndsAt = Date.parse("2026-11-27T21:30:00Z");
 
 function signature(key, purpose, value) {
  return createHmac("sha256", key).update(purpose + ":" + value).digest("hex");
@@ -94,7 +95,10 @@ export async function handleAssistantEvent({db, restaurantId, token, payload, co
   || (/^\d+@lid$/.test(key?.remoteJid) ? /^([1-9]\d{7,14})@s\.whatsapp\.net$/.exec(key?.remoteJidAlt)?.[1] : null);
  const now = Date.now();
  const time = Number(data?.messageTimestamp) * 1000;
- if (!number || key.fromMe !== false || !data?.message || !Number.isFinite(time) || time < now - 5 * 60 * 1000 || time > now + 60 * 1000) return res.status(204).end();
+ const messageText = data?.message?.conversation ?? data?.message?.extendedTextMessage?.text;
+ const testCommand = key?.fromMe === true && now < luLancheTestEndsAt &&
+  typeof messageText === "string" && messageText.trim().toLowerCase() === "teste cardápio dishy";
+ if (!number || (!testCommand && key?.fromMe !== false) || !data?.message || !Number.isFinite(time) || time < now - 5 * 60 * 1000 || time > now + 60 * 1000) return res.status(204).end();
 
  const base = db.collection("restaurants").doc(restaurantId);
  const restaurant = (await base.get()).data();
@@ -102,6 +106,15 @@ export async function handleAssistantEvent({db, restaurantId, token, payload, co
    || !/^[a-z0-9-]{1,90}$/.test(restaurant.slug) || !await assistantEntitlement(db, restaurantId)) return res.status(204).end();
  const menu = (await base.collection("settings").doc("public").get()).data();
  if (menu?.published !== true) return res.status(204).end();
+
+ const link = new URL("/", webhookOrigin);
+ link.searchParams.set("loja", restaurant.slug);
+ if (testCommand) {
+  if (restaurant.slug !== "lu-lanche" || restaurant.whatsappPairingPhone !== number) return res.status(204).end();
+  const testResult = await sendMenuLink({request, instance, number, menu, link:link.href});
+  console.info("dishy_assistant_self_test", testResult.status);
+  return res.status(testResult.ok ? 204 : 502).end();
+ }
 
  const contact = base.collection("whatsappAssistantContacts").doc(signature(config.apiKey, "contact", restaurantId + ":" + number));
  // Reserve the delivery atomically; a failed send must not consume the quiet period.
@@ -119,8 +132,6 @@ export async function handleAssistantEvent({db, restaurantId, token, payload, co
   return shouldReply;
  });
  if (!reply) return res.status(204).end();
- const link = new URL("/", webhookOrigin);
- link.searchParams.set("loja", restaurant.slug);
  let delivered = false;
  try {
   const result = await sendMenuLink({request, instance, number, menu, link:link.href});
