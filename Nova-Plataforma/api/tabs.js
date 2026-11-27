@@ -104,7 +104,7 @@ export default async function handler(req,res){
  await db.runTransaction(async tx=>{
   const snap=await tx.get(ref);if(!snap.exists||snap.data().status!=="OPEN")throw Error("not_open");
   const d=snap.data();
-  tx.set(orderRef,{channel:"TABLE",table:(d.type==="TABLE"?"Mesa ":"Comanda ")+d.label,tabId:id,number:"M"+orderRef.id.slice(0,6).toUpperCase(),customerSnapshot:{name:(d.type==="TABLE"?"Mesa ":"Comanda ")+d.label},items:entries,totalCents:0,status:"RECEIVED",paymentStatus:"PENDING",paymentMethod:"CASH",createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
+  tx.set(orderRef,{channel:"TABLE",table:(d.type==="TABLE"?"Mesa ":"Comanda ")+d.label,tabId:id,number:"M"+orderRef.id.slice(0,6).toUpperCase(),customerSnapshot:{name:(d.type==="TABLE"?"Mesa ":"Comanda ")+d.label},items:entries,totalCents:0,tabItemsTotalCents:total,source:"TAB_KITCHEN",status:"RECEIVED",paymentStatus:"PENDING",paymentMethod:null,createdAt:FieldValue.serverTimestamp(),updatedAt:FieldValue.serverTimestamp()});
   tx.update(ref,{items:[...(d.items||[]),...entries.map(x=>({...x,addedAt:new Date().toISOString()}))],totalCents:Number(d.totalCents||0)+total,updatedAt:FieldValue.serverTimestamp()});
  });
  return res.status(200).json({ok:true,orderId:orderRef.id});
